@@ -1,0 +1,147 @@
+---
+import Base from '../layouts/Base.astro';
+
+const education = [
+  { school: 'Wellesley College (B.A.)', href: 'https://www.wellesley.edu/', program: 'Mathematics & HCI', dates: '2020–2024' },
+  { school: 'Massachusetts Institute of Technology', program: 'Cross-registered, Media Arts and Sciences', dates: '2021–2023' },
+  { school: 'RISD Precollege', program: 'Graphic Design', dates: '2018' },
+];
+
+const experience = [
+  { org: 'Five9', href: 'https://www.five9.com/', role: 'Product Designer', dates: 'Jul 2025–Present' },
+  { org: 'Ikigai Labs', href: 'https://ikigailabs.io/', role: 'UX Designer', dates: 'Feb–Jul 2025' },
+  { org: 'UberJets / Virtual Hangar', href: 'https://virtualhangar.com/', role: 'Lead UX/UI Designer', dates: 'Aug–Dec 2024' },
+  { org: 'QuantUniversity', role: 'UX Design Intern', dates: 'Jul–Aug 2024' },
+  { org: 'Neural Image AI', role: 'Product Engineering Intern', dates: 'May–Nov 2023' },
+  { org: 'MIT Media Lab', href: 'https://www.media.mit.edu/', role: 'Designer, Researcher', dates: 'Jan 2021–Dec 2022' },
+  { org: 'MIT CSAIL', href: 'https://www.csail.mit.edu/', role: 'HCI Student Researcher', dates: 'May–Sept 2022' },
+];
+---
+
+<Base
+  title="About — Shellie Hu"
+  description="Product designer in Boston. Currently designing Cortex."
+>
+  <div style="max-width: var(--measure);">
+    <h1 class="section-heading">about</h1>
+
+    {/* DRAFT — revise in my voice */}
+    <div class="mt-6 space-y-5 text-[var(--text-lg)] leading-relaxed">
+      <p>
+        I'm a product designer in Boston, currently designing
+        <a href="/projects/cortex">Cortex</a> — a voice AI agent builder
+        platform. I studied math and HCI at Wellesley, with time
+        cross-registered at the MIT Media Lab.
+      </p>
+      <p class="text-[var(--color-ink-muted)]">
+        Outside of work I draw, hike, play badminton, and stargaze. I play
+        guitar in a band. Currently reading
+        <em>Stories of Your Life and Others</em> by Ted Chiang.
+      </p>
+    </div>
+
+    <hr class="mt-16" />
+
+    <section class="mt-16">
+      <h2 class="section-heading">experience</h2>
+      <div class="cv-list mt-3">
+        {experience.map((x) => (
+          <div class="cv-row">
+            <div class="cv-body">
+              {x.href ? (
+                <a class="cv-name" href={x.href} target="_blank" rel="noopener noreferrer">
+                  {x.org}<span class="text-[var(--color-ink-faint)]"> ↗</span>
+                </a>
+              ) : (
+                <span class="cv-name">{x.org}</span>
+              )}
+              <span class="cv-role">{x.role}</span>
+            </div>
+            <span class="cv-date">{x.dates}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <section class="mt-16">
+      <h2 class="section-heading">education</h2>
+      <div class="cv-list mt-3">
+        {education.map((e) => (
+          <div class="cv-row">
+            <div class="cv-body">
+              {e.href ? (
+                <a class="cv-name" href={e.href} target="_blank" rel="noopener noreferrer">
+                  {e.school}<span class="text-[var(--color-ink-faint)]"> ↗</span>
+                </a>
+              ) : (
+                <span class="cv-name">{e.school}</span>
+              )}
+              <span class="cv-role">{e.program}</span>
+            </div>
+            <span class="cv-date">{e.dates}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <hr class="mt-16" />
+
+    <p class="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-ink-muted)]">
+      <a href="https://drive.google.com/file/d/1VN7CgJ39HzV7wJgoLg0Dnn6T65Z6hE_l/view?usp=sharing" target="_blank" rel="noopener noreferrer">Resume ↗</a>
+      <a href="mailto:shelliehxx@outlook.com">Email</a>
+      <a href="https://www.linkedin.com/in/shelliehu/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+      <a href="https://www.instagram.com/shellwedraw/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .section-heading {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .cv-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-rule);
+  }
+  .cv-row:last-child { border-bottom: none; }
+  .cv-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .cv-name {
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  a.cv-name {
+    text-decoration: none;
+  }
+  a.cv-name:hover {
+    color: var(--color-accent);
+  }
+  .cv-role {
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    line-height: 1.5;
+  }
+  .cv-date {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 540px) {
+    .cv-row { grid-template-columns: 1fr; }
+    .cv-date { order: -1; margin-bottom: 0.1rem; }
+  }
+</style>

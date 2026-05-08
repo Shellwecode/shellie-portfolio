@@ -1,0 +1,33 @@
+---
+import ThemeToggle from './ThemeToggle.astro';
+
+const pathname = Astro.url.pathname;
+const isHome = pathname === '/' || pathname === '';
+---
+
+<header class="mb-12 flex items-baseline justify-between">
+  {
+    isHome ? (
+      <span class="font-medium">Shellie Hu</span>
+    ) : (
+      <a href="/" class="name-link font-medium hover:text-[var(--color-accent)]">
+        Shellie Hu
+      </a>
+    )
+  }
+  <nav class="flex items-center gap-5 text-sm text-[var(--color-ink-muted)]">
+    <a href="/about" class="no-underline hover:text-[var(--color-accent)]">about</a>
+    <a href="/workshop" class="no-underline hover:text-[var(--color-accent)]">workshop</a>
+    <a href="/writing" class="no-underline hover:text-[var(--color-accent)]">writing</a>
+    <a href="/doodles" class="no-underline hover:text-[var(--color-accent)]">doodles</a>
+    <a href="/now" class="no-underline hover:text-[var(--color-accent)]">now</a>
+    <ThemeToggle />
+  </nav>
+</header>
+
+<style>
+  .name-link,
+  .name-link:hover {
+    text-decoration: none;
+  }
+</style>

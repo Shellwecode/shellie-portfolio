@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#faf8f5"/>
+  <g stroke="#2a2824" stroke-width="1.5" fill="none" stroke-linecap="round">
+    <path d="M 100 200 Q 150 100, 200 150 Q 250 200, 300 130"/>
+    <path d="M 110 210 L 120 200"/>
+    <path d="M 290 140 L 300 150"/>
+    <circle cx="200" cy="150" r="6" fill="#a0522d" stroke="none"/>
+    <path d="M 150 230 L 250 230" stroke-dasharray="3 4"/>
+  </g>
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="10" fill="#a8a39c">placeholder — replace with your drawing</text>
+</svg>

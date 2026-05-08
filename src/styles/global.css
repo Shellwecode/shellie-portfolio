@@ -1,0 +1,204 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens — warm, grounded, minimal.
+   Change colors here; everything cascades.
+--------------------------------------------------------------------------- */
+@theme {
+  /* Colors — warm cream on warm ink, one earthy accent */
+  --color-bg: #faf8f5;
+  --color-ink: #2a2824;
+  --color-ink-muted: #78736c;
+  --color-ink-faint: #a8a39c;
+  --color-rule: #ebe6dd;
+  --color-accent: #a0522d; /* sienna — use sparingly */
+
+  /* Typography — Inter-style sans body, mono accents for dates/tags */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale — tight, editorial */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+
+  /* Spacing — a single reading measure */
+  --measure: 48rem;       /* ~768px — shared by text and images */
+  --measure-wide: 48rem;  /* kept as alias for existing call sites */
+}
+
+/* Dark mode — same warmth, inverted values */
+:root[data-theme="dark"] {
+  --color-bg: #1b1815;
+  --color-ink: #ece6db;
+  --color-ink-muted: #9a9386;
+  --color-ink-faint: #625c54;
+  --color-rule: #2e2a25;
+  --color-accent: #d07a52;
+}
+
+/* ---------------------------------------------------------------------------
+   Base element styles
+--------------------------------------------------------------------------- */
+html {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11"; /* Inter stylistic sets for readability */
+  color-scheme: light;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+:root[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Links — underline by default, accent on hover. No color fireworks. */
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--color-ink-faint);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color 120ms ease, color 120ms ease;
+}
+a:visited {
+  color: inherit;
+}
+a:hover {
+  color: var(--color-accent);
+  text-decoration-color: var(--color-accent);
+}
+
+/* Headings — modest weight, tight leading */
+h1, h2, h3, h4 {
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+/* Selection — warm, not electric blue */
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 20%, transparent);
+  color: var(--color-ink);
+}
+
+/* Horizontal rules — hairline */
+hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 2.5rem 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Prose — long-form reading (writing, case studies)
+--------------------------------------------------------------------------- */
+.prose {
+  max-width: var(--measure);
+}
+.prose > * + * {
+  margin-top: 1.25em;
+}
+.prose h2 {
+  font-size: var(--text-xl);
+  margin-top: 2.5em;
+}
+.prose h3 {
+  font-size: var(--text-lg);
+  margin-top: 2em;
+}
+.prose p {
+  line-height: 1.7;
+}
+.prose blockquote {
+  border-left: 2px solid var(--color-rule);
+  padding-left: 1rem;
+  color: var(--color-ink-muted);
+  font-style: italic;
+}
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: color-mix(in oklab, var(--color-ink) 5%, transparent);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+.prose pre {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--color-rule);
+}
+.prose pre code {
+  background: transparent;
+  padding: 0;
+}
+.prose img {
+  border-radius: 16px;
+  margin-block: 2em;
+}
+.prose ul, .prose ol {
+  padding-left: 1.25rem;
+}
+.prose li + li {
+  margin-top: 0.4em;
+}
+
+/* ---------------------------------------------------------------------------
+   Archive rows — the homepage list
+--------------------------------------------------------------------------- */
+.archive-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  align-items: baseline;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  font-size: var(--text-base);
+}
+.archive-row:last-child {
+  border-bottom: none;
+}
+.archive-row .kind {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  min-width: 4.5rem;
+}
+.archive-row .title {
+  text-decoration: none;
+}
+.archive-row .title:hover {
+  color: var(--color-accent);
+}
+.archive-row .date {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-ink-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 540px) {
+  .archive-row {
+    grid-template-columns: 1fr auto;
+  }
+  .archive-row .kind {
+    grid-column: 1 / -1;
+    margin-bottom: -0.3rem;
+  }
+}

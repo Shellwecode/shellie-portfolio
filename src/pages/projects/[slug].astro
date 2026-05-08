@@ -1,0 +1,134 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const projects = (await getCollection('projects'))
+    .filter((p) => !p.data.draft && !p.data.external)
+    .sort((a, b) => b.data.year - a.data.year);
+
+  return projects.map((project, i) => {
+    const prev = projects[i + 1] ?? null; // older
+    const next = projects[i - 1] ?? null; // newer
+    return {
+      params: { slug: project.id },
+      props: {
+        project,
+        prev: prev ? { id: prev.id, title: prev.data.title } : null,
+        next: next ? { id: next.id, title: next.data.title } : null,
+      },
+    };
+  });
+}
+
+const { project, prev, next } = Astro.props;
+const { Content } = await render(project);
+---
+
+<Base title={`${project.data.title} — Shellie Hu`} description={project.data.summary}>
+  {
+    project.data.cover && (
+      <div class="project-hero">
+        <Image
+          src={project.data.cover}
+          alt={`${project.data.title} — cover`}
+          widths={[480, 720, 1040, 1280]}
+          sizes="(min-width: 720px) 40rem, 92vw"
+          class="project-hero-img"
+        />
+      </div>
+    )
+  }
+
+  <article class="prose">
+    <header class="mb-10">
+      <div
+        class="font-mono text-xs text-[var(--color-ink-muted)] uppercase tracking-wider mb-3"
+      >
+        {project.data.year}
+        {project.data.role && <span> · {project.data.role}</span>}
+        {project.data.company && <span> · {project.data.company}</span>}
+      </div>
+      <h1 class="text-2xl font-medium leading-tight mb-3">{project.data.title}</h1>
+      <p class="text-[var(--color-ink-muted)] text-lg">{project.data.summary}</p>
+    </header>
+
+    <Content />
+
+    <nav class="project-nav" aria-label="Project navigation">
+      {prev ? (
+        <a href={`/projects/${prev.id}`} class="project-nav-link prev">
+          <span class="project-nav-dir">← previous</span>
+          <span class="project-nav-title">{prev.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+      {next ? (
+        <a href={`/projects/${next.id}`} class="project-nav-link next">
+          <span class="project-nav-dir">next →</span>
+          <span class="project-nav-title">{next.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+    </nav>
+
+    <footer class="mt-10 pt-8 border-t border-[var(--color-rule)]">
+      <a href="/" class="text-sm no-underline hover:text-[var(--color-accent)]">
+        ← back home
+      </a>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .project-hero {
+    max-width: var(--measure-wide);
+    margin: 0 0 2.5rem;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--color-rule);
+    background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+  }
+  .project-hero-img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 8 / 5;
+    object-fit: cover;
+  }
+  .project-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 3.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-rule);
+  }
+  .project-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-decoration: none;
+    color: var(--color-ink);
+    transition: color 120ms ease;
+  }
+  .project-nav-link.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+  .project-nav-link:hover { color: var(--color-accent); }
+  .project-nav-dir {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+  }
+  .project-nav-title {
+    font-size: var(--text-sm);
+    line-height: 1.35;
+  }
+</style>

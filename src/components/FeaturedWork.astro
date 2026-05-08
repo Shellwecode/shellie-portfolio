@@ -1,0 +1,127 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+}
+
+const { projects } = Astro.props;
+---
+
+{
+  projects.length > 0 && (
+    <section class="featured mb-16">
+      <h2 class="sr-only">Featured work</h2>
+      <ul class="featured-grid">
+        {projects.map((p) => {
+          const href = p.data.external ?? `/projects/${p.id}`;
+          const isExternal = !!p.data.external;
+          return (
+            <li class="featured-card">
+              <a
+                href={href}
+                class="featured-link"
+                {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              >
+                <div class="featured-media">
+                  {p.data.cover ? (
+                    <Image
+                      src={p.data.cover}
+                      alt={`${p.data.title} — cover`}
+                      widths={[320, 480, 640, 960]}
+                      sizes="(min-width: 640px) 20rem, 92vw"
+                      class="featured-img"
+                    />
+                  ) : (
+                    <div class="featured-img-fallback" aria-hidden="true" />
+                  )}
+                </div>
+                <div class="featured-meta">
+                  <h3 class="featured-title">
+                    {p.data.title}
+                    {isExternal && <span class="featured-ext" aria-hidden="true"> ↗</span>}
+                  </h3>
+                  <p class="featured-summary">{p.data.summary}</p>
+                  <p class="featured-byline">
+                    {p.data.year}
+                    {p.data.role && <span> · {p.data.role}</span>}
+                  </p>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )
+}
+
+<style>
+  .featured-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;       /* gap-6 */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  @media (min-width: 640px) {
+    .featured-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .featured-grid { gap: 2rem; }  /* lg:gap-8 */
+  }
+  .featured-card { margin: 0; }
+  .featured-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+  .featured-media {
+    border-radius: 20px;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--color-ink) 4%, transparent);
+    aspect-ratio: 8 / 5;
+    transition: transform 220ms ease;
+  }
+  .featured-link:hover .featured-media {
+    transform: translateY(-2px);
+  }
+  .featured-img,
+  .featured-img-fallback {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .featured-img-fallback {
+    background: linear-gradient(135deg,
+      color-mix(in oklab, var(--color-accent) 14%, var(--color-bg)),
+      color-mix(in oklab, var(--color-ink) 8%, var(--color-bg)));
+  }
+  .featured-meta { margin-top: 0.85rem; }
+  .featured-title {
+    font-size: var(--text-base);
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    margin: 0 0 0.2rem;
+    transition: color 120ms ease;
+  }
+  .featured-link:hover .featured-title { color: var(--color-accent); }
+  .featured-ext { color: var(--color-ink-faint); font-weight: 400; }
+  .featured-summary {
+    color: var(--color-ink-faint);
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    margin: 0 0 0.4rem;
+  }
+  .featured-byline {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-faint);
+    text-transform: lowercase;
+    letter-spacing: 0.02em;
+    margin: 0;
+  }
+</style>

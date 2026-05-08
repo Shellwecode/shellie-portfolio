@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const href = project.data.external ?? `/projects/${project.id}`;
+const isExternal = !!project.data.external;
+---
+
+<a
+  href={href}
+  class="hero-project group block no-underline"
+  {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+>
+  {project.data.cover && (
+    <div class="hero-cover">
+      <Image
+        src={project.data.cover}
+        alt={`${project.data.title} cover image`}
+        widths={[800, 1200, 1600]}
+        sizes="(max-width: 768px) 100vw, 768px"
+        class="w-full h-full object-cover"
+      />
+    </div>
+  )}
+  <div class="hero-meta">
+    <h3 class="hero-title">
+      {project.data.title}
+      {isExternal && <span class="text-[var(--color-ink-faint)]"> ↗</span>}
+    </h3>
+    <p class="hero-summary">{project.data.summary}</p>
+    <p class="hero-tag">
+      {project.data.year}
+      {project.data.role && ` · ${project.data.role}`}
+      {project.data.company && ` · ${project.data.company}`}
+    </p>
+  </div>
+</a>
+
+<style>
+  .hero-project,
+  .hero-project:hover {
+    display: block;
+    text-decoration: none;
+  }
+  .hero-cover {
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border-radius: 20px;
+    background: var(--color-rule);
+  }
+  .hero-cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .hero-meta {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .hero-title {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    color: var(--color-ink);
+    text-decoration: none;
+    transition: color 120ms ease;
+  }
+  .hero-project:hover .hero-title { color: var(--color-accent); }
+  .hero-summary {
+    font-size: var(--text-base);
+    color: var(--color-ink-muted);
+    line-height: 1.55;
+    text-decoration: none;
+  }
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-faint);
+    margin-top: 0.25rem;
+    text-decoration: none;
+  }
+</style>

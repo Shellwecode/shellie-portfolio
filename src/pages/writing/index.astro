@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ArchiveRow from '../../components/ArchiveRow.astro';
+
+const posts = (await getCollection('writing'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+---
+
+<Base
+  title="Writing — Shellie Hu"
+  description="Notes on design, people, and the threads between."
+>
+  <div class="mb-10 space-y-4 text-[var(--text-lg)] leading-relaxed" style="max-width: var(--measure);">
+    <h1 class="text-xl font-medium">Writing</h1>
+    <p class="text-[var(--color-ink-muted)]">
+      A way to make sense of the patterns and people behind projects. I write
+      to slow down, think more deeply, and articulate what might otherwise go
+      unspoken.
+    </p>
+  </div>
+  <div style="max-width: var(--measure);">
+    {
+      posts.map((post) => (
+        <ArchiveRow
+          kind="writing"
+          title={post.data.title}
+          href={`/writing/${post.id}`}
+          date={post.data.date}
+        />
+      ))
+    }
+  </div>
+</Base>

@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+
+// Update this page every month or so. It's the warmest page on the site —
+// it shows you're a person who keeps going.
+const lastUpdated = 'April 2026';
+---
+
+<Base title="Now — Shellie Hu" description="What I'm working on this month.">
+  <article class="prose">
+    <header class="mb-8">
+      <h1 class="text-2xl font-medium">Now</h1>
+      <p class="font-mono text-xs text-[var(--color-ink-muted)] uppercase tracking-wider mt-2">
+        Updated {lastUpdated}
+      </p>
+    </header>
+
+    <p>
+      <em>This is a placeholder — write a paragraph or two about what you're
+      focused on this month. What are you designing, reading, drawing? What are
+      you avoiding? Keep it short and honest. People return for this.</em>
+    </p>
+
+    <p>
+      Inspired by <a href="https://nownownow.com/about">Derek Sivers' /now movement</a>.
+    </p>
+
+    <footer class="mt-16 pt-8 border-t border-[var(--color-rule)]">
+      <a href="/" class="text-sm no-underline hover:text-[var(--color-accent)]">
+        ← back home
+      </a>
+    </footer>
+  </article>
+</Base>

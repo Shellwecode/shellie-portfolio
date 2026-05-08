@@ -1,0 +1,36 @@
+---
+title: "TITLE_HERE"
+# summary: "One-line preview shown on the archive row and under the title."
+date: 2026-04-16
+tags: ["craft"]
+draft: true
+---
+
+{/*
+  Frontmatter notes — schema lives in src/content.config.ts
+  • title   — required. Sentence case, no trailing period. Keep it short.
+  • summary — optional. One line, reads like a subtitle (not a teaser).
+              Uncomment above to use.
+  • date    — required. YYYY-MM-DD, unquoted (Zod coerces to Date).
+              Used for archive sort order.
+  • tags    — array of strings, defaults to []. Existing posts use
+              "craft" as the spine plus one domain tag ("notes",
+              "product", "drawing"). Two tags is the norm.
+  • draft   — defaults to false. Kept `true` here so this template
+              never shows up in the archive; flip to false when ready.
+
+  No MDX components are currently imported in any writing post — all
+  three existing posts are prose-only. If you want to add one later,
+  the pattern is:
+
+      import SomeComponent from '../../components/SomeComponent.astro';
+
+  and then use <SomeComponent /> inline below.
+*/}
+
+## Heading
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod
+tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim
+veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+commodo consequat.

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3e8d2"/>
+      <stop offset="1" stop-color="#dcc29a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg)"/>
+  <g>
+    <rect x="140" y="200" width="280" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5"/>
+    <rect x="440" y="200" width="220" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.8"/>
+    <rect x="680" y="200" width="300" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.65"/>
+
+    <rect x="140" y="260" width="340" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.85"/>
+    <rect x="500" y="260" width="180" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.6"/>
+    <rect x="700" y="260" width="260" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.5"/>
+
+    <rect x="140" y="320" width="200" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.55"/>
+    <rect x="360" y="320" width="300" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.4"/>
+
+    <rect x="140" y="380" width="260" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.45"/>
+    <rect x="420" y="380" width="220" height="36" rx="6" fill="#faf8f5" stroke="#a0522d" stroke-width="1.5" opacity="0.35"/>
+  </g>
+</svg>

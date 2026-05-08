@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="400" height="300" fill="#faf8f5"/>
+  <g stroke="#2a2824" stroke-width="1.5" fill="none" stroke-linecap="round">
+    <rect x="130" y="100" width="140" height="100" rx="4"/>
+    <line x1="130" y1="130" x2="270" y2="130"/>
+    <circle cx="145" cy="115" r="3" fill="#a0522d"/>
+    <circle cx="160" cy="115" r="3" fill="#2a2824"/>
+    <path d="M 160 160 L 180 170 L 160 180"/>
+    <path d="M 190 155 L 240 155"/>
+    <path d="M 190 170 L 230 170"/>
+    <path d="M 190 185 L 240 185"/>
+  </g>
+  <text x="200" y="270" text-anchor="middle" font-family="monospace" font-size="10" fill="#a8a39c">placeholder — replace with your drawing</text>
+</svg>

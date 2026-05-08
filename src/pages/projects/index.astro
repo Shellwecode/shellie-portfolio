@@ -1,0 +1,32 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ArchiveRow from '../../components/ArchiveRow.astro';
+
+const projects = (await getCollection('projects'))
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.year - a.data.year);
+---
+
+<Base title="Projects — Shellie Hu">
+  <div style="max-width: var(--measure);">
+    <h1 class="text-xl font-medium mb-3">Projects</h1>
+    <p class="text-[var(--color-ink-muted)] leading-relaxed mb-8">
+      A list of client and professional work. For things I've built on my
+      own, see the <a href="/workshop">workshop</a>.
+    </p>
+    <div>
+      {
+        projects.map((p) => (
+          <ArchiveRow
+            kind={p.data.tags[0] ?? 'work'}
+            title={p.data.title}
+            href={p.data.external ?? `/projects/${p.id}`}
+            date={String(p.data.year)}
+            external={!!p.data.external}
+          />
+        ))
+      }
+    </div>
+  </div>
+</Base>

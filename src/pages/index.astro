@@ -1,0 +1,122 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import ArchiveRow from '../components/ArchiveRow.astro';
+import HeroProject from '../components/HeroProject.astro';
+
+// One hero project; everything else flows into the archive.
+const allProjects = (await getCollection('projects')).filter((p) => !p.data.draft);
+const heroProject = allProjects.find((p) => p.data.hero) ?? null;
+
+const archivedProjectEntries = allProjects
+  .filter((p) => !p.data.hero)
+  .map((p) => ({
+    kind: 'work' as const,
+    title: p.data.title,
+    href: p.data.external ?? `/projects/${p.id}`,
+    external: !!p.data.external,
+    date: new Date(p.data.year, 0, 1),
+    sortKey: p.data.year * 10000,
+  }));
+
+const writing = (await getCollection('writing'))
+  .filter((w) => !w.data.draft)
+  .map((w) => ({
+    kind: 'writing' as const,
+    title: w.data.title,
+    href: `/writing/${w.id}`,
+    external: false,
+    date: w.data.date,
+    sortKey: w.data.date.getTime(),
+  }));
+
+const doodles = (await getCollection('doodles'))
+  .filter((d) => !d.data.draft)
+  .map((d) => ({
+    kind: 'doodle' as const,
+    title: d.data.title,
+    href: `/doodles#${d.id}`,
+    external: false,
+    date: d.data.date,
+    sortKey: d.data.date.getTime(),
+  }));
+
+const archive = [...archivedProjectEntries, ...writing, ...doodles].sort(
+  (a, b) => b.sortKey - a.sortKey,
+);
+---
+
+<Base
+  title="Shellie Hu — Product Designer"
+  description="Product designer in Boston working on AI agent experiences. Designing Cortex, a voice AI agent builder."
+>
+  {/* DRAFT — revise in my own voice before shipping */}
+  {/* Intro — left-aligned with the grid, right-capped at --measure. */}
+  <section
+    class="mb-16 space-y-5 text-[var(--text-lg)] leading-relaxed"
+    style="max-width: 36rem;"
+  >
+    <p>
+      I'm <strong class="font-medium">Shellie</strong>, a product designer in
+      Boston working on AI agent experiences. Currently designing
+      <a href="/projects/cortex">Cortex</a>, a voice AI agent builder platform.
+      I care about interfaces that feel ambient rather than loud — that keep
+      the human visible in the loop.
+    </p>
+    <p class="text-[var(--color-ink-muted)]">
+      I also <a href="/workshop">build things on the side</a>,
+      <a href="/writing">write</a> about craft, and
+      <a href="/doodles">draw</a>.
+    </p>
+  </section>
+
+  {/* Current — the single hero project. */}
+  {heroProject && (
+    <section class="mb-16">
+      <h2 class="current-label">Current</h2>
+      <HeroProject project={heroProject} />
+      <p class="earlier-link">
+        <a href="/projects">Earlier work →</a>
+      </p>
+    </section>
+  )}
+
+  {/* Archive — left-aligned with the grid, right-capped at --measure. */}
+  {archive.length > 0 && (
+    <section style="max-width: var(--measure);">
+      <h2 class="sr-only">Archive</h2>
+      <div>
+        {archive.map((item) => (
+          <ArchiveRow
+            kind={item.kind}
+            title={item.title}
+            href={item.href}
+            date={item.date}
+            external={item.external}
+          />
+        ))}
+      </div>
+    </section>
+  )}
+</Base>
+
+<style>
+  .current-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-transform: lowercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .earlier-link {
+    margin-top: 0.9rem;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+  .earlier-link a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .earlier-link a:hover { color: var(--color-accent); }
+</style>

@@ -1,0 +1,30 @@
+---
+// A single row in the archive list. Used for work, writing, doodles —
+// anything with a date and a title.
+interface Props {
+  kind: 'work' | 'writing' | 'doodle' | 'side' | string;
+  title: string;
+  href: string;
+  date: Date | string; // ISO string or Date
+  external?: boolean;
+}
+
+const { kind, title, href, date, external = false } = Astro.props;
+
+const displayDate =
+  date instanceof Date
+    ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+    : date;
+---
+
+<div class="archive-row">
+  <span class="kind">{kind}</span>
+  <a
+    href={href}
+    class="title"
+    {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+  >
+    {title}{external && <span class="text-[var(--color-ink-faint)]"> ↗</span>}
+  </a>
+  <span class="date">{displayDate}</span>
+</div>
