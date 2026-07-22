@@ -92,26 +92,26 @@
   const GROUPS: Record<string, Dial[]> = {
     shell: [
       { v: '--shell-pad-x', label: 'pad-x', def: 48, min: 16, max: 120 },
-      { v: '--shell-pad-top', label: 'pad-top', def: 28, min: 0, max: 96 },
-      { v: '--nav-w', label: 'nav width', def: 168, min: 120, max: 300 },
+      { v: '--shell-pad-top', label: 'pad-top', def: 72, min: 0, max: 96 },
+      { v: '--nav-w', label: 'nav width', def: 160, min: 120, max: 300 },
       { v: '--nav-inset', label: 'nav inset', def: 16, min: 0, max: 40 },
-      { v: '--pill-bottom', label: 'pill bottom', def: 16, min: 0, max: 64 },
+      { v: '--pill-bottom', label: 'pill bottom', def: 36, min: 0, max: 64 },
     ],
     hero: [
-      { v: '--hero-gap', label: 'copy gap', def: 14, min: 4, max: 40 },
-      { v: '--hero-pad-b', label: 'pad bottom', def: 28, min: 0, max: 80 },
-      { v: '--intro-measure', label: 'intro width', def: 540, min: 360, max: 760 },
-      { v: '--illo-w', label: 'illo width', def: 160, min: 80, max: 300 },
-      { v: '--illo-mr', label: 'illo right', def: 128, min: 0, max: 400 },
+      { v: '--hero-gap', label: 'copy gap', def: 40, min: 4, max: 64 },
+      { v: '--hero-pad-b', label: 'pad bottom', def: 36, min: 0, max: 80 },
+      { v: '--intro-measure', label: 'intro width', def: 551, min: 360, max: 760 },
+      { v: '--illo-w', label: 'illo width', def: 234, min: 80, max: 300 },
+      { v: '--illo-mr', label: 'illo right', def: 160, min: 0, max: 400 },
     ],
     cards: [
-      { v: '--card-cover-h', label: 'cover height', def: 210, min: 120, max: 400 },
+      { v: '--card-cover-h', label: 'cover height', def: 328, min: 120, max: 400 },
       { v: '--card-gap', label: 'gap', def: 20, min: 4, max: 56 },
       { v: '--radius-md', label: 'radius', def: 16, min: 0, max: 32 },
     ],
     type: [
       { v: '--text-display', label: 'greeting', def: 28, min: 20, max: 44 },
-      { v: '--text-section', label: 'section', def: 18, min: 14, max: 26 },
+      { v: '--text-section', label: 'section', def: 16, min: 14, max: 26 },
     ],
   };
   const ALL = Object.values(GROUPS).flat();

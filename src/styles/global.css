@@ -24,7 +24,7 @@
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
-  --text-section: 1.125rem; /* section headers (selected work, writing) — w600 */
+  --text-section: 1rem;     /* section headers (selected work, writing) — w600 */
   --text-display: 1.75rem;  /* the greeting — one per page, home only — w600 */
 
   /* Spacing — a single reading measure */
@@ -33,17 +33,17 @@
 
   /* Layout — every shell distance is a token (tunable via the dev dial panel) */
   --shell-pad-x: 48px;    /* main column inline padding */
-  --shell-pad-top: 28px;  /* content top padding under the top bar */
-  --nav-w: 168px;         /* expanded nav panel width */
+  --shell-pad-top: 72px;  /* content top padding under the top bar */
+  --nav-w: 160px;         /* expanded nav panel width */
   --nav-inset: 16px;      /* nav panel inset from viewport edges */
-  --card-cover-h: 210px;  /* one cover height across a card row */
+  --card-cover-h: 328px;  /* one cover height across a card row */
   --card-gap: 20px;       /* gap between cards in a row */
-  --hero-gap: 14px;       /* hero copy stack gap */
-  --hero-pad-b: 28px;     /* hero padding above the hairline */
-  --intro-measure: 540px; /* intro paragraph max width */
-  --illo-w: 160px;        /* hero illustration width */
-  --illo-mr: 128px;       /* illustration distance from right edge */
-  --pill-bottom: 16px;    /* whisper pill altitude */
+  --hero-gap: 40px;       /* hero copy stack gap */
+  --hero-pad-b: 36px;     /* hero padding above the hairline */
+  --intro-measure: 551px; /* intro paragraph max width */
+  --illo-w: 234px;        /* hero illustration width */
+  --illo-mr: 160px;       /* illustration distance from right edge */
+  --pill-bottom: 36px;    /* whisper pill altitude */
 
   /* Motion — quiet instruments. Springs live in motion.ts; these are the rest. */
   --motion-micro: 120ms;    /* link + hover color */
