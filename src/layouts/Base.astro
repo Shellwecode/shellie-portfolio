@@ -4,6 +4,7 @@ import SideNav from '../components/SideNav.astro';
 import TopBar from '../components/TopBar.astro';
 import WhisperPill from '../components/WhisperPill.astro';
 import NowRail from '../components/NowRail.astro';
+import LayoutDials from '../components/LayoutDials.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -82,6 +83,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </div>
     {deck === 'pill' && <WhisperPill />}
     <NowRail />
+    {import.meta.env.DEV && <LayoutDials />}
   </body>
 </html>
 
@@ -98,9 +100,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    padding: 0 3rem 5.5rem 3rem; /* 48px inline per mock; bottom clears the pill */
+    padding: 0 var(--shell-pad-x) 5.5rem var(--shell-pad-x);
   }
-  .shell-content { padding-top: 1.75rem; flex: 1; }
+  .shell-content { padding-top: var(--shell-pad-top); flex: 1; }
 
   /* Collapsed dock floats — give content room to breathe past it */
   :global(html[data-nav='collapsed']) .shell-main { padding-left: 6.5rem; }

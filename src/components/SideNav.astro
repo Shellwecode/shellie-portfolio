@@ -67,11 +67,11 @@ const isActive = (href: string) =>
   .nav-expanded {
     display: flex;
     flex-direction: column;
-    width: 168px;
-    height: calc(100dvh - 32px);
+    width: var(--nav-w);
+    height: calc(100dvh - 2 * var(--nav-inset));
     position: sticky;
-    top: 16px;
-    margin: 16px 0 16px 16px;
+    top: var(--nav-inset);
+    margin: var(--nav-inset) 0 var(--nav-inset) var(--nav-inset);
     padding: 1.125rem 0.75rem;
     border-radius: 14px;
     background: color-mix(in oklab, var(--color-bg) 66%, transparent);

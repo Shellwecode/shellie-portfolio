@@ -117,8 +117,8 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .hero-copy {
     display: flex;
     flex-direction: column;
-    gap: 0.875rem;
-    padding-bottom: 1.75rem;
+    gap: var(--hero-gap);
+    padding-bottom: var(--hero-pad-b);
     flex: 1;
   }
   .greeting {
@@ -130,17 +130,17 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .intro {
     font-size: var(--text-lg);
     line-height: 1.55;
-    max-width: 34rem;
+    max-width: var(--intro-measure);
   }
   .intro-muted { color: var(--color-ink-muted); }
   .hero-illo {
-    width: 160px;
+    width: var(--illo-w);
     flex-shrink: 0;
     align-self: flex-end;
     margin-bottom: -6px; /* feet on the hairline, per mock */
-    margin-right: 8rem;
+    margin-right: var(--illo-mr);
   }
-  .hero-illo img { width: 160px; height: auto; display: block; }
+  .hero-illo img { width: var(--illo-w); height: auto; display: block; }
 
   .section-head {
     display: flex;
@@ -163,7 +163,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .work { margin-bottom: 2.5rem; }
   .cards {
     display: flex;
-    gap: 1.25rem;
+    gap: var(--card-gap);
   }
   .card {
     display: flex;
@@ -175,7 +175,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .card-emphasis { flex: 2; }
   .card-cover {
     width: 100%;
-    height: 210px; /* one cover height across the row — widths differ, height never */
+    height: var(--card-cover-h); /* one height across the row — widths differ, height never */
     background: var(--color-rule);
     border-radius: 16px;
     overflow: hidden;
