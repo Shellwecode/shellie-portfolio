@@ -24,10 +24,17 @@
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
+  --text-section: 1.125rem; /* section headers (selected work, writing) — w600 */
+  --text-display: 1.75rem;  /* the greeting — one per page, home only — w600 */
 
   /* Spacing — a single reading measure */
   --measure: 48rem;       /* ~768px — shared by text and images */
   --measure-wide: 48rem;  /* kept as alias for existing call sites */
+
+  /* Motion — quiet instruments. Springs live in motion.ts; these are the rest. */
+  --motion-micro: 120ms;    /* link + hover color */
+  --motion-fade: 180ms;     /* theme toggle, page crossfade */
+  --motion-content: 240ms;  /* content swaps, dims, staggered children */
 }
 
 /* Dark mode — same warmth, inverted values */
@@ -99,6 +106,23 @@ hr {
   border: 0;
   border-top: 1px solid var(--color-rule);
   margin: 2.5rem 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Glass — vellum, not Vision Pro.
+   Only on layers that float above content (dock, pill, rail, search, peek).
+   Never on page surfaces. The soft shadow is legal on floating glass only.
+--------------------------------------------------------------------------- */
+.glass {
+  background: color-mix(in oklab, var(--color-bg) 66%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-bg) 95%, transparent);
+  box-shadow: 0 8px 32px color-mix(in oklab, var(--color-ink) 10%, transparent);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .glass { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .glass { background: var(--color-bg); } /* solid fallback must look complete */
 }
 
 /* ---------------------------------------------------------------------------

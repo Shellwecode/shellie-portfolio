@@ -1,98 +1,104 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ArchiveRow from '../components/ArchiveRow.astro';
-import HeroProject from '../components/HeroProject.astro';
 
-// One hero project; everything else flows into the archive.
+// Home: greeting + intro (the greeting owns the name; the intro never repeats it),
+// selected work with the current project as the emphasis card, recent writing rows.
 const allProjects = (await getCollection('projects')).filter((p) => !p.data.draft);
-const heroProject = allProjects.find((p) => p.data.hero) ?? null;
-
-const archivedProjectEntries = allProjects
-  .filter((p) => !p.data.hero)
-  .map((p) => ({
-    kind: 'work' as const,
-    title: p.data.title,
-    href: p.data.external ?? `/projects/${p.id}`,
-    external: !!p.data.external,
-    date: new Date(p.data.year, 0, 1),
-    sortKey: p.data.year * 10000,
-  }));
+const heroProject = allProjects.find((p) => p.data.hero) ?? allProjects[0] ?? null;
+const otherProjects = allProjects
+  .filter((p) => p !== heroProject)
+  .sort((a, b) => b.data.year - a.data.year)
+  .slice(0, 2);
 
 const writing = (await getCollection('writing'))
   .filter((w) => !w.data.draft)
-  .map((w) => ({
-    kind: 'writing' as const,
-    title: w.data.title,
-    href: `/writing/${w.id}`,
-    external: false,
-    date: w.data.date,
-    sortKey: w.data.date.getTime(),
-  }));
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3);
 
-const doodles = (await getCollection('doodles'))
-  .filter((d) => !d.data.draft)
-  .map((d) => ({
-    kind: 'doodle' as const,
-    title: d.data.title,
-    href: `/doodles#${d.id}`,
-    external: false,
-    date: d.data.date,
-    sortKey: d.data.date.getTime(),
-  }));
-
-const archive = [...archivedProjectEntries, ...writing, ...doodles].sort(
-  (a, b) => b.sortKey - a.sortKey,
-);
+const projectHref = (p: (typeof allProjects)[number]) =>
+  p.data.external ?? `/projects/${p.id}`;
 ---
 
 <Base
   title="Shellie Hu — Product Designer"
   description="Product designer in Boston working on AI agent experiences. Designing Cortex, a voice AI agent builder."
 >
-  {/* DRAFT — revise in my own voice before shipping */}
-  {/* Intro — left-aligned with the grid, right-capped at --measure. */}
-  <section
-    class="mb-16 space-y-5 text-[var(--text-lg)] leading-relaxed"
-    style="max-width: 36rem;"
-  >
-    <p>
-      I'm <strong class="font-medium">Shellie</strong>, a product designer in
-      Boston working on AI agent experiences. Currently designing
-      <a href="/projects/cortex">Cortex</a>, a voice AI agent builder platform.
-      I care about interfaces that feel ambient rather than loud — that keep
-      the human visible in the loop.
-    </p>
-    <p class="text-[var(--color-ink-muted)]">
-      I also <a href="/workshop">build things on the side</a>,
-      <a href="/writing">write</a> about craft, and
-      <a href="/doodles">draw</a>.
-    </p>
+  {/* Hero — greeting + intro, grounded by a hairline. Illustration drops into .hero-illo. */}
+  <section class="hero">
+    <div class="hero-copy">
+      <h1 class="greeting">hello, i'm shellie.</h1>
+      <p class="intro">
+        a product designer in Boston working on AI agent experiences — currently
+        designing <a href="/projects/cortex">Cortex</a>, a voice AI agent builder
+        platform.
+      </p>
+      <p class="intro intro-muted">
+        i also <a href="/workshop">build things</a>, <a href="/writing">write</a>,
+        and <a href="/doodles">draw</a>.
+      </p>
+    </div>
+    <div class="hero-illo" aria-hidden="true">
+      {/* hand-drawn illustration — stands on the hairline */}
+    </div>
   </section>
 
-  {/* Current — the single hero project. */}
-  {heroProject && (
-    <section class="mb-16">
-      <h2 class="current-label">Current</h2>
-      <HeroProject project={heroProject} />
-      <p class="earlier-link">
-        <a href="/projects">Earlier work →</a>
-      </p>
-    </section>
-  )}
+  {/* Selected work — one card anatomy; the current project is the emphasis variant. */}
+  <section class="work">
+    <div class="section-head">
+      <h2 class="section-title">selected work</h2>
+      <a href="/projects" class="section-link">show all →</a>
+    </div>
+    <div class="cards">
+      {heroProject && (
+        <a href={projectHref(heroProject)} class="card card-emphasis">
+          <div class="card-cover">
+            {heroProject.data.cover && (
+              <Image
+                src={heroProject.data.cover}
+                alt={`${heroProject.data.title} cover`}
+                widths={[600, 1200]}
+                sizes="(max-width: 768px) 100vw, 640px"
+              />
+            )}
+          </div>
+          <span class="card-title">{heroProject.data.title.toLowerCase()}</span>
+          <span class="card-meta">case study · {heroProject.data.year} · current</span>
+        </a>
+      )}
+      {otherProjects.map((p) => (
+        <a href={projectHref(p)} class="card">
+          <div class="card-cover">
+            {p.data.cover && (
+              <Image
+                src={p.data.cover}
+                alt={`${p.data.title} cover`}
+                widths={[400, 800]}
+                sizes="(max-width: 768px) 100vw, 320px"
+              />
+            )}
+          </div>
+          <span class="card-title">{p.data.title.toLowerCase()}</span>
+          <span class="card-meta">case study · {p.data.year}</span>
+        </a>
+      ))}
+    </div>
+  </section>
 
-  {/* Archive — left-aligned with the grid, right-capped at --measure. */}
-  {archive.length > 0 && (
-    <section style="max-width: var(--measure);">
-      <h2 class="sr-only">Archive</h2>
+  {/* Writing — section header per addendum; rows are the existing archive pattern. */}
+  {writing.length > 0 && (
+    <section class="writing" style="max-width: var(--measure);">
+      <h2 class="section-title">writing</h2>
       <div>
-        {archive.map((item) => (
+        {writing.map((w) => (
           <ArchiveRow
-            kind={item.kind}
-            title={item.title}
-            href={item.href}
-            date={item.date}
-            external={item.external}
+            kind="essay"
+            title={w.data.title}
+            href={`/writing/${w.id}`}
+            date={w.data.date}
+            external={false}
           />
         ))}
       </div>
@@ -101,22 +107,102 @@ const archive = [...archivedProjectEntries, ...writing, ...doodles].sort(
 </Base>
 
 <style>
-  .current-label {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-ink-muted);
-    text-transform: lowercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 0.75rem;
+  .hero {
+    display: flex;
+    align-items: flex-end;
+    gap: 2rem;
+    border-bottom: 1px solid var(--color-rule);
+    margin-bottom: 2rem;
   }
-  .earlier-link {
-    margin-top: 0.9rem;
-    font-size: var(--text-sm);
-    color: var(--color-ink-muted);
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding-bottom: 1.75rem;
+    flex: 1;
   }
-  .earlier-link a {
-    color: inherit;
+  .greeting {
+    font-size: var(--text-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .intro {
+    font-size: var(--text-lg);
+    line-height: 1.55;
+    max-width: 34rem;
+  }
+  .intro-muted { color: var(--color-ink-muted); }
+  .hero-illo {
+    width: 200px;
+    height: 180px;
+    flex-shrink: 0;
+    margin-bottom: -1px; /* feet on the hairline */
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.875rem;
+  }
+  .section-title {
+    font-size: var(--text-section);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .section-link {
+    font-size: 0.8125rem;
+    color: var(--color-ink-muted);
     text-decoration: none;
   }
-  .earlier-link a:hover { color: var(--color-accent); }
+  .section-link:hover { color: var(--color-accent); }
+
+  .work { margin-bottom: 2.5rem; }
+  .cards {
+    display: flex;
+    gap: 1.25rem;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    flex: 1;
+    text-decoration: none;
+  }
+  .card-emphasis { flex: 2; }
+  .card-cover {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    background: var(--color-rule);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--motion-content) ease-out;
+  }
+  .card:hover .card-cover :global(img) { transform: scale(1.02); }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    transition: color var(--motion-micro) ease;
+  }
+  .card:hover .card-title { color: var(--color-accent); }
+  .card-meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+  }
+
+  .writing .section-title { margin-bottom: 0.5rem; }
+
+  @media (max-width: 768px) {
+    .hero-illo { display: none; }
+    .cards { flex-direction: column; }
+    .card-emphasis { flex: 1; }
+  }
 </style>

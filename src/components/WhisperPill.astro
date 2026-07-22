@@ -1,0 +1,87 @@
+---
+import now from '../data/now.json';
+
+// The deck at rest. Phase 2 morphs this into the now rail; for now it links to /now.
+// Data is manual (src/data/now.json); the Spotify serverless swap keeps this shape.
+---
+
+<a href="/now" class="whisper-pill glass" transition:persist="whisper-pill" aria-label="What Shellie is up to right now">
+  <span class="pill-thumb" aria-hidden="true"></span>
+  <span class="pill-song">♪ {now.listening.title.toLowerCase()} — {now.listening.artist.toLowerCase()}</span>
+  <span class="pill-meta">· building {now.building.label.split(' ·')[0]}</span>
+  <span class="pill-track" aria-hidden="true"><span class="pill-needle"></span></span>
+  <span class="pill-time" data-pill-time data-location={now.location}>· {now.location}</span>
+</a>
+
+<style>
+  .whisper-pill {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    height: 48px;
+    padding: 0 1.125rem;
+    border-radius: 999px;
+    z-index: 50;
+    text-decoration: none;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-ink);
+    transition: box-shadow var(--motion-micro) ease;
+  }
+  .whisper-pill:hover {
+    color: var(--color-ink);
+    box-shadow: 0 10px 36px color-mix(in oklab, var(--color-ink) 14%, transparent);
+  }
+  .pill-thumb {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    background: var(--color-rule);
+    border-radius: 6px;
+  }
+  .pill-song { white-space: nowrap; }
+  .pill-meta, .pill-time {
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+  }
+  .pill-track {
+    width: 90px;
+    height: 2px;
+    flex-shrink: 0;
+    background: color-mix(in oklab, var(--color-ink) 14%, transparent);
+  }
+  .pill-needle {
+    display: block;
+    width: 55%;
+    height: 2px;
+    background: var(--color-accent);
+  }
+  @media (max-width: 768px) {
+    .pill-meta, .pill-track { display: none; }
+  }
+</style>
+
+<script>
+  // Benji-style signature: live local time in Boston.
+  function tickPillTime() {
+    const els = document.querySelectorAll('[data-pill-time]');
+    if (!els.length) return;
+    const time = new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/New_York',
+    }).format(new Date());
+    els.forEach((el) => {
+      const location = (el as HTMLElement).dataset.location ?? '';
+      el.textContent = `${time} ${location}`.trim();
+    });
+  }
+  tickPillTime();
+  setInterval(tickPillTime, 30_000);
+  document.addEventListener('astro:after-swap', tickPillTime);
+</script>

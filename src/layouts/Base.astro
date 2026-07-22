@@ -1,7 +1,8 @@
 ---
 import '../styles/global.css';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
+import SideNav from '../components/SideNav.astro';
+import TopBar from '../components/TopBar.astro';
+import WhisperPill from '../components/WhisperPill.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -45,31 +46,62 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
     <ClientRouter />
 
-    {/* Set theme before first paint to avoid flash. */}
+    {/* Set theme + nav state before first paint to avoid flash. */}
     <script is:inline>
       (function () {
-        try {
-          var saved = localStorage.getItem('theme');
-          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (e) {}
+        function apply() {
+          try {
+            var saved = localStorage.getItem('theme');
+            var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+            if (localStorage.getItem('nav') === 'collapsed') {
+              document.documentElement.setAttribute('data-nav', 'collapsed');
+            } else {
+              document.documentElement.removeAttribute('data-nav');
+            }
+          } catch (e) {}
+        }
+        apply();
+        document.addEventListener('astro:after-swap', apply);
       })();
-      document.addEventListener('astro:after-swap', function () {
-        try {
-          var saved = localStorage.getItem('theme');
-          var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (e) {}
-      });
     </script>
   </head>
   <body>
-    <div class="mx-auto w-full max-w-[var(--measure-wide)] px-6 py-16 md:py-24 flex-1">
-      <Header />
-      <main>
-        <slot />
-      </main>
-      <Footer />
+    <div class="shell">
+      <SideNav />
+      <div class="shell-main">
+        <TopBar />
+        <main class="shell-content">
+          <slot />
+        </main>
+      </div>
     </div>
+    <WhisperPill />
   </body>
 </html>
+
+<style>
+  .shell {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    flex: 1;
+    min-height: 100dvh;
+  }
+  .shell-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding: 0 2.5rem 5.5rem 2.5rem; /* bottom clears the whisper pill */
+  }
+  .shell-content { padding-top: 2rem; flex: 1; }
+
+  /* Collapsed dock floats — give content room to breathe past it */
+  :global(html[data-nav='collapsed']) .shell-main { padding-left: 6.5rem; }
+
+  @media (max-width: 768px) {
+    .shell-main { padding: 0 1.5rem 5rem 1.5rem; }
+    :global(html[data-nav='collapsed']) .shell-main { padding-left: 1.5rem; }
+  }
+</style>
