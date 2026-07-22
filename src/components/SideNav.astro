@@ -62,16 +62,24 @@ const isActive = (href: string) =>
 </aside>
 
 <style>
-  /* Expanded state */
+  /* Expanded state — in-flow (content reflows beside it), styled as the
+     soft inset panel from the canonical mock: 168px, 16px inset, radius 14. */
   .nav-expanded {
     display: flex;
     flex-direction: column;
-    width: 240px;
-    height: 100dvh;
+    width: 168px;
+    height: calc(100dvh - 32px);
     position: sticky;
-    top: 0;
-    border-right: 1px solid var(--color-rule);
-    padding: 1.5rem 1rem;
+    top: 16px;
+    margin: 16px 0 16px 16px;
+    padding: 1.125rem 0.75rem;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--color-bg) 66%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-bg) 95%, transparent);
+    box-shadow: 0 8px 32px color-mix(in oklab, var(--color-ink) 10%, transparent);
+  }
+  @supports (backdrop-filter: blur(1px)) {
+    .nav-expanded { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
   }
   .nav-head {
     display: flex;
@@ -100,11 +108,11 @@ const isActive = (href: string) =>
   .nav-row {
     display: flex;
     align-items: center;
-    gap: 0.625rem;
-    padding: 0.5rem 0.625rem;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.5rem;
     border-radius: 8px;
     text-decoration: none;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--color-ink-muted);
     transition: color var(--motion-micro) ease, background var(--motion-micro) ease;
   }
@@ -115,8 +123,8 @@ const isActive = (href: string) =>
     background: color-mix(in oklab, var(--color-ink) 5%, transparent);
   }
   .nav-thumb {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     flex-shrink: 0;
     background: var(--color-rule);
     border-radius: 6px;

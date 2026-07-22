@@ -41,7 +41,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
       </p>
     </div>
     <div class="hero-illo" aria-hidden="true">
-      {/* hand-drawn illustration — stands on the hairline */}
+      <img src="/illo-suitcase.png" alt="" width="160" height="293" loading="eager" />
     </div>
   </section>
 
@@ -134,11 +134,13 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   }
   .intro-muted { color: var(--color-ink-muted); }
   .hero-illo {
-    width: 200px;
-    height: 180px;
+    width: 160px;
     flex-shrink: 0;
-    margin-bottom: -1px; /* feet on the hairline */
+    align-self: flex-end;
+    margin-bottom: -6px; /* feet on the hairline, per mock */
+    margin-right: 8rem;
   }
+  .hero-illo img { width: 160px; height: auto; display: block; }
 
   .section-head {
     display: flex;
@@ -173,7 +175,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .card-emphasis { flex: 2; }
   .card-cover {
     width: 100%;
-    aspect-ratio: 3 / 2;
+    height: 210px; /* one cover height across the row — widths differ, height never */
     background: var(--color-rule);
     border-radius: 16px;
     overflow: hidden;

@@ -1,32 +1,145 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import ArchiveRow from '../../components/ArchiveRow.astro';
 
+// Work index: hero project as the emphasis card, everything else in the grid.
 const projects = (await getCollection('projects'))
   .filter((p) => !p.data.draft)
   .sort((a, b) => b.data.year - a.data.year);
+
+const heroProject = projects.find((p) => p.data.hero) ?? projects[0] ?? null;
+const rest = projects.filter((p) => p !== heroProject);
+const row1 = rest.slice(0, 1); // shares the top row with the emphasis card
+const row2 = rest.slice(1);
+
+const href = (p: (typeof projects)[number]) => p.data.external ?? `/projects/${p.id}`;
+const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
 ---
 
-<Base title="Projects — Shellie Hu">
-  <div style="max-width: var(--measure);">
-    <h1 class="text-xl font-medium mb-3">Projects</h1>
-    <p class="text-[var(--color-ink-muted)] leading-relaxed mb-8">
-      A list of client and professional work. For things I've built on my
-      own, see the <a href="/workshop">workshop</a>.
+<Base
+  title="Work — Shellie Hu"
+  description="Case studies and professional work by Shellie Hu."
+>
+  <div class="page-head">
+    <h1 class="page-title">work</h1>
+    <p class="page-sub">
+      client and professional work — things i've built on my own live in the
+      <a href="/workshop">workshop</a>.
     </p>
-    <div>
-      {
-        projects.map((p) => (
-          <ArchiveRow
-            kind={p.data.tags[0] ?? 'work'}
-            title={p.data.title}
-            href={p.data.external ?? `/projects/${p.id}`}
-            date={String(p.data.year)}
-            external={!!p.data.external}
-          />
-        ))
-      }
-    </div>
   </div>
+
+  <div class="cards-row">
+    {heroProject && (
+      <a href={href(heroProject)} class="card card-emphasis">
+        <div class="card-cover">
+          {heroProject.data.cover && (
+            <Image
+              src={heroProject.data.cover}
+              alt={`${heroProject.data.title} cover`}
+              widths={[600, 1200]}
+              sizes="(max-width: 768px) 100vw, 640px"
+            />
+          )}
+        </div>
+        <span class="card-title">{heroProject.data.title.toLowerCase()}</span>
+        <span class="card-meta">{kind(heroProject)} · {heroProject.data.year} · current</span>
+      </a>
+    )}
+    {row1.map((p) => (
+      <a href={href(p)} class="card">
+        <div class="card-cover">
+          {p.data.cover && (
+            <Image
+              src={p.data.cover}
+              alt={`${p.data.title} cover`}
+              widths={[400, 800]}
+              sizes="(max-width: 768px) 100vw, 320px"
+            />
+          )}
+        </div>
+        <span class="card-title">{p.data.title.toLowerCase()}{p.data.external && ' ↗'}</span>
+        <span class="card-meta">{kind(p)} · {p.data.year}</span>
+      </a>
+    ))}
+  </div>
+
+  {row2.length > 0 && (
+    <div class="cards-row cards-row-secondary">
+      {row2.map((p) => (
+        <a href={href(p)} class="card">
+          <div class="card-cover card-cover-short">
+            {p.data.cover && (
+              <Image
+                src={p.data.cover}
+                alt={`${p.data.title} cover`}
+                widths={[400, 800]}
+                sizes="(max-width: 768px) 100vw, 320px"
+              />
+            )}
+          </div>
+          <span class="card-title">{p.data.title.toLowerCase()}{p.data.external && ' ↗'}</span>
+          <span class="card-meta">{kind(p)} · {p.data.year}</span>
+        </a>
+      ))}
+    </div>
+  )}
 </Base>
+
+<style>
+  .page-head { margin-bottom: 1.5rem; }
+  .page-title {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    font-size: var(--text-base);
+    color: var(--color-ink-muted);
+    line-height: 1.55;
+    max-width: var(--measure);
+  }
+
+  .cards-row { display: flex; gap: 1.25rem; margin-bottom: 1.5rem; }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    flex: 1;
+    text-decoration: none;
+  }
+  .card-emphasis { flex: 2; }
+  .card-cover {
+    width: 100%;
+    height: 240px;
+    background: var(--color-rule);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .card-cover-short { height: 170px; }
+  .card-cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--motion-content) ease-out;
+  }
+  .card:hover .card-cover :global(img) { transform: scale(1.02); }
+  .card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    transition: color var(--motion-micro) ease;
+  }
+  .card:hover .card-title { color: var(--color-accent); }
+  .card-meta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+  }
+
+  @media (max-width: 768px) {
+    .cards-row { flex-direction: column; }
+    .card-emphasis { flex: 1; }
+  }
+</style>

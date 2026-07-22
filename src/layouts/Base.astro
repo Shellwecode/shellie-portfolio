@@ -3,16 +3,20 @@ import '../styles/global.css';
 import SideNav from '../components/SideNav.astro';
 import TopBar from '../components/TopBar.astro';
 import WhisperPill from '../components/WhisperPill.astro';
+import NowRail from '../components/NowRail.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title?: string;
   description?: string;
+  /** 'pill' (default) floats the whisper pill; 'none' for reading pages that dock their own progress bar. */
+  deck?: 'pill' | 'none';
 }
 
 const {
   title = 'Shellie Hu',
   description = "Product designer in Boston. Empathetic, quiet interfaces.",
+  deck = 'pill',
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -76,7 +80,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
-    <WhisperPill />
+    {deck === 'pill' && (
+      <>
+        <WhisperPill />
+        <NowRail />
+      </>
+    )}
   </body>
 </html>
 
@@ -93,9 +102,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    padding: 0 2.5rem 5.5rem 2.5rem; /* bottom clears the whisper pill */
+    padding: 0 3rem 5.5rem 3rem; /* 48px inline per mock; bottom clears the pill */
   }
-  .shell-content { padding-top: 2rem; flex: 1; }
+  .shell-content { padding-top: 1.75rem; flex: 1; }
 
   /* Collapsed dock floats — give content room to breathe past it */
   :global(html[data-nav='collapsed']) .shell-main { padding-left: 6.5rem; }
