@@ -80,12 +80,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
-    {deck === 'pill' && (
-      <>
-        <WhisperPill />
-        <NowRail />
-      </>
-    )}
+    {deck === 'pill' && <WhisperPill />}
+    <NowRail />
   </body>
 </html>
 

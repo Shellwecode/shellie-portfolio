@@ -15,7 +15,7 @@ import ThemeToggle from './ThemeToggle.astro';
     <a href="/writing">writing</a>
     <a href="/doodles">doodles</a>
   </nav>
-  <a href="/now" class="topbar-link">now</a>
+  <button type="button" class="topbar-link" data-deck-toggle aria-expanded="false">now</button>
   <ThemeToggle />
 </div>
 
@@ -53,6 +53,12 @@ import ThemeToggle from './ThemeToggle.astro';
     font-size: 0.875rem;
     color: var(--color-ink-muted);
     text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color var(--motion-micro) ease;
   }
   .topbar-link:hover { color: var(--color-accent); }
   .topbar-mobile-nav { display: none; }

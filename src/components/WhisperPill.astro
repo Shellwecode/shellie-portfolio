@@ -5,13 +5,13 @@ import now from '../data/now.json';
 // Data is manual (src/data/now.json); the Spotify serverless swap keeps this shape.
 ---
 
-<a href="/now" class="whisper-pill glass" transition:persist="whisper-pill" aria-label="What Shellie is up to right now">
+<button type="button" class="whisper-pill glass" data-deck-toggle transition:persist="whisper-pill" aria-label="What Shellie is up to right now" aria-expanded="false">
   <span class="pill-thumb" aria-hidden="true"></span>
   <span class="pill-song">♪ {now.listening.title.toLowerCase()} — {now.listening.artist.toLowerCase()}</span>
   <span class="pill-meta">· building {now.building.label.split(' ·')[0]}</span>
   <span class="pill-track" aria-hidden="true"><span class="pill-needle"></span></span>
   <span class="pill-time" data-pill-time data-location={now.location}>· {now.location}</span>
-</a>
+</button>
 
 <style>
   .whisper-pill {
@@ -26,7 +26,7 @@ import now from '../data/now.json';
     padding: 0 1.125rem;
     border-radius: 999px;
     z-index: 50;
-    text-decoration: none;
+    cursor: pointer;
     font-family: var(--font-mono);
     font-size: 0.75rem;
     color: var(--color-ink);

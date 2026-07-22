@@ -132,17 +132,17 @@ import now from '../data/now.json';
     if (open) html.setAttribute('data-rail', 'open');
     else html.removeAttribute('data-rail');
     document.getElementById('now-rail')?.setAttribute('aria-hidden', String(!open));
+    document.querySelectorAll('[data-deck-toggle]').forEach((el) =>
+      el.setAttribute('aria-expanded', String(open)),
+    );
   }
   function railIsOpen() {
     return document.documentElement.getAttribute('data-rail') === 'open';
   }
   function wireRail() {
-    // Pill toggles the rail instead of navigating (href stays as no-JS fallback).
-    document.querySelectorAll('.whisper-pill').forEach((pill) =>
-      pill.addEventListener('click', (e) => {
-        e.preventDefault();
-        setRail(!railIsOpen());
-      }),
+    // Anything marked data-deck-toggle (whisper pill, topbar "now") toggles the rail.
+    document.querySelectorAll('[data-deck-toggle]').forEach((el) =>
+      el.addEventListener('click', () => setRail(!railIsOpen())),
     );
     document.querySelectorAll('[data-rail-close]').forEach((el) =>
       el.addEventListener('click', () => setRail(false)),
