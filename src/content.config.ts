@@ -8,6 +8,7 @@ const projects = defineCollection({
     z.object({
       title: z.string(),
       summary: z.string(), // one-line description for the archive row
+      tagline: z.string().optional(), // plain-language card subtitle (DS v0.3)
       year: z.number(),
       role: z.string().optional(), // e.g. "Product Design"
       company: z.string().optional(),

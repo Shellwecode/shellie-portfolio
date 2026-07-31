@@ -19,9 +19,12 @@
 
 <style>
   .theme-toggle {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    width: 1rem;
+    height: 1rem;
     color: var(--color-ink-muted);
     background: transparent;
     border: 0;
@@ -31,9 +34,31 @@
     transition: color 120ms ease;
   }
   .theme-toggle:hover { color: var(--color-accent); }
-  .theme-toggle .icon { width: 1rem; height: 1rem; }
-  :root[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
-  :root:not([data-theme="dark"]) .theme-toggle .icon-moon { display: none; }
+  /* 16px glyph, 40px hit area (left edge stays clear of the "now" link's) */
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    inset: -12px -12px -12px -10px;
+  }
+  /* Both icons stay in the DOM; states cross-fade instead of popping. */
+  .theme-toggle .icon {
+    width: 1rem;
+    height: 1rem;
+    transition:
+      opacity 300ms cubic-bezier(0.2, 0, 0, 1),
+      scale 300ms cubic-bezier(0.2, 0, 0, 1),
+      filter 300ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .theme-toggle .icon-moon { position: absolute; inset: 0; }
+  :root[data-theme="dark"] .theme-toggle .icon-sun,
+  :root:not([data-theme="dark"]) .theme-toggle .icon-moon {
+    opacity: 0;
+    scale: 0.25;
+    filter: blur(4px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .theme-toggle .icon { transition: opacity 120ms ease; }
+  }
 </style>
 
 <script>

@@ -1,6 +1,44 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
+   Fonts — self-hosted. Aileron (sans statics) + Junicode VF (serif variable).
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/Aileron-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/Aileron-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Aileron";
+  src: url("/fonts/Aileron-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Junicode VF";
+  src: url("/fonts/JunicodeVF-Roman.woff2") format("woff2-variations");
+  font-weight: 300 700;
+  font-stretch: 75% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Junicode VF";
+  src: url("/fonts/JunicodeVF-Italic.woff2") format("woff2-variations");
+  font-weight: 300 700;
+  font-stretch: 75% 125%;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ---------------------------------------------------------------------------
    Design tokens — warm, grounded, minimal.
    Change colors here; everything cascades.
 --------------------------------------------------------------------------- */
@@ -13,36 +51,38 @@
   --color-rule: #ebe6dd;
   --color-accent: #a0522d; /* sienna — use sparingly */
 
-  /* Typography — Inter-style sans body, mono accents for dates/tags */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+  /* Typography — DS v0.3 "crafted type": Aileron content, Junicode VF voice,
+     mono only when the data is live */
+  --font-sans: "Aileron", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", sans-serif;
+  --font-serif: "Junicode VF", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Type scale — tight, editorial */
+  /* Type scale — one display size; hierarchy is voice, not scale */
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
-  --text-section: 1rem;     /* section headers (selected work, writing) — w600 */
-  --text-display: 1.75rem;  /* the greeting — one per page, home only — w600 */
+  --text-section: 1.125rem; /* section headers — serif italic 600 */
+  --text-display: 1.125rem; /* the greeting — same size, same voice */
 
   /* Spacing — a single reading measure */
   --measure: 48rem;       /* ~768px — shared by text and images */
   --measure-wide: 48rem;  /* kept as alias for existing call sites */
 
-  /* Layout — every shell distance is a token (tunable via the dev dial panel) */
-  --shell-pad-x: 48px;    /* main column inline padding */
-  --shell-pad-top: 72px;  /* content top padding under the top bar */
-  --nav-w: 160px;         /* expanded nav panel width */
-  --nav-inset: 16px;      /* nav panel inset from viewport edges */
-  --card-cover-h: 328px;  /* one cover height across a card row */
-  --card-gap: 20px;       /* gap between cards in a row */
-  --hero-gap: 40px;       /* hero copy stack gap */
-  --hero-pad-b: 36px;     /* hero padding above the hairline */
-  --intro-measure: 551px; /* intro paragraph max width */
-  --illo-w: 234px;        /* hero illustration width */
-  --illo-mr: 160px;       /* illustration distance from right edge */
+  /* Layout — every shell distance is a token (source of truth: Paper "Landing" frame,
+     grid system: "grid / laptop A + desktop A" — one 1160 cap, margins breathe) */
+  --content-cap: 1160px;  /* one content grid across laptop and desktop */
+  --shell-pad-l: 120px;   /* minimum left margin — the dock lane */
+  --shell-pad-r: 48px;    /* minimum right margin */
+  --shell-pad-top: 28px;  /* gap between the top bar and content (main stack gap) */
+  --nav-inset: 16px;      /* dock inset from viewport edges */
+  --card-cover-h: 210px;  /* one cover height across a card row */
+  --card-gap: 16px;       /* gap between cards in a row */
+  --hero-gap: 14px;       /* hero copy stack gap */
+  --hero-pad-b: 28px;     /* hero padding below the copy */
+  --intro-measure: 540px; /* intro paragraph max width */
   --pill-bottom: 36px;    /* whisper pill altitude */
 
   /* Motion — quiet instruments. Springs live in motion.ts; these are the rest. */
@@ -73,7 +113,6 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  font-feature-settings: "ss01", "cv11"; /* Inter stylistic sets for readability */
   color-scheme: light;
   transition: background-color 180ms ease, color 180ms ease;
 }
@@ -107,6 +146,15 @@ h1, h2, h3, h4 {
   font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.25;
+  text-wrap: balance;
+}
+
+p { text-wrap: pretty; }
+
+/* Focus — visible, on-palette, only for keyboard */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }
 
 /* Selection — warm, not electric blue */
@@ -215,7 +263,7 @@ hr {
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   text-transform: lowercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em; /* matches the mono-label tracking in the Landing frame */
   min-width: 4.5rem;
 }
 .archive-row .title {
@@ -229,6 +277,26 @@ hr {
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   white-space: nowrap;
+}
+
+/* Plain variant — home writing list: no kind lane, serif italic dates */
+.archive-row--plain {
+  grid-template-columns: 1fr auto;
+}
+.archive-row--plain .title {
+  color: var(--color-ink-muted);
+  transition: color var(--motion-micro) ease;
+}
+.archive-row--plain .title:hover {
+  color: var(--color-accent);
+}
+.archive-row--plain .date {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-stretch: 87.5%;
+  font-size: var(--text-base);
+  color: var(--color-ink-muted);
+  line-height: 20px;
 }
 
 @media (max-width: 540px) {

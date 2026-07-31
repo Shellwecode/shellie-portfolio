@@ -7,8 +7,8 @@ import now from '../data/now.json';
 
 <button type="button" class="whisper-pill glass" data-deck-toggle transition:persist="whisper-pill" aria-label="What Shellie is up to right now" aria-expanded="false">
   <span class="pill-thumb" aria-hidden="true"></span>
-  <span class="pill-song">♪ {now.listening.title.toLowerCase()} — {now.listening.artist.toLowerCase()}</span>
-  <span class="pill-meta">· building {now.building.label.split(' ·')[0]}</span>
+  <span class="pill-song">{now.listening.title} — {now.listening.artist}</span>
+  <span class="pill-meta">building {now.building.label.split(' ·')[0].replace(/^./, (c) => c.toUpperCase())}</span>
   <span class="pill-track" aria-hidden="true"><span class="pill-needle"></span></span>
   <span class="pill-time" data-pill-time data-location={now.location}>· {now.location}</span>
 </button>
@@ -27,11 +27,12 @@ import now from '../data/now.json';
     border-radius: 999px;
     z-index: 50;
     cursor: pointer;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-size: 0.75rem;
     color: var(--color-ink);
-    transition: box-shadow var(--motion-micro) ease;
+    transition: box-shadow var(--motion-micro) ease, scale var(--motion-micro) ease;
   }
+  .whisper-pill:active { scale: 0.96; }
   .whisper-pill:hover {
     color: var(--color-ink);
     box-shadow: 0 10px 36px color-mix(in oklab, var(--color-ink) 14%, transparent);
@@ -43,8 +44,21 @@ import now from '../data/now.json';
     background: var(--color-rule);
     border-radius: 6px;
   }
-  .pill-song { white-space: nowrap; }
-  .pill-meta, .pill-time {
+  .pill-song {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 500;
+    font-size: 0.9375rem;
+    line-height: 20px;
+    white-space: nowrap;
+  }
+  .pill-meta {
+    font-weight: 300;
+    color: var(--color-ink-muted);
+    white-space: nowrap;
+  }
+  .pill-time {
+    font-family: var(--font-mono);
     color: var(--color-ink-muted);
     white-space: nowrap;
   }

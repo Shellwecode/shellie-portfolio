@@ -2,14 +2,16 @@
 // A single row in the archive list. Used for work, writing, doodles —
 // anything with a date and a title.
 interface Props {
-  kind: 'work' | 'writing' | 'doodle' | 'side' | string;
+  kind?: 'work' | 'writing' | 'doodle' | 'side' | string;
   title: string;
   href: string;
   date: Date | string; // ISO string or Date
   external?: boolean;
+  /** Plain variant (home): no kind lane, serif italic date */
+  plain?: boolean;
 }
 
-const { kind, title, href, date, external = false } = Astro.props;
+const { kind, title, href, date, external = false, plain = false } = Astro.props;
 
 const displayDate =
   date instanceof Date
@@ -17,8 +19,8 @@ const displayDate =
     : date;
 ---
 
-<div class="archive-row">
-  <span class="kind">{kind}</span>
+<div class:list={['archive-row', { 'archive-row--plain': plain }]}>
+  {!plain && <span class="kind">{kind}</span>}
   <a
     href={href}
     class="title"

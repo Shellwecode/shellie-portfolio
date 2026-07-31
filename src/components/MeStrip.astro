@@ -1,0 +1,192 @@
+---
+import now from '../data/now.json';
+
+// (me) — personal telemetry as a quiet instrument strip: four hairline-divided
+// columns on the surface, no boxes. Time and weather are live; duolingo and
+// cooked are manual (src/data/now.json), same contract as the pill.
+---
+
+<section class="me" aria-label="What Shellie is up to">
+  <h2 class="section-title">(me)</h2>
+  <div class="me-strip">
+    <div class="me-col">
+      <span class="me-label">boston</span>
+      <span class="me-value" data-me-time>--:--</span>
+      <span class="me-sub" data-me-tz>local</span>
+    </div>
+    <div class="me-col">
+      <span class="me-label">outside</span>
+      <span class="me-value" data-me-temp>—</span>
+      <span class="me-sub" data-me-sky>&nbsp;</span>
+    </div>
+    <div class="me-col">
+      <span class="me-label">duolingo</span>
+      <span class="me-value me-value-accent">{now.duolingo.streak}</span>
+      <span class="me-sub">day streak</span>
+    </div>
+    <div class="me-col me-col-wide">
+      <span class="me-label">cooked</span>
+      <span class="me-value me-value-text">{now.cooked.dish}</span>
+      <span class="me-sub">{now.cooked.meal}</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .me {
+    display: flex;
+    flex-direction: column;
+  }
+  .me .section-title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-section);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 22px;
+    margin-bottom: 0.875rem;
+  }
+  .me-strip {
+    display: flex;
+    max-width: 600px;
+  }
+  .me-col {
+    flex: 1 1 0%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 1rem;
+    border-left: 1px solid var(--color-rule);
+    min-width: 0;
+  }
+  .me-col:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+  .me-col:last-child { padding-right: 0; }
+  .me-col-wide { flex-grow: 1.6; }
+  .me-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-muted);
+    line-height: 1rem;
+  }
+  .me-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    line-height: 1.5rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .me-value-accent { color: var(--color-accent); }
+  .me-value-text {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.5rem; /* shares the numerals' baseline */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .me-sub {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--color-ink-faint);
+    line-height: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .me-strip { flex-wrap: wrap; }
+    .me-col {
+      flex-basis: 50%;
+      border-left: none;
+      padding-left: 0;
+    }
+    .me-col:nth-child(even) {
+      border-left: 1px solid var(--color-rule);
+      padding-left: 1rem;
+    }
+    .me-col:nth-child(n + 3) { border-top: 1px solid var(--color-rule); }
+    .me-col-wide { flex-basis: 50%; }
+  }
+</style>
+
+<script>
+  // Live Boston clock — same cadence + swap handling as the whisper pill.
+  function tickMeTime() {
+    const els = document.querySelectorAll('[data-me-time]');
+    if (!els.length) return;
+    const now = new Date();
+    const time = new Intl.DateTimeFormat('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: 'America/New_York',
+    }).format(now);
+    const tz = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      timeZoneName: 'short',
+    })
+      .formatToParts(now)
+      .find((p) => p.type === 'timeZoneName')?.value;
+    els.forEach((el) => (el.textContent = time));
+    if (tz) {
+      document
+        .querySelectorAll('[data-me-tz]')
+        .forEach((el) => (el.textContent = tz.toLowerCase()));
+    }
+  }
+  tickMeTime();
+  setInterval(tickMeTime, 30_000);
+  document.addEventListener('astro:after-swap', tickMeTime);
+
+  // Boston weather via Open-Meteo (keyless). Cached for 30 min; the strip
+  // renders complete without it, so a failed fetch just leaves the em dash.
+  const SKY: Record<number, string> = {
+    0: 'clear', 1: 'fair', 2: 'some clouds', 3: 'overcast',
+    45: 'fog', 48: 'fog', 51: 'drizzle', 53: 'drizzle', 55: 'drizzle',
+    61: 'rain', 63: 'rain', 65: 'rain', 66: 'sleet', 67: 'sleet',
+    71: 'snow', 73: 'snow', 75: 'snow', 77: 'snow',
+    80: 'showers', 81: 'showers', 82: 'showers',
+    95: 'storm', 96: 'storm', 99: 'storm',
+  };
+
+  function paintWeather(tempF: number, code: number) {
+    document
+      .querySelectorAll('[data-me-temp]')
+      .forEach((el) => (el.textContent = `${Math.round(tempF)}°`));
+    document
+      .querySelectorAll('[data-me-sky]')
+      .forEach((el) => (el.textContent = SKY[code] ?? 'outside'));
+  }
+
+  async function loadWeather() {
+    if (!document.querySelector('[data-me-temp]')) return;
+    const cached = sessionStorage.getItem('me-weather');
+    if (cached) {
+      const { t, temp, code } = JSON.parse(cached);
+      if (Date.now() - t < 30 * 60_000) {
+        paintWeather(temp, code);
+        return;
+      }
+    }
+    try {
+      const res = await fetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=42.36&longitude=-71.06&current=temperature_2m,weather_code&temperature_unit=fahrenheit'
+      );
+      const data = await res.json();
+      const temp = data.current.temperature_2m;
+      const code = data.current.weather_code;
+      paintWeather(temp, code);
+      sessionStorage.setItem(
+        'me-weather',
+        JSON.stringify({ t: Date.now(), temp, code })
+      );
+    } catch {
+      /* leave the em dash — the strip is complete without weather */
+    }
+  }
+  loadWeather();
+  document.addEventListener('astro:after-swap', loadWeather);
+</script>

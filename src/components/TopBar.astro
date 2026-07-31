@@ -23,10 +23,11 @@ import ThemeToggle from './ThemeToggle.astro';
   .topbar {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.25rem 0 0 0;
+    gap: 1.125rem;
+    height: 52px;
   }
   .search-pill {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -34,22 +35,46 @@ import ThemeToggle from './ThemeToggle.astro';
     padding: 0 0.875rem;
     background: none;
     border: 1px solid var(--color-rule);
-    border-radius: 999px;
+    border-radius: 16px;
     color: var(--color-ink-faint);
     font-size: 0.8125rem;
     font-family: inherit;
     cursor: pointer;
-    transition: border-color var(--motion-micro) ease, color var(--motion-micro) ease;
+    transition:
+      border-color var(--motion-micro) ease,
+      color var(--motion-micro) ease,
+      opacity var(--motion-fade) ease-out;
   }
   .search-pill:hover { border-color: var(--color-ink-faint); color: var(--color-ink-muted); }
   .search-dot {
     width: 12px;
     height: 12px;
     border: 1.5px solid currentColor;
-    border-radius: 999px;
+    border-radius: 6px;
+  }
+  /* Search lives with the menu — it arrives when the dock opens. */
+  @media (min-width: 769px) {
+    :global(html:not([data-nav='open'])) .search-pill {
+      opacity: 0;
+      visibility: hidden; /* keeps the hidden button out of the tab order */
+      pointer-events: none;
+      transition:
+        border-color var(--motion-micro) ease,
+        color var(--motion-micro) ease,
+        opacity var(--motion-fade) ease-out,
+        visibility 0s linear var(--motion-fade);
+    }
+    :global(html[data-nav='open']) .search-pill { transition-delay: 0s, 0s, 120ms, 120ms; }
+  }
+  /* 32px control, 40px hit area */
+  .search-pill::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
   }
   .topbar-spacer { flex: 1; }
   .topbar-link {
+    position: relative;
     font-size: 0.875rem;
     color: var(--color-ink-muted);
     text-decoration: none;
@@ -59,6 +84,12 @@ import ThemeToggle from './ThemeToggle.astro';
     font-family: inherit;
     cursor: pointer;
     transition: color var(--motion-micro) ease;
+  }
+  /* text link, 40px hit area (stays clear of the theme toggle's) */
+  .topbar-link::after {
+    content: '';
+    position: absolute;
+    inset: -11px -6px;
   }
   .topbar-link:hover { color: var(--color-accent); }
   .topbar-mobile-nav { display: none; }

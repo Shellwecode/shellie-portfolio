@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ArchiveRow from '../components/ArchiveRow.astro';
+import MeStrip from '../components/MeStrip.astro';
 
 // Home: greeting + intro (the greeting owns the name; the intro never repeats it),
 // selected work with the current project as the emphasis card, recent writing rows.
@@ -11,7 +12,11 @@ const heroProject = allProjects.find((p) => p.data.hero) ?? allProjects[0] ?? nu
 const otherProjects = allProjects
   .filter((p) => p !== heroProject)
   .sort((a, b) => b.data.year - a.data.year)
-  .slice(0, 2);
+  .slice(0, 1);
+
+// Card titles are the short form, Title Case per DS v0.3:
+// "Cortex — Voice AI Agent Builder" → "Cortex".
+const shortTitle = (title: string) => title.split('—')[0].trim();
 
 const writing = (await getCollection('writing'))
   .filter((w) => !w.data.draft)
@@ -26,12 +31,12 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   title="Shellie Hu — Product Designer"
   description="Product designer in Boston working on AI agent experiences. Designing Cortex, a voice AI agent builder."
 >
-  {/* Hero — greeting + intro, grounded by a hairline. Illustration drops into .hero-illo. */}
+  {/* Hero — greeting + intro. No illustration, no hairline, per the Landing frame. */}
   <section class="hero">
     <div class="hero-copy">
-      <h1 class="greeting">hello, i'm shellie.</h1>
+      <h1 class="greeting">Hello, I'm Shellie.</h1>
       <p class="intro">
-        a product designer in Boston working on AI agent experiences — currently
+        a product designer working on AI agent experiences — currently
         designing <a href="/projects/cortex">Cortex</a>, a voice AI agent builder
         platform.
       </p>
@@ -40,32 +45,31 @@ const projectHref = (p: (typeof allProjects)[number]) =>
         and <a href="/doodles">draw</a>.
       </p>
     </div>
-    <div class="hero-illo" aria-hidden="true">
-      <img src="/illo-suitcase.png" alt="" width="160" height="293" loading="eager" />
-    </div>
   </section>
 
   {/* Selected work — one card anatomy; the current project is the emphasis variant. */}
   <section class="work">
     <div class="section-head">
-      <h2 class="section-title">selected work</h2>
+      <h2 class="section-title">Selected work</h2>
       <a href="/projects" class="section-link">show all →</a>
     </div>
     <div class="cards">
       {heroProject && (
-        <a href={projectHref(heroProject)} class="card card-emphasis">
+        <a href={projectHref(heroProject)} class="card">
           <div class="card-cover">
             {heroProject.data.cover && (
               <Image
                 src={heroProject.data.cover}
                 alt={`${heroProject.data.title} cover`}
-                widths={[600, 1200]}
-                sizes="(max-width: 768px) 100vw, 640px"
+                widths={[420, 840]}
+                sizes="(max-width: 768px) 100vw, 410px"
               />
             )}
           </div>
-          <span class="card-title">{heroProject.data.title.toLowerCase()}</span>
-          <span class="card-meta">case study · {heroProject.data.year} · current</span>
+          <span class="card-text">
+            <span class="card-title">{shortTitle(heroProject.data.title)}</span>
+            <span class="card-sub">{heroProject.data.tagline ?? heroProject.data.summary}</span>
+          </span>
         </a>
       )}
       {otherProjects.map((p) => (
@@ -75,44 +79,53 @@ const projectHref = (p: (typeof allProjects)[number]) =>
               <Image
                 src={p.data.cover}
                 alt={`${p.data.title} cover`}
-                widths={[400, 800]}
-                sizes="(max-width: 768px) 100vw, 320px"
+                widths={[420, 840]}
+                sizes="(max-width: 768px) 100vw, 410px"
               />
             )}
           </div>
-          <span class="card-title">{p.data.title.toLowerCase()}</span>
-          <span class="card-meta">case study · {p.data.year}</span>
+          <span class="card-text">
+            <span class="card-title">{shortTitle(p.data.title)}</span>
+            <span class="card-sub">{p.data.tagline ?? p.data.summary}</span>
+          </span>
         </a>
       ))}
+      <a href="/workshop" class="card">
+        <div class="card-cover"></div>
+        <span class="card-text">
+          <span class="card-title">Workshop</span>
+          <span class="card-sub">Vibe code experiments, ongoing</span>
+        </span>
+      </a>
     </div>
   </section>
 
-  {/* Writing — section header per addendum; rows are the existing archive pattern. */}
-  {writing.length > 0 && (
-    <section class="writing" style="max-width: var(--measure);">
-      <h2 class="section-title">writing</h2>
-      <div>
-        {writing.map((w) => (
-          <ArchiveRow
-            kind="essay"
-            title={w.data.title}
-            href={`/writing/${w.id}`}
-            date={w.data.date}
-            external={false}
-          />
-        ))}
-      </div>
-    </section>
-  )}
+  {/* Foot row — writing and (me) as sibling columns, per mock/home-1. */}
+  <div class="foot">
+    {writing.length > 0 && (
+      <section class="writing">
+        <h2 class="section-title">Writing</h2>
+        <div>
+          {writing.map((w) => (
+            <ArchiveRow
+              plain
+              title={w.data.title}
+              href={`/writing/${w.id}`}
+              date={w.data.date}
+              external={false}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+    <MeStrip />
+  </div>
 </Base>
 
 <style>
   .hero {
     display: flex;
-    align-items: flex-end;
-    gap: 2rem;
-    border-bottom: 1px solid var(--color-rule);
-    margin-bottom: 2rem;
+    margin-bottom: 1.75rem;
   }
   .hero-copy {
     display: flex;
@@ -122,25 +135,20 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     flex: 1;
   }
   .greeting {
+    font-family: var(--font-serif);
+    font-style: italic;
     font-size: var(--text-display);
     font-weight: 600;
-    letter-spacing: -0.01em;
-    line-height: 1.25;
+    letter-spacing: 0.03em;
+    line-height: 22px;
   }
   .intro {
     font-size: var(--text-lg);
-    line-height: 1.55;
+    line-height: 1.45;
     max-width: var(--intro-measure);
+    color: var(--color-ink-muted);
   }
   .intro-muted { color: var(--color-ink-muted); }
-  .hero-illo {
-    width: var(--illo-w);
-    flex-shrink: 0;
-    align-self: flex-end;
-    margin-bottom: -6px; /* feet on the hairline, per mock */
-    margin-right: var(--illo-mr);
-  }
-  .hero-illo img { width: var(--illo-w); height: auto; display: block; }
 
   .section-head {
     display: flex;
@@ -149,18 +157,21 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     margin-bottom: 0.875rem;
   }
   .section-title {
+    font-family: var(--font-serif);
+    font-style: italic;
     font-size: var(--text-section);
     font-weight: 600;
     letter-spacing: -0.01em;
+    line-height: 22px;
   }
   .section-link {
-    font-size: 0.8125rem;
+    font-size: var(--text-sm);
     color: var(--color-ink-muted);
     text-decoration: none;
   }
   .section-link:hover { color: var(--color-accent); }
 
-  .work { margin-bottom: 2.5rem; }
+  .work { margin-bottom: 1.75rem; }
   .cards {
     display: flex;
     gap: var(--card-gap);
@@ -170,15 +181,33 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     flex-direction: column;
     gap: 0.625rem;
     flex: 1;
+    min-width: 0;
     text-decoration: none;
   }
-  .card-emphasis { flex: 2; }
+  .card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
   .card-cover {
+    position: relative;
     width: 100%;
     height: var(--card-cover-h); /* one height across the row — widths differ, height never */
     background: var(--color-rule);
     border-radius: 16px;
     overflow: hidden;
+  }
+  /* hairline image outline — sits above the image, keeps cover edges crisp */
+  .card-cover::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px oklch(0 0 0 / 0.08);
+    pointer-events: none;
+  }
+  :global(html[data-theme='dark']) .card-cover::after {
+    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08);
   }
   .card-cover :global(img) {
     width: 100%;
@@ -189,22 +218,33 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .card:hover .card-cover :global(img) { transform: scale(1.02); }
   .card-title {
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 400;
+    line-height: 20px;
     color: var(--color-ink);
     transition: color var(--motion-micro) ease;
   }
   .card:hover .card-title { color: var(--color-accent); }
-  .card-meta {
-    font-family: var(--font-mono);
+  .card-sub {
+    font-weight: 300;
     font-size: 0.75rem;
+    line-height: 16px;
     color: var(--color-ink-muted);
   }
 
-  .writing .section-title { margin-bottom: 0.5rem; }
+  .foot {
+    display: flex;
+    align-items: flex-start;
+    gap: 3rem;
+  }
+  .foot > .writing { flex: 0 1 600px; min-width: 0; }
+  /* The strip's content (the dish) wins the shrink fight — writing gives way */
+  .foot > :global(.me) { flex: 0 1 624px; min-width: 560px; }
+  .writing .section-title { margin-bottom: 0.875rem; } /* header→first row rhythm matches (me) */
 
   @media (max-width: 768px) {
-    .hero-illo { display: none; }
     .cards { flex-direction: column; }
-    .card-emphasis { flex: 1; }
+    .foot { flex-direction: column; gap: 2.5rem; }
+    .foot > .writing,
+    .foot > :global(.me) { flex: none; width: 100%; }
   }
 </style>

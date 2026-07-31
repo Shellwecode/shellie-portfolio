@@ -4,7 +4,6 @@ import SideNav from '../components/SideNav.astro';
 import TopBar from '../components/TopBar.astro';
 import WhisperPill from '../components/WhisperPill.astro';
 import NowRail from '../components/NowRail.astro';
-import LayoutDials from '../components/LayoutDials.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -41,11 +40,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
 
-    {/* Fonts — Inter (variable) + JetBrains Mono. Swap for self-hosted later. */}
+    {/* Fonts — Aileron + Junicode VF self-hosted (global.css); JetBrains Mono from Google. */}
+    <link rel="preload" href="/fonts/Aileron-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/JunicodeVF-Italic.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
 
@@ -59,8 +60,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
             var saved = localStorage.getItem('theme');
             var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', theme);
-            if (localStorage.getItem('nav') === 'collapsed') {
-              document.documentElement.setAttribute('data-nav', 'collapsed');
+            if (localStorage.getItem('nav') === 'open') {
+              document.documentElement.setAttribute('data-nav', 'open');
             } else {
               document.documentElement.removeAttribute('data-nav');
             }
@@ -73,7 +74,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
   </head>
   <body>
     <div class="shell">
-      <SideNav />
       <div class="shell-main">
         <TopBar />
         <main class="shell-content">
@@ -81,9 +81,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
+    <SideNav />
     {deck === 'pill' && <WhisperPill />}
     <NowRail />
-    {import.meta.env.DEV && <LayoutDials />}
   </body>
 </html>
 
@@ -100,15 +100,15 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    padding: 0 var(--shell-pad-x) 5.5rem var(--shell-pad-x);
+    /* Left margin: the 120px dock lane until true centering exceeds it —
+       continuous between laptop (dock-anchored) and desktop (centered). */
+    padding: 48px var(--shell-pad-r) 5.5rem
+      max(var(--shell-pad-l), calc((100dvw - var(--content-cap)) / 2));
   }
+  .shell-main > :global(*) { max-width: var(--content-cap); }
   .shell-content { padding-top: var(--shell-pad-top); flex: 1; }
-
-  /* Collapsed dock floats — give content room to breathe past it */
-  :global(html[data-nav='collapsed']) .shell-main { padding-left: 6.5rem; }
 
   @media (max-width: 768px) {
     .shell-main { padding: 0 1.5rem 5rem 1.5rem; }
-    :global(html[data-nav='collapsed']) .shell-main { padding-left: 1.5rem; }
   }
 </style>

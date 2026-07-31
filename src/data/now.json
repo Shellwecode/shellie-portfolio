@@ -3,5 +3,7 @@
   "reading": "[book title]",
   "building": { "label": "strays · chrome extension", "href": "/workshop" },
   "thought": "drawing more than usual this month.",
-  "location": "boston"
+  "location": "boston",
+  "duolingo": { "streak": 214, "course": "日本語" },
+  "cooked": { "dish": "tomato egg noodles", "meal": "lunch" }
 }

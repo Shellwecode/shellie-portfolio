@@ -1,168 +1,126 @@
 ---
-import { getCollection } from 'astro:content';
-
-// Two states, one rule: expanded = docked paper (reserves space, no glass);
-// collapsed = floating glass dock (content flows beneath). User toggle persists.
-const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
-const workshop = (await getCollection('workshop')).filter((w) => !w.data.draft);
-const writing = (await getCollection('writing')).filter((w) => !w.data.draft);
-const doodles = (await getCollection('doodles')).filter((d) => !d.data.draft);
+// One element, two shapes: at rest a small glass capsule sits bottom-left
+// holding the library (menu) button; open, the capsule grows to full height
+// and the nav icons appear above it. The trigger never moves — the capsule
+// morphs around it. Glass floats over the page margin; content never reflows.
 
 const items = [
-  { href: '/about', label: 'about', count: null },
-  { href: '/projects', label: 'work', count: projects.length },
-  { href: '/workshop', label: 'workshop', count: workshop.length },
-  { href: '/writing', label: 'writing', count: writing.length },
-  { href: '/doodles', label: 'doodles', count: doodles.length },
+  { href: '/about', label: 'about' },
+  { href: '/projects', label: 'work' },
+  { href: '/workshop', label: 'workshop' },
+  { href: '/writing', label: 'writing' },
+  { href: '/doodles', label: 'doodle' },
 ];
+
+// 24-viewBox glyphs, 1.5px optical stroke at rendered size, round caps.
+const glyphs: Record<string, string> = {
+  about:
+    '<circle cx="12" cy="8.5" r="3.25"/><path d="M5.5 19.5c.9-3.7 3.5-5.6 6.5-5.6s5.6 1.9 6.5 5.6"/>',
+  work:
+    '<circle cx="12" cy="12" r="8.25"/><circle cx="12" cy="12" r="1.4"/><path d="M12 7.75a4.25 4.25 0 0 1 4.25 4.25"/>',
+  workshop: '<path d="M6.5 8.5l4.5 3.5-4.5 3.5"/><path d="M13.5 16.5H18"/>',
+  writing: '<path d="M16.7 3.8a2 2 0 0 1 2.8 2.8L8 18l-4.2 1.4L5.2 15 16.7 3.8z"/>',
+  doodle:
+    '<path d="M4 15.5c1.6-5.5 3.6-7 4.6-4.2s.6 6.9 2.6 5 .9-7.5 3.4-6.4 3 4.6 5.4 3.6"/>',
+  library: '<path d="M6.5 5v14"/><path d="M10.5 5v14"/><path d="M14 5.5l4.5 13"/>',
+};
 
 const pathname = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
 ---
 
-<aside class="sidenav" transition:persist="sidenav">
-  {/* Expanded — docked paper panel */}
-  <div class="nav-expanded">
-    <div class="nav-head">
-      <a href="/" class="nav-name">Shellie Hu</a>
-      <button class="nav-toggle" data-nav-collapse aria-label="Collapse navigation">⟨</button>
-    </div>
-    <nav class="nav-list">
-      {items.map((item) => (
-        <a href={item.href} class:list={['nav-row', { active: isActive(item.href) }]}>
-          <span class="nav-thumb" aria-hidden="true"></span>
-          <span class="nav-label">{item.label}</span>
-          {item.count !== null && <span class="nav-count">{item.count}</span>}
-        </a>
-      ))}
-    </nav>
-    <div class="nav-foot">
-      <a href="mailto:shelliehxx@outlook.com">email</a>
-      <a href="https://www.linkedin.com/in/shelliehu/">linkedin</a>
-      <a href="https://www.instagram.com/shellwedraw/">instagram</a>
-    </div>
-  </div>
-
-  {/* Collapsed — floating glass dock */}
-  <div class="nav-dock glass">
-    <button class="nav-toggle" data-nav-expand aria-label="Expand navigation">⟩</button>
+<nav class="dock glass" transition:persist="sidenav" aria-label="Site navigation">
+  <div class="dock-items">
     {items.map((item) => (
       <a
         href={item.href}
         class:list={['dock-item', { active: isActive(item.href) }]}
-        title={item.count !== null ? `${item.label} · ${item.count}` : item.label}
+        aria-label={item.label}
+        title={item.label}
       >
-        <span class="dock-glyph" aria-hidden="true"></span>
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.125"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          set:html={glyphs[item.label]}
+        />
       </a>
     ))}
-    <div class="dock-spacer"></div>
-    <a href="/about" class="dock-avatar" title="Shellie Hu · about" aria-label="About Shellie Hu"></a>
   </div>
-</aside>
+  <button
+    type="button"
+    class="dock-library"
+    data-nav-toggle
+    aria-label="Toggle navigation menu"
+    aria-expanded="false"
+  >
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.385"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      set:html={glyphs.library}
+    />
+  </button>
+</nav>
 
 <style>
-  /* Expanded state — in-flow (content reflows beside it), styled as the
-     soft inset panel from the canonical mock: 168px, 16px inset, radius 14. */
-  .nav-expanded {
-    display: flex;
-    flex-direction: column;
-    width: var(--nav-w);
-    height: calc(100dvh - 2 * var(--nav-inset));
-    position: sticky;
-    top: var(--nav-inset);
-    margin: var(--nav-inset) 0 var(--nav-inset) var(--nav-inset);
-    padding: 1.125rem 0.75rem;
-    border-radius: 14px;
-    background: color-mix(in oklab, var(--color-bg) 66%, transparent);
-    border: 1px solid color-mix(in oklab, var(--color-bg) 95%, transparent);
-    box-shadow: 0 8px 32px color-mix(in oklab, var(--color-ink) 10%, transparent);
-  }
-  @supports (backdrop-filter: blur(1px)) {
-    .nav-expanded { backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); }
-  }
-  .nav-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 0.625rem 1rem 0.625rem;
-  }
-  .nav-name {
-    font-weight: 500;
-    font-size: 0.9375rem;
-    text-decoration: none;
-  }
-  .nav-name:hover { color: var(--color-accent); }
-  .nav-toggle {
-    background: none;
-    border: none;
-    color: var(--color-ink-faint);
-    font-size: 0.8125rem;
-    cursor: pointer;
-    padding: 0.25rem 0.375rem;
-    border-radius: 6px;
-    transition: color var(--motion-micro) ease;
-  }
-  .nav-toggle:hover { color: var(--color-accent); }
-  .nav-list { display: flex; flex-direction: column; gap: 2px; }
-  .nav-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4375rem 0.5rem;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 0.8125rem;
-    color: var(--color-ink-muted);
-    transition: color var(--motion-micro) ease, background var(--motion-micro) ease;
-  }
-  .nav-row:hover { color: var(--color-ink); }
-  .nav-row.active {
-    color: var(--color-ink);
-    font-weight: 500;
-    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
-  }
-  .nav-thumb {
-    width: 24px;
-    height: 24px;
-    flex-shrink: 0;
-    background: var(--color-rule);
-    border-radius: 6px;
-  }
-  .nav-label { flex: 1; }
-  .nav-count {
-    font-family: var(--font-mono);
-    font-size: 0.6875rem;
-    color: var(--color-ink-faint);
-  }
-  .nav-row.active .nav-count { color: var(--color-ink-muted); }
-  .nav-foot {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-    padding: 0.875rem 0.625rem 0 0.625rem;
-    border-top: 1px solid var(--color-rule);
-    font-size: 0.8125rem;
-  }
-  .nav-foot a { color: var(--color-ink-muted); }
-
-  /* Collapsed state — glass capsule */
-  .nav-dock {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+  .dock {
     position: fixed;
-    left: 16px;
-    top: 16px;
-    bottom: 16px;
+    left: var(--nav-inset);
+    bottom: var(--nav-inset);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
     width: 56px;
+    height: 56px; /* closed: capsule around the library button */
     padding: 0.875rem 0;
     border-radius: 999px;
-    z-index: 40;
+    overflow: hidden;
+    transition: height var(--motion-content) cubic-bezier(0.2, 0, 0, 1);
   }
-  .nav-dock .nav-toggle { padding-bottom: 0.375rem; }
+  /* Hover peek — the capsule stretches upward, hinting at the expansion. */
+  :global(html:not([data-nav='open'])) .dock:hover { height: 79px; }
+  :global(html[data-nav='open']) .dock {
+    height: calc(100dvh - 2 * var(--nav-inset));
+  }
+
+  .dock-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-height: 0;
+    opacity: 0;
+    visibility: hidden; /* removes hidden links from the tab order */
+    pointer-events: none;
+    transition:
+      opacity var(--motion-fade) ease-out,
+      visibility 0s linear var(--motion-fade);
+  }
+  /* Container grows first, then contents arrive; on close they leave first. */
+  :global(html[data-nav='open']) .dock-items {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition-delay: 120ms, 120ms;
+  }
+
   .dock-item {
     display: flex;
     align-items: center;
@@ -170,50 +128,69 @@ const isActive = (href: string) =>
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    transition: background var(--motion-micro) ease;
+    color: var(--color-ink-muted);
+    transition:
+      background var(--motion-micro) ease,
+      color var(--motion-micro) ease;
   }
-  .dock-item:hover,
-  .dock-item.active {
+  .dock-item:hover {
+    color: var(--color-ink);
     background: color-mix(in oklab, var(--color-ink) 5%, transparent);
   }
-  .dock-glyph {
-    width: 32px;
-    height: 32px;
-    background: var(--color-rule);
-    border-radius: 8px;
+  .dock-item.active {
+    color: var(--color-ink);
+    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
   }
-  .dock-spacer { flex: 1; }
-  .dock-avatar {
+
+  .dock-library {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 26px;
     height: 26px;
-    background: var(--color-rule);
-    border-radius: 999px;
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: scale var(--motion-micro) ease;
+  }
+  /* 26px glyph, 40px hit area */
+  .dock-library::after {
+    content: '';
+    position: absolute;
+    inset: -7px;
+  }
+  .dock-library:active { scale: 0.96; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dock { transition: none; }
+    .dock-items { transition: opacity var(--motion-micro) ease; transition-delay: 0ms; }
   }
 
-  /* State switch — driven by data-nav on <html>, set pre-paint */
-  :global(html[data-nav='collapsed']) .nav-expanded { display: none; }
-  :global(html:not([data-nav='collapsed'])) .nav-dock { display: none; }
-
-  /* Mobile: no sidebar in phase 1 — TopBar carries the links */
+  /* Mobile: no dock in phase 1 — TopBar carries the links */
   @media (max-width: 768px) {
-    .nav-expanded, .nav-dock { display: none !important; }
+    .dock { display: none !important; }
   }
 </style>
 
 <script>
   function wireNav() {
-    document.querySelectorAll('[data-nav-collapse]').forEach((el) =>
+    document.querySelectorAll('[data-nav-toggle]').forEach((el) => {
       el.addEventListener('click', () => {
-        document.documentElement.setAttribute('data-nav', 'collapsed');
-        localStorage.setItem('nav', 'collapsed');
-      }),
-    );
-    document.querySelectorAll('[data-nav-expand]').forEach((el) =>
-      el.addEventListener('click', () => {
-        document.documentElement.removeAttribute('data-nav');
-        localStorage.setItem('nav', 'expanded');
-      }),
-    );
+        const open = document.documentElement.getAttribute('data-nav') === 'open';
+        if (open) {
+          document.documentElement.removeAttribute('data-nav');
+          localStorage.setItem('nav', 'closed');
+        } else {
+          document.documentElement.setAttribute('data-nav', 'open');
+          localStorage.setItem('nav', 'open');
+        }
+        el.setAttribute('aria-expanded', String(!open));
+      });
+    });
   }
   wireNav();
   document.addEventListener('astro:after-swap', wireNav);

@@ -49,16 +49,20 @@ import now from '../data/now.json';
     z-index: 45;
     /* closed state */
     opacity: 0;
+    visibility: hidden; /* keeps rail links/buttons out of the tab order */
     transform: translateX(12px);
     pointer-events: none;
     transition:
       opacity var(--motion-content) ease,
-      transform var(--motion-content) ease;
+      transform var(--motion-content) ease,
+      visibility 0s linear var(--motion-content);
   }
   :global(html[data-rail='open']) .now-rail {
     opacity: 1;
+    visibility: visible;
     transform: translateX(0);
     pointer-events: auto;
+    transition-delay: 0s, 0s, 0s;
   }
 
   .rail-head {
@@ -73,6 +77,7 @@ import now from '../data/now.json';
     color: var(--color-ink-muted);
   }
   .rail-close {
+    position: relative;
     background: none;
     border: none;
     font-family: var(--font-mono);
@@ -81,6 +86,12 @@ import now from '../data/now.json';
     cursor: pointer;
     padding: 0.25rem;
     transition: color var(--motion-micro) ease;
+  }
+  /* small label, 40px hit area */
+  .rail-close::after {
+    content: '';
+    position: absolute;
+    inset: -10px -8px;
   }
   .rail-close:hover { color: var(--color-accent); }
 
