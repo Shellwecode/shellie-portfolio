@@ -24,10 +24,11 @@ const posts = (await getCollection('writing'))
     {
       posts.map((post) => (
         <ArchiveRow
-          kind="writing"
+          kind={post.data.kind ?? 'writing'}
           title={post.data.title}
-          href={`/writing/${post.id}`}
-          date={post.data.date}
+          href={post.data.external ?? `/writing/${post.id}`}
+          date={post.data.dateLabel ?? post.data.date}
+          external={Boolean(post.data.external)}
         />
       ))
     }

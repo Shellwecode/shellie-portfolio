@@ -21,13 +21,16 @@ const projects = defineCollection({
     }),
 });
 
-// Writing — essays, notes
+// Writing — essays, notes; older papers/fiction live as external links
 const writing = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/writing' }),
   schema: z.object({
     title: z.string(),
     summary: z.string().optional(),
     date: z.coerce.date(),
+    dateLabel: z.string().optional(), // display override when only the year is known ("2024")
+    kind: z.string().optional(), // archive lane label; defaults to "writing"
+    external: z.string().url().optional(), // links out (PDF, publication) instead of a local page
     tags: z.array(z.string()).default([]),
     draft: z.boolean().default(false),
   }),

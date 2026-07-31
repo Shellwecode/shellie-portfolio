@@ -15,7 +15,7 @@ const { kind, title, href, date, external = false, plain = false } = Astro.props
 
 const displayDate =
   date instanceof Date
-    ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' })
+    ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', timeZone: 'UTC' })
     : date;
 ---
 

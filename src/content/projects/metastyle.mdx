@@ -1,30 +1,74 @@
 ---
-title: "MetaStyle — AI Art Generator"
-summary: "Refining the prompting flow for a mobile image-gen app."
-year: 2024
-role: "UX Design"
-cover: "./metastyle.svg"
+title: "MetaStyle — Mobile AI Art Generator"
+summary: "Bringing Stable Diffusion to a phone for people who'd never prompted before — and refining what prompting even means on mobile."
+tagline: "Mobile AI art generator"
+year: 2023
+role: "UX Designer"
+company: "MetaStyle AI"
 tags: ["work", "ai", "mobile"]
+cover: "./metastyle.svg"
 draft: false
 ---
 
-## The ask
+## Overview
 
-MetaStyle let people generate art on their phones, but the prompting felt
-like talking to a search bar. The team wanted something that felt more like
-sketching.
+MetaStyle is a mobile generative-art app built on Stable Diffusion. I was the
+only designer on the team — one PM, two engineers — working as UX designer,
+prompt engineer, and researcher across a six-month internship (May–November
+2023). The work centered on the two moments that make or break the app:
+how people prompt, and what they get back.
 
-## The approach
+## The problem
 
-— Replaced the text box as the primary input with a set of visual modifiers
-(style, mood, palette) you could layer and reorder.
+Three obstacles kept mobile image generation from satisfying anyone:
 
-— Kept the text field, but demoted it to an "advanced" step.
+1. **Text-image alignment.** Prompts failed to accurately depict all the
+   attributes people described — the image ignored half the sentence.
+2. **The body problem.** Generated images came back with distorted,
+   incomplete, or duplicated body parts — hands, notoriously.
+3. **Aesthetic dissatisfaction.** Even technically correct outputs deviated
+   from what users found beautiful.
 
-— Built the generation feedback loop around small previews — four at once,
-cheap to dismiss, easy to iterate on.
+## Research
 
-## What shipped
+I framed the question as *user aesthetic satisfaction in context*: not "is
+the model good," but "does the result match what this person imagined?" I ran
+self-analysis across different Stable Diffusion models, prompting experiments
+with users, and comparative evaluations of identical prompts in different
+phrase formations. ChatGPT integration opened up alternative prompting
+methods, so we ran participatory sessions where users refined prompts with
+its help and judged the outputs.
 
-A flow that let first-time users get to a good image in under 30 seconds,
-without ever typing a full sentence.
+Our target users had minimal generative-AI experience and cared about one
+thing: results that matched their conception of attractiveness. We used
+download likelihood as the satisfaction metric — if you'd keep it, it worked.
+
+## Design
+
+Stable Diffusion's web interface offers everything; a phone can't. With the
+PM I studied existing mobile AI art generators and curated ruthlessly: a
+prompting section, style and size selection, the generated output, and an
+inspiration gallery — each feature weighed against its impact on engagement.
+
+The bigger move was re-exploring prompting itself. Research showed segmented
+short phrases outperformed single words, so we refined the feature tree to
+surface only consistently high-performing options as selectable tags —
+predefined labels as starting points, with manual input still there for
+creative freedom. Instead of staring at an empty text box, users compose from
+labels that are known to work. Less typing, lower cognitive load, faster to a
+good image.
+
+## Takeaways
+
+Human-AI interaction is changing the way we design software. Making AI tools
+accessible means understanding how users interpret these systems and closing
+the expectation gap through the interface. Three prompting lessons I still
+use:
+
+- **Start small + large.** Begin with a small/local and a large/global scope
+  keyword for a solid base image that generates fast.
+- **Longer isn't better.** 5–10 short phrases, comma-separated, beat long
+  detailed prompts; prompt length barely correlates with quality.
+- **Match subject to style.** Pair subjects and styles that harmonize in
+  their level of abstractness — a subject that fights the style's conceptual
+  tone loses.

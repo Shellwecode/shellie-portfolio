@@ -13,6 +13,8 @@ const otherProjects = allProjects
   .filter((p) => p !== heroProject)
   .sort((a, b) => b.data.year - a.data.year)
   .slice(0, 1);
+// Third card is hand-picked: the early MIT project balances the two 2026 ones.
+const thirdProject = allProjects.find((p) => p.id === 'saving-face') ?? null;
 
 // Card titles are the short form, Title Case per DS v0.3:
 // "Cortex — Voice AI Agent Builder" → "Cortex".
@@ -35,14 +37,16 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   <section class="hero">
     <div class="hero-copy">
       <div class="enter" style="--enter-i: 0"><HeroGreeting /></div>
-      <p class="intro enter" style="--enter-i: 1">
-        a product designer working on AI agent experiences — currently
-        designing <a href="/projects/cortex">Cortex</a>, a voice AI agent builder
-        platform.
+      <p class="intro intro-lead enter" style="--enter-i: 1">
+        I design software that talks, to us and to each other.
       </p>
-      <p class="intro intro-muted enter" style="--enter-i: 2">
-        i also <a href="/workshop">build things</a>, <a href="/writing">write</a>,
-        and <a href="/doodles">draw</a>.
+      <p class="intro enter" style="--enter-i: 2">
+        I'm building Five9's first <a href="/projects/cortex">voice AI agent builder</a>;
+        before that, I researched human-AI interaction and made creative tools.
+      </p>
+      <p class="intro intro-muted enter" style="--enter-i: 3">
+        Constantly inspired by sci-fi, mathematics, and curiosity about how
+        things work.
       </p>
     </div>
   </section>
@@ -90,13 +94,24 @@ const projectHref = (p: (typeof allProjects)[number]) =>
           </span>
         </a>
       ))}
-      <a href="/workshop" class="card enter" style="--enter-i: 6">
-        <div class="card-cover"></div>
-        <span class="card-text">
-          <span class="card-title">Workshop</span>
-          <span class="card-sub">Vibe code experiments, ongoing</span>
-        </span>
-      </a>
+      {thirdProject && (
+        <a href={projectHref(thirdProject)} class="card enter" style="--enter-i: 6">
+          <div class="card-cover">
+            {thirdProject.data.cover && (
+              <Image
+                src={thirdProject.data.cover}
+                alt={`${thirdProject.data.title} cover`}
+                widths={[420, 840]}
+                sizes="(max-width: 768px) 100vw, 410px"
+              />
+            )}
+          </div>
+          <span class="card-text">
+            <span class="card-title">{shortTitle(thirdProject.data.title)}</span>
+            <span class="card-sub">{thirdProject.data.tagline ?? thirdProject.data.summary}</span>
+          </span>
+        </a>
+      )}
     </div>
   </section>
 
@@ -110,9 +125,9 @@ const projectHref = (p: (typeof allProjects)[number]) =>
             <ArchiveRow
               plain
               title={w.data.title}
-              href={`/writing/${w.id}`}
-              date={w.data.date}
-              external={false}
+              href={w.data.external ?? `/writing/${w.id}`}
+              date={w.data.dateLabel ?? w.data.date}
+              external={Boolean(w.data.external)}
             />
           </div>
         ))}
@@ -138,7 +153,9 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     line-height: 1.45;
     max-width: var(--intro-measure);
     color: var(--color-ink-muted);
+    text-wrap: balance; /* even rag on the few hero lines; p keeps pretty elsewhere */
   }
+  .intro-lead { color: var(--color-ink); } /* the claim carries full ink; the rest stays quiet */
   .intro-muted { color: var(--color-ink-muted); }
 
   .section-head {

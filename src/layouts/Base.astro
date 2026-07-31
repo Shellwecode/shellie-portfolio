@@ -89,7 +89,6 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
-    {fog && <div class="edge-fog edge-fog--top" aria-hidden="true"></div>}
     {fog && <div class="edge-fog edge-fog--bottom" aria-hidden="true"></div>}
     <SideNav />
     {deck === 'pill' && <WhisperPill />}
@@ -97,9 +96,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 
     <script>
       // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.
+      // Exposed on window so floating instruments (chapter player) can scrollTo
+      // through Lenis — native smooth scrolling loses to its raf loop.
       import Lenis from 'lenis';
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        new Lenis({ autoRaf: true });
+        (window as any).lenis = new Lenis({ autoRaf: true });
       }
     </script>
   </body>

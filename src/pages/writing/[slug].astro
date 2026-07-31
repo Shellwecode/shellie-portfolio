@@ -5,7 +5,7 @@ import Base from '../../layouts/Base.astro';
 export async function getStaticPaths() {
   const posts = await getCollection('writing');
   return posts
-    .filter((p) => !p.data.draft)
+    .filter((p) => !p.data.draft && !p.data.external)
     .map((post) => ({
       params: { slug: post.id },
       props: { post },
@@ -19,6 +19,7 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
+  timeZone: 'UTC', // frontmatter dates are date-only; local TZ would shift the day
 });
 ---
 

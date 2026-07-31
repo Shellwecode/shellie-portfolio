@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Synthetic UX Tester cover placeholder">
+  <defs>
+    <linearGradient id="sx" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#efe8dc" />
+      <stop offset="100%" stop-color="#a9b39c" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#sx)" />
+  <!-- the calibration plane: technical confidence × risk aversion -->
+  <g stroke="#2a2824" stroke-width="1" opacity="0.3">
+    <line x1="400" y1="110" x2="400" y2="390" />
+    <line x1="230" y1="250" x2="570" y2="250" />
+  </g>
+  <g fill="none" stroke="#2a2824" stroke-width="1" opacity="0.18">
+    <rect x="270" y="150" width="260" height="200" rx="8" />
+  </g>
+  <!-- five archetypes covering the corners where designs break -->
+  <g fill="#2a2824">
+    <circle cx="292" cy="176" r="5" opacity="0.4" />
+    <circle cx="510" cy="182" r="5" opacity="0.4" />
+    <circle cx="286" cy="330" r="5" opacity="0.4" />
+    <circle cx="516" cy="322" r="5" opacity="0.4" />
+    <circle cx="400" cy="250" r="6" opacity="0.55" />
+    <circle cx="400" cy="250" r="22" fill="none" stroke="#2a2824" stroke-width="1" opacity="0.35" />
+  </g>
+  <text x="400" y="460" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#2a2824" opacity="0.55">synthetic ux tester · 2026</text>
+</svg>

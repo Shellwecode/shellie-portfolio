@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Saving Face cover placeholder">
+  <defs>
+    <linearGradient id="sf" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#efe8dc" />
+      <stop offset="100%" stop-color="#a8b4bd" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#sf)" />
+  <!-- sonar: the hand pings, the face hears -->
+  <g fill="none" stroke="#2a2824" stroke-linecap="round">
+    <path d="M330 250 a 70 70 0 0 1 0 0" />
+    <path d="M355 215 a 55 55 0 0 1 0 70" stroke-width="1.5" opacity="0.4" />
+    <path d="M385 195 a 85 85 0 0 1 0 110" stroke-width="1.2" opacity="0.3" />
+    <path d="M415 175 a 115 115 0 0 1 0 150" stroke-width="1" opacity="0.2" />
+    <path d="M445 155 a 145 145 0 0 1 0 190" stroke-width="1" opacity="0.12" />
+  </g>
+  <g fill="#2a2824">
+    <circle cx="310" cy="250" r="7" opacity="0.5" />
+    <circle cx="500" cy="250" r="5" opacity="0.35" />
+  </g>
+  <text x="400" y="460" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#2a2824" opacity="0.55">saving face · 2021</text>
+</svg>

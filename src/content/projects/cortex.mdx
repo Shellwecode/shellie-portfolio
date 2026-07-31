@@ -1,10 +1,10 @@
 ---
 title: "Cortex — Voice AI Agent Builder"
-summary: "A platform for designing voice agents that feel less like a performance and more like a quiet collaborator."
+summary: "Designing how non-engineers shape agent behavior — from prompt soup to a builder people trust."
 tagline: "Voice AI Agent Builder Platform"
 year: 2026
-role: "Product Design"
-company: "[fill in]"
+role: "Product Designer"
+company: "Five9"
 tags: ["work", "ai", "voice"]
 cover: "./covers/cortex.svg"
 featured: true
@@ -12,18 +12,115 @@ hero: true
 draft: false
 ---
 
-{/* DRAFT — please revise in my own voice */}
+## Overview
 
-## The context
+Cortex is Five9's new enterprise AI voice agent builder — a platform where
+agentic and deterministic agent systems are both first-class. It's ongoing
+work, currently in user validation and executive alignment.
 
-[What Cortex is, what problem it solves, who uses it — 2-3 sentences.]
+I shipped the first version of Cortex on my own. For 2.0, I partnered with our
+design lead and ran the research that shaped and validated the new information
+architecture and interaction patterns the platform is built on. Along the way
+we built design tooling to scale the practice to the whole org — *2 product
+designers, 3 PMs, 50+ engineers*.
 
-## What I designed
+> *Design a self-service platform for AI agent builders, where they can choose
+> between autonomous and rule-based behavior, and be given precise control over
+> agent decisions at enterprise scale.*
 
-[Describe the core flow or surface you led. Specific, not generic.
-What were the hardest decisions? What did you cut?]
+## The problem
 
-## What I'm learning
+Enterprises wanted agentic AI, but every existing solution forced a choice.
+Fully agentic systems couldn't meet enterprise standards for trust, governance,
+and compliance; fully deterministic systems couldn't adapt to calls that don't
+follow a script. Combining the two meant fragmentation and risk. Five9 needed a
+platform where both paradigms were first-class, not a compromise.
 
-[Since this is current work, frame it as in-progress. What's surprising
-you about designing for voice? About designing for AI agents in general?]
+The timeline for 1.0 was tight — I was the only designer when we started. It
+worked, but it was the version built around the deadline, not the one I'd have
+built with time to think.
+
+Two problems surfaced after launch:
+
+1. **The terminology was a wall.** Prompt, operating procedure, instruction —
+   three words for what users experienced as the same thing. They pointed to
+   slightly different technical concepts, but users couldn't tell them apart.
+2. **The mental model didn't form.** 1.0 never communicated the multi-agent
+   hierarchy early or clearly enough. Users understood the idea but couldn't
+   internalize it — the product complicated the system instead of explaining it.
+
+## Research
+
+I spent the weeks after launch studying what we had shipped and where the gaps
+were. I interviewed our forward-deployed engineers who author agent prompts for
+customers, and reached out to voice agent builders on online forums to
+understand their mental models and how they get a voice agent into production.
+
+I also mapped the market. Most platforms still relied on a single text field
+for agent behavior; others leaned into pure flow-based automation. Almost no
+one had built a seamless hybrid of the two — resolving this tension was a
+category bet, and it confirmed the 1.0 findings were valid.
+
+Two patterns kept showing up in how builders actually work: they start from
+prebuilt templates rather than blank prompts, and they iterate with AI — using
+it to draft, revise, and stress-test their work. When Owen joined as design
+lead and we started on 2.0, these findings became the brief.
+
+## Explorations
+
+The thesis from 1.0 was clear: builders shouldn't have to author rules,
+instructions, and behavior in the same place. The design problem was turning
+one big prompt field into a system of scoped, structured configuration without
+losing the flexibility builders rely on.
+
+We developed a lifecycle-based IA — configuration mapped to the stages of
+building, deploying, and operating an agent. *Configure* holds everything that
+defines an agent; *Test* holds everything for testing and debugging. Builders
+move between stages without losing their place in the work.
+
+The bigger move was in the language itself. In 1.0, an agent was an
+orchestrator over subagents, each holding prompts, tools, variables, and
+knowledge — too many behaviors happening at once to tell where one piece of
+work ended and another began. In 2.0 we split the model into *Agent* and
+*Task*, and did the same for prompts, guardrails, and transfers. A guardrail
+that applies to every task lives at the agent level; a tool only one task needs
+lives on that task. The hierarchy 1.0 hid in language is the hierarchy 2.0
+makes visible.
+
+## Final design
+
+Templates are the first surface, and AI is built into the authoring experience.
+A builder can ask it to draft a task description, tighten a guardrail, or
+rewrite an instruction without leaving the surface. The AI behaves differently
+at different levels — at the agent level it generates tasks and guardrails; at
+the task level it drafts and refines prompts and suggests next steps.
+
+The editor lets builders compose with the same primitives the IA defines —
+tools, variables, knowledge dropped inline — and power users move through them
+with keyboard shortcuts.
+
+Testing runs alongside authoring. A builder can start a test call while
+configuring a task to see where it holds and where it breaks. The
+build–test–rewrite loop collapses into a single flow: iterate on one section of
+a task prompt, test it in isolation, and trace each outcome back to the
+configuration choice that caused it.
+
+## Impact
+
+Cortex 2.0's spine — the lifecycle IA, the agent/task split, AI-in-context
+authoring — is the architecture the platform is now being validated against,
+with users and with executives. The research and patterns from this work also
+became the brief for org-wide design tooling, scaling the practice beyond one
+project.
+
+What I'm still pondering:
+
+- **Where should procedural work end and agentic capability begin?** The hybrid
+  model presumes you can tell automation and agentic apart — but the two blur
+  within a single flow.
+- **What's the right home for cross-agent context?** The agent/task split
+  clarified scope at two levels, but real systems have shared knowledge, shared
+  guardrails, shared behavior.
+- **How do we keep the builder's intent legible when AI is in the loop?** As
+  builders iterate with AI, configuration drifts from what they would have
+  written alone. When does that become a problem?

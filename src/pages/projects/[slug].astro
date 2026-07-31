@@ -3,6 +3,7 @@ import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
+import ChapterPlayer from '../../components/ChapterPlayer.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -28,14 +29,30 @@ const { Content, headings } = await render(project);
 
 // The album page: case study as record. Sections come from h2s; read time from body.
 const sections = headings.filter((h) => h.depth === 2);
-const words = (project.body ?? '').split(/\s+/).filter(Boolean).length;
+const body = project.body ?? '';
+const words = body.split(/\s+/).filter(Boolean).length;
 const readMinutes = Math.max(1, Math.round(words / 200));
+
+// Track "durations" — each section's words at ~200wpm, rounded to :05.
+// These size the chapter player's segments, like track lengths on a record.
+const h2Matches = [...body.matchAll(/^##\s+.*$/gm)];
+const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+const tracks = sections.map((h, i) => {
+  const m = h2Matches[i];
+  const start = m ? (m.index ?? 0) + m[0].length : 0;
+  const end = h2Matches[i + 1]?.index ?? body.length;
+  const w = body.slice(start, end).split(/\s+/).filter(Boolean).length;
+  const seconds = Math.max(30, Math.round((w / 200) * 60 / 5) * 5);
+  return { slug: h.slug, title: h.text, seconds, label: fmt(seconds) };
+});
+const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
 ---
 
 <Base
   title={`${project.data.title} — Shellie Hu`}
   description={project.data.summary}
   deck="none"
+  fog={true}
 >
   <a href="/projects" class="crumb">← work</a>
 
@@ -67,12 +84,13 @@ const readMinutes = Math.max(1, Math.round(words / 200));
     </div>
   </header>
 
-  {sections.length > 0 && (
+  {tracks.length > 0 && (
     <nav class="tracklist" aria-label="Sections">
-      {sections.map((h, i) => (
-        <a href={`#${h.slug}`} class="track">
+      {tracks.map((t, i) => (
+        <a href={`#${t.slug}`} class="track" style={`--ri: ${tracks.length - 1 - i}`}>
           <span class="track-n">{i + 1}</span>
-          <span class="track-title">{h.text.toLowerCase()}</span>
+          <span class="track-title">{t.title.toLowerCase()}</span>
+          <span class="track-time">{t.label}</span>
         </a>
       ))}
     </nav>
@@ -87,17 +105,31 @@ const readMinutes = Math.max(1, Math.round(words / 200));
     </footer>
   </article>
 
-  <ReadingBar
-    title={project.data.title}
-    prevHref={prev ? `/projects/${prev.id}` : null}
-    prevLabel={prev?.title}
-    nextHref={next ? `/projects/${next.id}` : null}
-    nextLabel={next?.title}
-  />
+  {tracks.length > 0 ? (
+    <ChapterPlayer
+      title={project.data.title.split('—')[0].trim()}
+      cover={project.data.cover}
+      tracks={tracks}
+      totalLabel={fmt(totalSeconds)}
+      nextHref={next ? `/projects/${next.id}` : null}
+      nextLabel={next?.title}
+    />
+  ) : (
+    <ReadingBar
+      title={project.data.title}
+      prevHref={prev ? `/projects/${prev.id}` : null}
+      prevLabel={prev?.title}
+      nextHref={next ? `/projects/${next.id}` : null}
+      nextLabel={next?.title}
+    />
+  )}
 </Base>
 
 <style>
   .crumb {
+    display: block;
+    max-width: var(--measure);
+    margin-inline: auto;
     font-weight: 300;
     font-size: var(--text-xs);
     color: var(--color-ink-muted);
@@ -105,21 +137,50 @@ const readMinutes = Math.max(1, Math.round(words / 200));
   }
   .crumb:hover { color: var(--color-accent); }
 
+  /* Album fold — scrubbed by scroll (--fold set on <html> by the script
+     below). This variant collapses PHYSICALLY: heights, gaps, and the cover
+     itself compress, so the content below genuinely rises as the album
+     folds shut — not a fade-out. */
   .album-header {
     display: flex;
     align-items: flex-end;
-    gap: 1.75rem;
-    padding: 1.5rem 0 1.75rem 0;
+    gap: calc(1.75rem - 0.875rem * var(--fold, 0));
+    padding: calc(1.5rem * (1 - 0.6 * var(--fold, 0))) 0
+      calc(1.75rem * (1 - 0.6 * var(--fold, 0))) 0;
     border-bottom: 1px solid var(--color-rule);
-    margin-bottom: 1.5rem;
+    margin-bottom: calc(1.5rem * (1 - 0.7 * var(--fold, 0)));
+    max-width: var(--measure);
+    margin-inline: auto;
   }
   .album-cover {
-    width: 200px;
-    height: 200px;
+    width: calc(200px - 136px * var(--fold, 0));
+    height: calc(200px - 136px * var(--fold, 0));
     flex-shrink: 0;
     background: var(--color-rule);
-    border-radius: 16px;
+    border-radius: calc(16px - 8px * var(--fold, 0));
     overflow: hidden;
+  }
+  .album-eyebrow {
+    max-height: calc(1.2rem * (1 - var(--fold, 0)));
+    overflow: hidden;
+    opacity: calc(1 - 2 * var(--fold, 0));
+  }
+  .album-title { opacity: calc(1 - 0.5 * var(--fold, 0)); }
+  .album-summary {
+    max-height: calc(3.5rem * (1 - var(--fold, 0)));
+    overflow: hidden;
+    opacity: calc(1 - 1.6 * var(--fold, 0));
+  }
+  .album-meta {
+    max-height: calc(1.5rem * (1 - var(--fold, 0)));
+    overflow: hidden;
+    opacity: calc(1 - 2 * var(--fold, 0));
+  }
+  .album-actions {
+    max-height: calc(38px * (1 - var(--fold, 0)));
+    padding-top: calc(0.375rem * (1 - var(--fold, 0)));
+    overflow: hidden;
+    opacity: calc(1 - 2.2 * var(--fold, 0));
   }
   .album-cover :global(img) {
     width: 100%;
@@ -188,7 +249,8 @@ const readMinutes = Math.max(1, Math.round(words / 200));
     display: flex;
     flex-direction: column;
     max-width: var(--measure);
-    margin-bottom: 2.5rem;
+    margin-inline: auto;
+    margin-bottom: calc(2.5rem * (1 - 0.6 * var(--fold, 0)));
   }
   .track {
     display: flex;
@@ -197,6 +259,17 @@ const readMinutes = Math.max(1, Math.round(words / 200));
     padding: 0.625rem 0;
     border-bottom: 1px solid var(--color-rule);
     text-decoration: none;
+    /* Rows fold shut like a drawer closing — bottom row first (--ri is the
+       reverse index), each accordioning to zero height as the fold deepens. */
+    --t: clamp(0, calc((var(--fold, 0) - var(--ri, 0) * 0.055) / 0.32), 1);
+    max-height: calc(46px * (1 - var(--t)));
+    overflow: hidden;
+    opacity: calc(1 - var(--t));
+    border-bottom-color: color-mix(
+      in oklab,
+      var(--color-rule) calc((1 - var(--t)) * 100%),
+      transparent
+    );
   }
   .track:last-child { border-bottom: none; }
   .track-n {
@@ -208,16 +281,77 @@ const readMinutes = Math.max(1, Math.round(words / 200));
     color: var(--color-ink-faint);
   }
   .track-title {
+    flex: 1;
     font-size: var(--text-base);
     color: var(--color-ink);
     transition: color var(--motion-micro) ease;
   }
   .track:hover .track-title { color: var(--color-accent); }
+  .track-time {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-stretch: 87.5%;
+    font-size: var(--text-base);
+    color: var(--color-ink-faint);
+    white-space: nowrap;
+  }
 
-  .prose { padding-bottom: 3.5rem; /* clears the reading bar */ }
+  .prose {
+    margin-inline: auto; /* centered reading column, matching the player */
+    padding-bottom: 7.5rem; /* clears the chapter player */
+  }
+  /* Chapter jumps land with air above the heading */
+  .prose :global(h2) { scroll-margin-top: 2.5rem; }
 
   @media (max-width: 768px) {
     .album-header { flex-direction: column; align-items: flex-start; }
     .album-cover { width: 100%; height: auto; aspect-ratio: 8 / 5; }
   }
 </style>
+
+<script>
+  // Album fold — scroll scrubs --fold (0 at rest → 1 by ~420px), the header
+  // and tracklist dissolve through it, and the chapter player rises in once
+  // reading has begun. Reduced motion: no scrub, player always present.
+  function wireAlbumFold() {
+    const header = document.querySelector('.album-header') as HTMLElement | null;
+    if (!header || header.dataset.foldWired) return;
+    header.dataset.foldWired = '1';
+
+    const root = document.documentElement;
+    root.setAttribute('data-album-fold', '');
+    const player = document.querySelector('[data-chapter-player]');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      root.style.setProperty('--fold', '0');
+      player?.setAttribute('data-visible', '');
+      return;
+    }
+
+    // Physical collapse: the block shrinks as it scrolls, so it exits faster
+    // than its resting height — scrub over roughly half of it.
+    const tracklist = document.querySelector('.tracklist');
+    const foldEl = (tracklist ?? header) as HTMLElement;
+    let range = 380;
+    function measure() {
+      range = Math.max(
+        320,
+        (foldEl.getBoundingClientRect().bottom + window.scrollY) * 0.55
+      );
+    }
+
+    function update() {
+      const t = Math.min(1, Math.max(0, window.scrollY / range));
+      root.style.setProperty('--fold', String(t));
+      if (player) {
+        if (t > 0.5) player.setAttribute('data-visible', '');
+        else player.removeAttribute('data-visible');
+      }
+    }
+    measure();
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', () => { measure(); update(); });
+  }
+  wireAlbumFold();
+  document.addEventListener('astro:page-load', wireAlbumFold);
+</script>
