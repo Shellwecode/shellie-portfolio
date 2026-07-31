@@ -11,12 +11,15 @@ interface Props {
   description?: string;
   /** 'pill' (default) floats the whisper pill; 'none' for reading pages that dock their own progress bar. */
   deck?: 'pill' | 'none';
+  /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages. */
+  fog?: boolean;
 }
 
 const {
   title = 'Shellie Hu',
   description = "Product designer in Boston. Empathetic, quiet interfaces.",
   deck = 'pill',
+  fog = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -40,15 +43,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:type" content="website" />
     <meta property="og:url" content={canonical} />
 
-    {/* Fonts — Aileron + Junicode VF self-hosted (global.css); JetBrains Mono from Google. */}
+    {/* Fonts — Aileron + Junicode VF, fully self-hosted (global.css). */}
     <link rel="preload" href="/fonts/Aileron-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/JunicodeVF-Italic.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
 
     <ClientRouter />
 
@@ -69,6 +66,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         }
         apply();
         document.addEventListener('astro:after-swap', apply);
+
+        /* Entrance plays once per session, never on in-app navigations. */
+        try {
+          if (!sessionStorage.getItem('entered')) {
+            document.documentElement.setAttribute('data-entrance', '');
+            sessionStorage.setItem('entered', '1');
+          }
+        } catch (e) {}
+        document.addEventListener('astro:after-swap', function () {
+          document.documentElement.removeAttribute('data-entrance');
+        });
       })();
     </script>
   </head>
@@ -81,9 +89,19 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
+    {fog && <div class="edge-fog edge-fog--top" aria-hidden="true"></div>}
+    {fog && <div class="edge-fog edge-fog--bottom" aria-hidden="true"></div>}
     <SideNav />
     {deck === 'pill' && <WhisperPill />}
     <NowRail />
+
+    <script>
+      // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.
+      import Lenis from 'lenis';
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        new Lenis({ autoRaf: true });
+      }
+    </script>
   </body>
 </html>
 
@@ -100,10 +118,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     flex-direction: column;
     flex: 1;
     min-width: 0;
-    /* Left margin: the 120px dock lane until true centering exceeds it —
-       continuous between laptop (dock-anchored) and desktop (centered). */
-    padding: 48px var(--shell-pad-r) 5.5rem
-      max(var(--shell-pad-l), calc((100dvw - var(--content-cap)) / 2));
+    /* Laptop: exactly the 120px dock lane (per the Landing frame);
+       wide desktop: true centering takes over. */
+    padding: 48px var(--shell-pad-r) 5.5rem var(--shell-pad-l);
+  }
+  @media (min-width: 1600px) {
+    .shell-main {
+      padding-left: max(var(--shell-pad-l), calc((100dvw - var(--content-cap)) / 2));
+    }
   }
   .shell-main > :global(*) { max-width: var(--content-cap); }
   .shell-content { padding-top: var(--shell-pad-top); flex: 1; }

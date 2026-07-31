@@ -1,0 +1,276 @@
+---
+// The karaoke greeting (hero ideation → concept a′):
+// idle — the line quietly cycles EN → 中文 → 日本語 once (6s dwell, pauses on
+// hover); click the waveform — three recordings of Shellie play in sequence,
+// the line swaps language at each file boundary, and spoken chunks turn
+// solid ink while unspoken ones wait faint, lyric-style. Ends home on EN.
+//
+// Audio lives at /voice/greeting-{en,zh,ja}.mp3 (self-hosted, no API).
+// Until the files exist, play falls back to a silent timed demo so the
+// interaction can be felt and tuned. Chunk timings are per-file seconds,
+// tuned after recording.
+
+const langs = [
+  {
+    code: 'en',
+    src: '/voice/greeting-en.mp3',
+    chunks: [
+      { t: 'Hello, ', from: 0.0, to: 0.55 },
+      { t: "I'm ", from: 0.55, to: 0.9 },
+      { t: 'Shellie.', from: 0.9, to: 1.7 },
+    ],
+  },
+  {
+    code: 'zh',
+    src: '/voice/greeting-zh.mp3',
+    chunks: [
+      { t: '你好，', from: 0.0, to: 0.7 },
+      { t: '我是', from: 0.7, to: 1.1 },
+      { t: '雪莉。', from: 1.1, to: 1.9 },
+    ],
+  },
+  {
+    code: 'ja',
+    src: '/voice/greeting-ja.mp3',
+    chunks: [
+      { t: 'こんにちは、', from: 0.0, to: 0.9 },
+      { t: 'シェリー', from: 0.9, to: 1.5 },
+      { t: 'です。', from: 1.5, to: 2.1 },
+    ],
+  },
+];
+---
+
+<h1 class="greeting" aria-label="Hello, I'm Shellie.">
+  <span class="g-wrap" aria-hidden="true" data-greeting data-langs={JSON.stringify(langs)}>
+    {langs.map((l, li) => (
+      <span class="g-layer" lang={l.code} data-lang={l.code} data-active={li === 0 ? '' : undefined}>
+        {l.chunks.map((c, ci) => (
+          <span class="g-chunk" data-i={ci}>{c.t}</span>
+        ))}
+      </span>
+    ))}
+    <button type="button" class="g-voice" data-voice aria-hidden="true" tabindex="-1">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <path class="w1" d="M1 6v0" /><path class="w2" d="M4 4v4" /><path class="w3" d="M7 2v8" /><path class="w4" d="M10 3v6" /><path class="w5" d="M13 5v2" /><path class="w6" d="M16 6v0" />
+      </svg>
+    </button>
+  </span>
+  {/* Real a11y control — visually merged with the decorative one above */}
+  <span class="sr-only">
+    <button type="button" data-voice aria-label="Hear Shellie say hello in English, Chinese, and Japanese">Play greeting</button>
+  </span>
+</h1>
+
+<style>
+  .greeting {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-display);
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    line-height: 22px;
+  }
+  /* Block-level flex: the h1 sizes to this fixed box — no baseline participation,
+     so no font's ascent/descent can nudge the layout by even a pixel. */
+  .g-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 22px;
+  }
+  .g-layer {
+    display: none;
+    line-height: 22px;
+    height: 22px;
+    white-space: nowrap;
+  }
+  .g-layer[data-active] { display: block; }
+  /* Junicode has no CJK — Source Han Serif carries 中/日, upright (no faux italics).
+     Slightly smaller: CJK squares run optically larger than the serif's lowercase. */
+  .g-layer[lang='zh'] {
+    font-family: 'Source Han Serif SC', 'Songti SC', serif;
+    font-style: normal;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+  }
+  .g-layer[lang='ja'] {
+    font-family: 'Source Han Serif JP', 'Hiragino Mincho ProN', serif;
+    font-style: normal;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+  }
+  /* Language arrival — same recipe as the page entrance, smaller. Dial-tunable. */
+  @keyframes g-swap {
+    from { opacity: 0; filter: blur(var(--g-swap-blur, 4px)); translate: 0 var(--g-swap-rise, 4px); }
+  }
+  .g-layer.swapping {
+    animation: g-swap var(--g-swap-ms, 300ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+
+  /* Lyric states — only while performing */
+  .g-chunk { transition: color var(--g-sung-ms, 120ms) ease; }
+  .g-wrap[data-playing] .g-chunk { color: var(--color-ink-faint); }
+  .g-wrap[data-playing] .g-chunk.sung { color: var(--color-ink); }
+
+  .g-voice {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--color-accent);
+    cursor: pointer;
+    transition: color var(--motion-micro) ease, scale var(--motion-micro) ease;
+  }
+  .g-voice::after { content: ''; position: absolute; inset: -8px; } /* 40px hit area */
+  .g-voice:hover { color: var(--color-ink); }
+  .g-voice:active { scale: 0.96; }
+  /* While speaking, the bars breathe — feedback, paired with the lyric cue */
+  @keyframes bar-breathe {
+    0%, 100% { transform: scaleY(0.6); }
+    50% { transform: scaleY(1.3); }
+  }
+  .g-wrap[data-playing] .g-voice path {
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: bar-breathe var(--g-bars-ms, 900ms) ease-in-out infinite;
+  }
+  .g-wrap[data-playing] .g-voice .w2 { animation-delay: 100ms; }
+  .g-wrap[data-playing] .g-voice .w3 { animation-delay: 200ms; }
+  .g-wrap[data-playing] .g-voice .w4 { animation-delay: 300ms; }
+  .g-wrap[data-playing] .g-voice .w5 { animation-delay: 400ms; }
+  .g-wrap[data-playing] .g-voice .w6 { animation-delay: 500ms; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .g-layer.swapping { animation: none; }
+    .g-wrap[data-playing] .g-voice path { animation: none; }
+  }
+</style>
+
+<script>
+  function initGreeting() {
+    const wrap = document.querySelector<HTMLElement>('[data-greeting]');
+    if (!wrap || wrap.dataset.wired) return;
+    wrap.dataset.wired = '1';
+
+    const langs = JSON.parse(wrap.dataset.langs ?? '[]') as {
+      code: string;
+      src: string;
+      chunks: { t: string; from: number; to: number }[];
+    }[];
+    const layers = Array.from(wrap.querySelectorAll<HTMLElement>('.g-layer'));
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let active = 0;
+    let performing = false;
+
+    function show(i: number, swap = true) {
+      active = i;
+      layers.forEach((l, li) => {
+        if (li === i) {
+          l.setAttribute('data-active', '');
+          if (swap && !reduced) {
+            l.classList.remove('swapping');
+            void l.offsetWidth; // restart animation
+            l.classList.add('swapping');
+          }
+        } else {
+          l.removeAttribute('data-active');
+        }
+      });
+    }
+
+    /* Idle cycle — one quiet round, pauses on hover, retires on play */
+    let cycleTimer: ReturnType<typeof setInterval> | null = null;
+    let cycled = 0;
+    function stopCycle() {
+      if (cycleTimer) clearTimeout(cycleTimer);
+      cycleTimer = null;
+    }
+    /* Dwell reads the dial live (--g-dwell-ms) so tuning applies mid-cycle */
+    function dwell(): number {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--g-dwell-ms');
+      const n = parseFloat(v);
+      return Number.isFinite(n) && n > 500 ? n : 6000;
+    }
+    if (!reduced) {
+      const loop = () => {
+        cycleTimer = setTimeout(() => {
+          if (!wrap.matches(':hover') && !performing) {
+            cycled += 1;
+            show((active + 1) % layers.length);
+          }
+          if (cycled < layers.length) loop(); // one full round, ends on EN
+          else cycleTimer = null;
+        }, dwell()) as unknown as ReturnType<typeof setInterval>;
+      };
+      loop();
+    }
+
+    /* Performance — three files in sequence, lyric highlight per chunk */
+    function setSung(layer: HTMLElement, time: number, chunks: { from: number }[]) {
+      layer.querySelectorAll<HTMLElement>('.g-chunk').forEach((el, i) => {
+        el.classList.toggle('sung', time >= chunks[i].from);
+      });
+    }
+    function clearSung() {
+      wrap.querySelectorAll('.g-chunk').forEach((el) => el.classList.remove('sung'));
+    }
+
+    async function playLang(i: number): Promise<void> {
+      const lang = langs[i];
+      const layer = layers[i];
+      show(i);
+      clearSung();
+      return new Promise((resolve) => {
+        const audio = new Audio(lang.src);
+        const total = lang.chunks[lang.chunks.length - 1].to;
+        audio.addEventListener('timeupdate', () => setSung(layer, audio.currentTime, lang.chunks));
+        audio.addEventListener('ended', () => resolve());
+        audio.play().catch(() => {
+          /* No recording yet — silent demo so the interaction is feelable */
+          const t0 = performance.now();
+          const tick = () => {
+            const t = (performance.now() - t0) / 1000;
+            setSung(layer, t, lang.chunks);
+            if (t < total + 0.3) requestAnimationFrame(tick);
+            else resolve();
+          };
+          requestAnimationFrame(tick);
+        });
+      });
+    }
+
+    async function perform() {
+      if (performing) return;
+      performing = true;
+      stopCycle(); // the cycle retires once she has spoken
+      wrap.setAttribute('data-playing', '');
+      for (let i = 0; i < langs.length; i++) await playLang(i);
+      wrap.removeAttribute('data-playing');
+      clearSung();
+      show(0); // settle home on English
+      performing = false;
+    }
+
+    document.querySelectorAll('[data-voice]').forEach((b) =>
+      b.addEventListener('click', perform),
+    );
+  }
+  initGreeting();
+  document.addEventListener('astro:after-swap', initGreeting);
+</script>

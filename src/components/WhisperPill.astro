@@ -58,7 +58,10 @@ import now from '../data/now.json';
     white-space: nowrap;
   }
   .pill-time {
-    font-family: var(--font-mono);
+    font-weight: 300;
+    /* Aileron ships no tabular figures — reserve the widest plausible width
+       so the centered pill doesn't breathe on each minute tick */
+    min-width: 78px;
     color: var(--color-ink-muted);
     white-space: nowrap;
   }

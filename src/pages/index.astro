@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ArchiveRow from '../components/ArchiveRow.astro';
-import MeStrip from '../components/MeStrip.astro';
+import HeroGreeting from '../components/HeroGreeting.astro';
 
 // Home: greeting + intro (the greeting owns the name; the intro never repeats it),
 // selected work with the current project as the emphasis card, recent writing rows.
@@ -34,13 +34,13 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   {/* Hero — greeting + intro. No illustration, no hairline, per the Landing frame. */}
   <section class="hero">
     <div class="hero-copy">
-      <h1 class="greeting">Hello, I'm Shellie.</h1>
-      <p class="intro">
+      <div class="enter" style="--enter-i: 0"><HeroGreeting /></div>
+      <p class="intro enter" style="--enter-i: 1">
         a product designer working on AI agent experiences — currently
         designing <a href="/projects/cortex">Cortex</a>, a voice AI agent builder
         platform.
       </p>
-      <p class="intro intro-muted">
+      <p class="intro intro-muted enter" style="--enter-i: 2">
         i also <a href="/workshop">build things</a>, <a href="/writing">write</a>,
         and <a href="/doodles">draw</a>.
       </p>
@@ -49,13 +49,13 @@ const projectHref = (p: (typeof allProjects)[number]) =>
 
   {/* Selected work — one card anatomy; the current project is the emphasis variant. */}
   <section class="work">
-    <div class="section-head">
+    <div class="section-head enter" style="--enter-i: 3">
       <h2 class="section-title">Selected work</h2>
-      <a href="/projects" class="section-link">show all →</a>
+      <a href="/projects" class="section-link">show all <span class="section-link-arrow">→</span></a>
     </div>
     <div class="cards">
       {heroProject && (
-        <a href={projectHref(heroProject)} class="card">
+        <a href={projectHref(heroProject)} class="card enter" style="--enter-i: 4">
           <div class="card-cover">
             {heroProject.data.cover && (
               <Image
@@ -72,8 +72,8 @@ const projectHref = (p: (typeof allProjects)[number]) =>
           </span>
         </a>
       )}
-      {otherProjects.map((p) => (
-        <a href={projectHref(p)} class="card">
+      {otherProjects.map((p, i) => (
+        <a href={projectHref(p)} class="card enter" style={`--enter-i: ${5 + i}`}>
           <div class="card-cover">
             {p.data.cover && (
               <Image
@@ -90,7 +90,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
           </span>
         </a>
       ))}
-      <a href="/workshop" class="card">
+      <a href="/workshop" class="card enter" style="--enter-i: 6">
         <div class="card-cover"></div>
         <span class="card-text">
           <span class="card-title">Workshop</span>
@@ -100,13 +100,13 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     </div>
   </section>
 
-  {/* Foot row — writing and (me) as sibling columns, per mock/home-1. */}
-  <div class="foot">
-    {writing.length > 0 && (
-      <section class="writing">
-        <h2 class="section-title">Writing</h2>
-        <div>
-          {writing.map((w) => (
+  {/* Writing — single column per the Landing frame; (me) strip parked for now. */}
+  {writing.length > 0 && (
+    <section class="writing">
+      <h2 class="section-title enter" style="--enter-i: 7">Writing</h2>
+      <div class="writing-list">
+        {writing.map((w, i) => (
+          <div class="enter" style={`--enter-i: ${8 + i}`}>
             <ArchiveRow
               plain
               title={w.data.title}
@@ -114,12 +114,11 @@ const projectHref = (p: (typeof allProjects)[number]) =>
               date={w.data.date}
               external={false}
             />
-          ))}
-        </div>
-      </section>
-    )}
-    <MeStrip />
-  </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
 </Base>
 
 <style>
@@ -133,14 +132,6 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     gap: var(--hero-gap);
     padding-bottom: var(--hero-pad-b);
     flex: 1;
-  }
-  .greeting {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-size: var(--text-display);
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    line-height: 22px;
   }
   .intro {
     font-size: var(--text-lg);
@@ -168,10 +159,16 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     font-size: var(--text-sm);
     color: var(--color-ink-muted);
     text-decoration: none;
+    transition: color var(--motion-micro) ease;
   }
   .section-link:hover { color: var(--color-accent); }
+  .section-link-arrow {
+    display: inline-block;
+    transition: translate var(--motion-micro) ease-out;
+  }
+  .section-link:hover .section-link-arrow { translate: var(--arrow-nudge, 3px) 0; }
 
-  .work { margin-bottom: 1.75rem; }
+  .work { margin-bottom: 2.625rem; } /* 14 section pad + 28 main gap, per frame */
   .cards {
     display: flex;
     gap: var(--card-gap);
@@ -213,9 +210,9 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform var(--motion-content) ease-out;
+    transition: transform var(--hover-card-ms, var(--motion-content)) ease-out;
   }
-  .card:hover .card-cover :global(img) { transform: scale(1.02); }
+  .card:hover .card-cover :global(img) { transform: scale(var(--hover-card-scale, 1.02)); }
   .card-title {
     font-size: 1rem;
     font-weight: 400;
@@ -231,20 +228,16 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     color: var(--color-ink-muted);
   }
 
-  .foot {
+  .writing { max-width: var(--measure); } /* 768 — the frame's writing column */
+  .writing .section-title { margin-bottom: 0.875rem; }
+  .writing-list {
     display: flex;
-    align-items: flex-start;
-    gap: 3rem;
+    flex-direction: column;
+    gap: 6px; /* row rhythm per frame: 10 pad + 6 gap + 10 pad */
   }
-  .foot > .writing { flex: 0 1 600px; min-width: 0; }
-  /* The strip's content (the dish) wins the shrink fight — writing gives way */
-  .foot > :global(.me) { flex: 0 1 624px; min-width: 560px; }
-  .writing .section-title { margin-bottom: 0.875rem; } /* header→first row rhythm matches (me) */
+  .writing-list :global(.archive-row--plain) { padding-block: 10px; }
 
   @media (max-width: 768px) {
     .cards { flex-direction: column; }
-    .foot { flex-direction: column; gap: 2.5rem; }
-    .foot > .writing,
-    .foot > :global(.me) { flex: none; width: 100%; }
   }
 </style>

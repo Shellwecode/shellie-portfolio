@@ -91,10 +91,10 @@ const isActive = (href: string) =>
     padding: 0.875rem 0;
     border-radius: 999px;
     overflow: hidden;
-    transition: height var(--motion-content) cubic-bezier(0.2, 0, 0, 1);
+    transition: height var(--dock-ms, var(--motion-content)) cubic-bezier(0.2, 0, 0, 1);
   }
   /* Hover peek — the capsule stretches upward, hinting at the expansion. */
-  :global(html:not([data-nav='open'])) .dock:hover { height: 79px; }
+  :global(html:not([data-nav='open'])) .dock:hover { height: var(--dock-peek-h, 79px); }
   :global(html[data-nav='open']) .dock {
     height: calc(100dvh - 2 * var(--nav-inset));
   }

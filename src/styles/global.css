@@ -37,6 +37,19 @@
   font-style: italic;
   font-display: swap;
 }
+/* Source Han Serif — subset to the greeting's glyphs only (~4KB each) */
+@font-face {
+  font-family: "Source Han Serif SC";
+  src: url("/fonts/SourceHanSerifSC-greeting.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Source Han Serif JP";
+  src: url("/fonts/SourceHanSerifJP-greeting.woff2") format("woff2");
+  font-weight: 600;
+  font-display: swap;
+}
 
 /* ---------------------------------------------------------------------------
    Design tokens — warm, grounded, minimal.
@@ -56,7 +69,7 @@
   --font-sans: "Aileron", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "Helvetica Neue", sans-serif;
   --font-serif: "Junicode VF", Georgia, "Times New Roman", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace; /* code blocks in prose only — no mono in UI */
 
   /* Type scale — one display size; hierarchy is voice, not scale */
   --text-xs: 0.75rem;
@@ -80,13 +93,13 @@
   --nav-inset: 16px;      /* dock inset from viewport edges */
   --card-cover-h: 210px;  /* one cover height across a card row */
   --card-gap: 16px;       /* gap between cards in a row */
-  --hero-gap: 14px;       /* hero copy stack gap */
+  --hero-gap: 12px;       /* hero copy stack gap */
   --hero-pad-b: 28px;     /* hero padding below the copy */
   --intro-measure: 540px; /* intro paragraph max width */
   --pill-bottom: 36px;    /* whisper pill altitude */
 
   /* Motion — quiet instruments. Springs live in motion.ts; these are the rest. */
-  --motion-micro: 120ms;    /* link + hover color */
+  --motion-micro: 380ms;    /* link + hover color — dial-tuned (was 120) */
   --motion-fade: 180ms;     /* theme toggle, page crossfade */
   --motion-content: 240ms;  /* content swaps, dims, staggered children */
 }
@@ -113,6 +126,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-synthesis: none; /* no faux bold/italic — Aileron has no italics; serif carries all italics */
   color-scheme: light;
   transition: background-color 180ms ease, color 180ms ease;
 }
@@ -141,9 +155,9 @@ a:hover {
   text-decoration-color: var(--color-accent);
 }
 
-/* Headings — modest weight, tight leading */
+/* Headings — semibold (a shipped Aileron weight; 500 doesn't exist and would snap) */
 h1, h2, h3, h4 {
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.01em;
   line-height: 1.25;
   text-wrap: balance;
@@ -169,6 +183,112 @@ hr {
   border-top: 1px solid var(--color-rule);
   margin: 2.5rem 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Entrance — quiet instruments. Plays once per session on first arrival
+   (html[data-entrance] is set pre-paint, only then). Opacity + blur +
+   translateY; chunks stagger 100ms; ease-out.
+--------------------------------------------------------------------------- */
+:root {
+  /* Motion — Shellie's dial-tuned defaults, locked 2026-07-31 */
+  --ent-ms: 950ms;
+  --ent-stagger: 120ms;
+  --ent-blur: 8px;
+  --ent-rise: 16px;
+  --g-swap-ms: 800ms;
+  --g-swap-blur: 8px;
+  --g-swap-rise: 7px;
+  --g-sung-ms: 100ms;
+  --g-bars-ms: 1050ms;
+  --hover-card-ms: 260ms;
+  --hover-card-scale: 1.07;
+  --arrow-nudge: 7px;
+  --dock-ms: 520ms;
+  --dock-peek-h: 69px;
+}
+@keyframes rise {
+  from { opacity: 0; filter: blur(var(--ent-blur)); translate: 0 var(--ent-rise); }
+}
+html[data-entrance] .enter {
+  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(var(--enter-i, 0) * var(--ent-stagger));
+}
+/* Floating instruments arrive last, after the page is set */
+html[data-entrance] .dock {
+  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(11 * var(--ent-stagger));
+}
+html[data-entrance] .whisper-pill {
+  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation-delay: calc(12 * var(--ent-stagger));
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-entrance] .enter,
+  html[data-entrance] .whisper-pill,
+  html[data-entrance] .dock {
+    animation: rise 120ms ease-out both;
+    animation-delay: 0ms;
+    translate: 0 0;
+    filter: none; /* crossfade only */
+  }
+  @keyframes rise {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Edge fog — content dissolves into the paper at the viewport's top and
+   bottom (after ol.studio: an EASED gradient of the bg color — 16 stops
+   following an exponential falloff — plus a whisper of masked backdrop blur).
+   Fixed, non-interactive, beneath every floating instrument.
+--------------------------------------------------------------------------- */
+.edge-fog {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  z-index: 30;
+  pointer-events: none;
+}
+.edge-fog::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    var(--fog-dir, 180deg),
+    color-mix(in srgb, var(--color-bg) 100%, transparent) 0%,
+    color-mix(in srgb, var(--color-bg) 98.8%, transparent) 9.37%,
+    color-mix(in srgb, var(--color-bg) 96.9%, transparent) 17.41%,
+    color-mix(in srgb, var(--color-bg) 94.1%, transparent) 24.33%,
+    color-mix(in srgb, var(--color-bg) 90.2%, transparent) 30.35%,
+    color-mix(in srgb, var(--color-bg) 85.1%, transparent) 35.69%,
+    color-mix(in srgb, var(--color-bg) 78.8%, transparent) 40.58%,
+    color-mix(in srgb, var(--color-bg) 72.2%, transparent) 45.23%,
+    color-mix(in srgb, var(--color-bg) 65.1%, transparent) 49.85%,
+    color-mix(in srgb, var(--color-bg) 56.9%, transparent) 54.67%,
+    color-mix(in srgb, var(--color-bg) 47.8%, transparent) 59.91%,
+    color-mix(in srgb, var(--color-bg) 38.8%, transparent) 65.78%,
+    color-mix(in srgb, var(--color-bg) 29%, transparent) 72.51%,
+    color-mix(in srgb, var(--color-bg) 20%, transparent) 80.31%,
+    color-mix(in srgb, var(--color-bg) 10.2%, transparent) 89.4%,
+    color-mix(in srgb, var(--color-bg) 0%, transparent) 100%
+  );
+  opacity: var(--fog-opacity, 0.6);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .edge-fog::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    backdrop-filter: blur(var(--fog-blur, 4px));
+    -webkit-backdrop-filter: blur(var(--fog-blur, 4px));
+    mask-image: linear-gradient(var(--fog-dir, 180deg), black 0%, transparent 85%);
+    -webkit-mask-image: linear-gradient(var(--fog-dir, 180deg), black 0%, transparent 85%);
+  }
+}
+.edge-fog--top { top: 0; --fog-dir: 180deg; }
+.edge-fog--bottom { bottom: 0; --fog-dir: 0deg; height: 100px; }
 
 /* ---------------------------------------------------------------------------
    Glass — vellum, not Vision Pro.
@@ -211,7 +331,13 @@ hr {
   border-left: 2px solid var(--color-rule);
   padding-left: 1rem;
   color: var(--color-ink-muted);
+  font-family: var(--font-serif);
+  font-style: italic; /* real italics — the serif carries them, never faux-slanted sans */
+}
+.prose em {
+  font-family: var(--font-serif);
   font-style: italic;
+  font-size: 1.0625em; /* serif runs optically small beside Aileron */
 }
 .prose code {
   font-family: var(--font-mono);
@@ -259,11 +385,11 @@ hr {
   border-bottom: none;
 }
 .archive-row .kind {
-  font-family: var(--font-mono);
+  font-weight: 300;
   font-size: var(--text-xs);
   color: var(--color-ink-muted);
   text-transform: lowercase;
-  letter-spacing: 0.04em; /* matches the mono-label tracking in the Landing frame */
+  letter-spacing: 0.02em;
   min-width: 4.5rem;
 }
 .archive-row .title {
@@ -273,9 +399,12 @@ hr {
   color: var(--color-accent);
 }
 .archive-row .date {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-stretch: 87.5%;
+  font-size: var(--text-base);
   color: var(--color-ink-muted);
+  line-height: 20px;
   white-space: nowrap;
 }
 
@@ -289,14 +418,6 @@ hr {
 }
 .archive-row--plain .title:hover {
   color: var(--color-accent);
-}
-.archive-row--plain .date {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-stretch: 87.5%;
-  font-size: var(--text-base);
-  color: var(--color-ink-muted);
-  line-height: 20px;
 }
 
 @media (max-width: 540px) {
