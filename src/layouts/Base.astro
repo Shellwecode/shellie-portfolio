@@ -13,6 +13,8 @@ interface Props {
   deck?: 'pill' | 'none';
   /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages. */
   fog?: boolean;
+  /** Reading pages: the dock recedes when not hovered/focused. */
+  quietDock?: boolean;
 }
 
 const {
@@ -20,13 +22,14 @@ const {
   description = "Product designer in Boston. Empathetic, quiet interfaces.",
   deck = 'pill',
   fog = false,
+  quietDock = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" data-quiet-dock={quietDock || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

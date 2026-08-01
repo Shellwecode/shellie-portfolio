@@ -9,6 +9,7 @@ import ThemeToggle from './ThemeToggle.astro';
   </button>
   <div class="topbar-spacer"></div>
   <nav class="topbar-mobile-nav">
+    <a href="/">home</a>
     <a href="/about">about</a>
     <a href="/projects">work</a>
     <a href="/workshop">workshop</a>
@@ -92,6 +93,8 @@ import ThemeToggle from './ThemeToggle.astro';
     inset: -11px -6px;
   }
   .topbar-link:hover { color: var(--color-accent); }
+  /* "now" belongs to the main pages — reading pages keep the top clean. */
+  :global(html[data-quiet-dock]) .topbar-link[data-deck-toggle] { display: none; }
   .topbar-mobile-nav { display: none; }
   @media (max-width: 768px) {
     .topbar-mobile-nav {

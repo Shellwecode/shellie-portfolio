@@ -152,17 +152,27 @@ import now from '../data/now.json';
     return document.documentElement.getAttribute('data-rail') === 'open';
   }
   function wireRail() {
-    // Anything marked data-deck-toggle (whisper pill, topbar "now") toggles the rail.
+    // Anything marked data-deck-toggle (whisper pill, topbar "now") toggles
+    // the rail. Persisted elements (the pill) survive view transitions while
+    // this re-runs per page — the guard keeps listeners from stacking, which
+    // read as "toggle does nothing" once the count went even.
+    const wire = (el: Element, fn: () => void) => {
+      if ((el as HTMLElement).dataset.wired) return;
+      (el as HTMLElement).dataset.wired = '1';
+      el.addEventListener('click', fn);
+    };
     document.querySelectorAll('[data-deck-toggle]').forEach((el) =>
-      el.addEventListener('click', () => setRail(!railIsOpen())),
+      wire(el, () => setRail(!railIsOpen())),
     );
     document.querySelectorAll('[data-rail-close]').forEach((el) =>
-      el.addEventListener('click', () => setRail(false)),
+      wire(el, () => setRail(false)),
     );
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && railIsOpen()) setRail(false);
     if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) {
+      // Reading pages hide the now toggle — the shortcut respects that.
+      if (document.documentElement.hasAttribute('data-quiet-dock')) return;
       const target = e.target as HTMLElement;
       if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') setRail(!railIsOpen());
     }

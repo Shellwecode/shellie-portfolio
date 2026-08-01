@@ -1,10 +1,13 @@
 ---
-// One element, two shapes: at rest a small glass capsule sits bottom-left
-// holding the library (menu) button; open, the capsule grows to full height
-// and the nav icons appear above it. The trigger never moves — the capsule
-// morphs around it. Glass floats over the page margin; content never reflows.
+// Fluid dock: the library button is a droplet; opening pulls five smaller
+// droplets out of it, and a gooey SVG filter (blur → alpha-contrast →
+// composite atop) makes them stretch and split like liquid. Two aligned
+// layers: filtered solid blobs underneath, crisp unfiltered icons on top —
+// anything inside the filter would smear. After Lucas Bebber's gooey
+// technique (via fancycomponents.dev).
 
 const items = [
+  { href: '/', label: 'home' },
   { href: '/about', label: 'about' },
   { href: '/projects', label: 'work' },
   { href: '/workshop', label: 'workshop' },
@@ -14,6 +17,8 @@ const items = [
 
 // 24-viewBox glyphs, 1.5px optical stroke at rendered size, round caps.
 const glyphs: Record<string, string> = {
+  home:
+    '<path d="M4.5 11L12 4.75 19.5 11"/><path d="M6.5 9.25v10.25h11V9.25"/>',
   about:
     '<circle cx="12" cy="8.5" r="3.25"/><path d="M5.5 19.5c.9-3.7 3.5-5.6 6.5-5.6s5.6 1.9 6.5 5.6"/>',
   work:
@@ -28,20 +33,61 @@ const glyphs: Record<string, string> = {
 const pathname = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+// Droplet order: --i counts outward from the toggle, so the last array item
+// sits nearest the button and 'about' stays on top, as before.
+const withIndex = items.map((item, idx) => ({
+  ...item,
+  i: items.length - 1 - idx,
+}));
 ---
 
-<nav class="dock glass" transition:persist="sidenav" aria-label="Site navigation">
-  <div class="dock-items">
-    {items.map((item) => (
+<nav class="dock" transition:persist="sidenav" aria-label="Site navigation">
+  {/* The goo: blur bleeds neighbors together, the color matrix sharpens the
+      alpha back, composite keeps the original color inside the blob. */}
+  <svg class="dock-defs" width="0" height="0" aria-hidden="true">
+    <defs>
+      <filter id="dock-goo">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+        <feColorMatrix
+          in="blur"
+          mode="matrix"
+          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+          result="goo"
+        />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+  </svg>
+
+  {/* Shadow layer — unfiltered twins of the blobs carrying box-shadows.
+      Shadows must live outside the goo: chained after the filter, Safari
+      recomputes them from the filter output and they lag the motion. */}
+  <div class="dock-shadow" aria-hidden="true">
+    <span class="goo-blob goo-toggle shadow-blob"></span>
+    {withIndex.map((item) => (
+      <span class="goo-blob goo-item shadow-blob" style={`--i: ${item.i}`}></span>
+    ))}
+  </div>
+
+  <div class="dock-goo" aria-hidden="true">
+    <span class="goo-blob goo-toggle"></span>
+    {withIndex.map((item) => (
+      <span class="goo-blob goo-item" style={`--i: ${item.i}`}></span>
+    ))}
+  </div>
+
+  <div class="dock-links">
+    {withIndex.map((item) => (
       <a
         href={item.href}
         class:list={['dock-item', { active: isActive(item.href) }]}
+        style={`--i: ${item.i}`}
         aria-label={item.label}
-        title={item.label}
       >
         <svg
-          width="32"
-          height="32"
+          width="30"
+          height="30"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -53,27 +99,27 @@ const isActive = (href: string) =>
         />
       </a>
     ))}
+    <button
+      type="button"
+      class="dock-library"
+      data-nav-toggle
+      aria-label="Toggle navigation menu"
+      aria-expanded="false"
+    >
+      <svg
+        width="26"
+        height="26"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.385"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+        set:html={glyphs.library}
+      />
+    </button>
   </div>
-  <button
-    type="button"
-    class="dock-library"
-    data-nav-toggle
-    aria-label="Toggle navigation menu"
-    aria-expanded="false"
-  >
-    <svg
-      width="26"
-      height="26"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.385"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-      set:html={glyphs.library}
-    />
-  </button>
 </nav>
 
 <style>
@@ -82,74 +128,156 @@ const isActive = (href: string) =>
     left: var(--nav-inset);
     bottom: var(--nav-inset);
     z-index: 40;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
     width: 56px;
-    height: 56px; /* closed: capsule around the library button */
-    padding: 0.875rem 0;
-    border-radius: 999px;
-    overflow: hidden;
-    transition: height var(--dock-ms, var(--motion-content)) cubic-bezier(0.2, 0, 0, 1);
-  }
-  /* Hover peek — the capsule stretches upward, hinting at the expansion. */
-  :global(html:not([data-nav='open'])) .dock:hover { height: var(--dock-peek-h, 79px); }
-  :global(html[data-nav='open']) .dock {
-    height: calc(100dvh - 2 * var(--nav-inset));
+    height: 56px; /* anchor box — droplets overflow upward freely */
+    /* Droplet geometry — one source of truth for both layers.
+       (--lift lives on the items: declared here, its var(--i) would resolve
+       once against the dock and every droplet would share one slot.) */
+    --blob: 44px;
+    --step: 54px;
+    --squish: cubic-bezier(0.3, 1.3, 0.4, 1); /* slight overshoot = liquid */
+    --goo-ms: 420ms;
+    --goo-stagger: 40ms;
   }
 
-  .dock-items {
+  .dock-defs { position: absolute; }
+
+  /* Reading pages: the dock recedes into the paper until you reach for it.
+     The delay keeps it from flickering as the pointer passes by. */
+  :global(html[data-quiet-dock]) .dock {
+    opacity: 0.35;
+    transition: opacity var(--motion-content) ease 400ms;
+  }
+  :global(html[data-quiet-dock]) .dock:hover,
+  :global(html[data-quiet-dock]) .dock:focus-within {
+    opacity: 1;
+    transition-delay: 0ms;
+  }
+
+  /* ---- goo layer: solid shapes only, nothing but the filter ---- */
+  .dock-goo {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    filter: url(#dock-goo);
+  }
+  /* ---- shadow layer: invisible circles, visible shadows, no filter ---- */
+  .dock-shadow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .shadow-blob {
+    background: transparent;
+    box-shadow: 0 8px 28px color-mix(in oklab, var(--color-ink) 13%, transparent);
+  }
+  /* Closed, the five twins stack under the toggle and would triple its
+     shadow — their shadows only exist while the droplets are out. */
+  .shadow-blob.goo-item {
+    opacity: 0;
+    transition:
+      translate var(--goo-ms) var(--squish),
+      scale var(--goo-ms) var(--squish),
+      opacity 200ms ease;
+    transition-delay: 0ms;
+  }
+  :global(html[data-nav='open']) .shadow-blob.goo-item { opacity: 1; }
+  .goo-blob {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    translate: -50% 0;
+  }
+  .goo-item {
+    --lift: calc(-60px - var(--i, 0) * var(--step));
+    /* Left-anchored (not centered) so the hover stretch grows rightward —
+       a droplet elongating toward its label. */
+    left: 6px;
+    translate: 0 0;
+    width: var(--blob);
+    height: var(--blob);
+    bottom: 6px;
+    scale: 0.35;
+    transition:
+      translate var(--goo-ms) var(--squish),
+      scale var(--goo-ms) var(--squish);
+    /* Interruptible: stagger only on the way out — closing (and any
+       mid-flight reversal) responds instantly from the current position. */
+    transition-delay: 0ms;
+  }
+  :global(html[data-nav='open']) .goo-item {
+    translate: 0 var(--lift);
+    scale: 1;
+    transition-delay: calc(var(--i) * var(--goo-stagger));
+  }
+  /* Hover tease — a small droplet bulges from the toggle's crown, about to
+     escape; the goo filter pulls it into a teardrop. */
+  :global(html:not([data-nav='open'])) .dock:hover .goo-item[style*='--i: 0'] {
+    translate: 0 -27px;
+    scale: 0.34;
+  }
+  .goo-toggle { transition: scale var(--goo-ms) var(--squish); }
+  :global(html:not([data-nav='open'])) .dock:hover .goo-toggle { scale: 1.04; }
+
+  /* ---- icon layer: unfiltered, mirrors the droplet motion exactly ---- */
+  .dock-links {
+    position: absolute;
+    inset: 0;
+  }
+  .dock-item {
+    --lift: calc(-60px - var(--i, 0) * var(--step));
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    flex: 1;
-    min-height: 0;
+    justify-content: center;
+    width: var(--blob);
+    height: var(--blob);
+    border-radius: 50%;
+    color: var(--color-ink-muted);
+    translate: 0 0;
     opacity: 0;
     visibility: hidden; /* removes hidden links from the tab order */
     pointer-events: none;
     transition:
-      opacity var(--motion-fade) ease-out,
-      visibility 0s linear var(--motion-fade);
+      translate var(--goo-ms) var(--squish),
+      opacity 200ms ease-out,
+      color var(--motion-micro) ease,
+      visibility 0s linear;
+    /* Close reverses instantly; visibility waits for the fade to finish. */
+    transition-delay: 0ms, 0ms, 0ms, 300ms;
   }
-  /* Container grows first, then contents arrive; on close they leave first. */
-  :global(html[data-nav='open']) .dock-items {
+  :global(html[data-nav='open']) .dock-item {
+    translate: 0 var(--lift);
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transition-delay: 120ms, 120ms;
+    /* icons condense a beat after their droplet starts moving */
+    transition-delay:
+      calc(var(--i) * var(--goo-stagger)),
+      calc(var(--i) * var(--goo-stagger) + 100ms),
+      0ms,
+      0ms;
   }
-
-  .dock-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    color: var(--color-ink-muted);
-    transition:
-      background var(--motion-micro) ease,
-      color var(--motion-micro) ease;
-  }
-  .dock-item:hover {
-    color: var(--color-ink);
-    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
-  }
-  .dock-item.active {
-    color: var(--color-ink);
-    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
-  }
+  .dock-item:hover,
+  .dock-item:focus-visible { color: var(--color-ink); }
+  .dock-item.active { color: var(--color-accent); }
 
   .dock-library {
-    position: relative;
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 56px;
+    height: 56px;
+    translate: -50% 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
     background: none;
     border: none;
     padding: 0;
@@ -157,17 +285,14 @@ const isActive = (href: string) =>
     cursor: pointer;
     transition: scale var(--motion-micro) ease;
   }
-  /* 26px glyph, 40px hit area */
-  .dock-library::after {
-    content: '';
-    position: absolute;
-    inset: -7px;
-  }
   .dock-library:active { scale: 0.96; }
 
   @media (prefers-reduced-motion: reduce) {
-    .dock { transition: none; }
-    .dock-items { transition: opacity var(--motion-micro) ease; transition-delay: 0ms; }
+    .goo-item,
+    .dock-item {
+      transition-duration: 0s, 0s, 0s, 0s;
+      transition-delay: 0ms, 0ms, 0ms, 0ms;
+    }
   }
 
   /* Mobile: no dock in phase 1 — TopBar carries the links */
@@ -177,16 +302,64 @@ const isActive = (href: string) =>
 </style>
 
 <script>
+  // The dock persists across view transitions, so its server-rendered
+  // active state goes stale — re-mark it against the live pathname.
+  function markActive() {
+    const path = location.pathname;
+    document.querySelectorAll('.dock-item').forEach((a) => {
+      const href = a.getAttribute('href') ?? '';
+      const active = href === '/' ? path === '/' : path.startsWith(href);
+      a.classList.toggle('active', active);
+    });
+  }
+  markActive();
+  document.addEventListener('astro:page-load', markActive);
+
+  // Leaving a page closes the menu: droplets fold home during the transition
+  // and the next page never replays the open state.
+  document.addEventListener('astro:before-swap', () => {
+    if (document.documentElement.getAttribute('data-nav') === 'open') {
+      document.documentElement.removeAttribute('data-nav');
+      document
+        .querySelectorAll('[data-nav-toggle]')
+        .forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    }
+  });
+
+  // Open state is session-ephemeral now — clear any legacy persisted value
+  // so a hard reload never resurrects an open menu.
+  try {
+    localStorage.removeItem('nav');
+  } catch {}
+
+  // Clicking anywhere outside the open menu closes it (Escape too).
+  function closeNav() {
+    if (document.documentElement.getAttribute('data-nav') !== 'open') return;
+    document.documentElement.removeAttribute('data-nav');
+    document
+      .querySelectorAll('[data-nav-toggle]')
+      .forEach((b) => b.setAttribute('aria-expanded', 'false'));
+  }
+  document.addEventListener('click', (e) => {
+    if (!(e.target as Element)?.closest?.('.dock')) closeNav();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeNav();
+  });
+
   function wireNav() {
     document.querySelectorAll('[data-nav-toggle]').forEach((el) => {
+      // The dock persists across view transitions while this re-runs on
+      // every page-load — without the guard, listeners stack on the same
+      // button and an even count opens + re-closes in one click.
+      if ((el as HTMLElement).dataset.wired) return;
+      (el as HTMLElement).dataset.wired = '1';
       el.addEventListener('click', () => {
         const open = document.documentElement.getAttribute('data-nav') === 'open';
         if (open) {
           document.documentElement.removeAttribute('data-nav');
-          localStorage.setItem('nav', 'closed');
         } else {
           document.documentElement.setAttribute('data-nav', 'open');
-          localStorage.setItem('nav', 'open');
         }
         el.setAttribute('aria-expanded', String(!open));
       });
