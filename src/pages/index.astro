@@ -15,6 +15,10 @@ const otherProjects = allProjects
   .slice(0, 1);
 // Third card is hand-picked: the early MIT project balances the two 2026 ones.
 const thirdProject = allProjects.find((p) => p.id === 'saving-face') ?? null;
+// The bento's three: Cortex anchors, the other two stack right.
+const featured = [heroProject, ...otherProjects, thirdProject].filter(
+  (p): p is NonNullable<typeof p> => Boolean(p),
+);
 
 // Card titles are the short form, Title Case per DS v0.3:
 // "Cortex — Voice AI Agent Builder" → "Cortex".
@@ -42,7 +46,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
       </p>
       <p class="intro enter" style="--enter-i: 2">
         I'm building Five9's first <a href="/projects/cortex">voice AI agent builder</a>;
-        before that, I researched human-AI interaction and made creative tools.
+        before that, I researched human-computer interaction and made creative tools.
       </p>
       <p class="intro intro-muted enter" style="--enter-i: 3">
         Constantly inspired by sci-fi, mathematics, and curiosity about how
@@ -51,67 +55,36 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     </div>
   </section>
 
-  {/* Selected work — one card anatomy; the current project is the emphasis variant. */}
+  {/* Selected work — bento, Shellie's dial-tuned composition (aug 2):
+      Cortex anchors 64%, twin 282px cells stack right. Cards are pure image
+      at rest; hover reveals tag, title, subtitle (shared styles, global.css) */}
   <section class="work">
     <div class="section-head enter" style="--enter-i: 3">
       <h2 class="section-title">Selected work</h2>
       <a href="/projects" class="section-link">show all <span class="section-link-arrow">→</span></a>
     </div>
     <div class="cards">
-      {heroProject && (
-        <a href={projectHref(heroProject)} class="card enter" style="--enter-i: 4">
-          <div class="card-cover">
-            {heroProject.data.cover && (
-              <Image
-                src={heroProject.data.cover}
-                alt={`${heroProject.data.title} cover`}
-                widths={[420, 840]}
-                sizes="(max-width: 768px) 100vw, 410px"
-              />
-            )}
-          </div>
-          <span class="card-text">
-            <span class="card-title">{shortTitle(heroProject.data.title)}</span>
-            <span class="card-sub">{heroProject.data.tagline ?? heroProject.data.summary}</span>
-          </span>
-        </a>
-      )}
-      {otherProjects.map((p, i) => (
-        <a href={projectHref(p)} class="card enter" style={`--enter-i: ${5 + i}`}>
+      {featured.map((p, i) => (
+        <a href={projectHref(p)} class="card enter" data-i={i} style={`--enter-i: ${4 + i}`}>
           <div class="card-cover">
             {p.data.cover && (
               <Image
                 src={p.data.cover}
                 alt={`${p.data.title} cover`}
-                widths={[420, 840]}
-                sizes="(max-width: 768px) 100vw, 410px"
+                widths={[420, 840, 1320]}
+                sizes="(max-width: 768px) 100vw, 660px"
               />
             )}
+            <span class="card-veil" aria-hidden="true"></span>
+            <span class="card-overlay">
+              <span class="card-tag">{p.data.tags.find((t) => t !== 'work') ?? p.data.year}</span>
+              <span class="card-ov-title">{shortTitle(p.data.title)}</span>
+              <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
+            </span>
+            <span class="card-go" aria-hidden="true">↗</span>
           </div>
-          <span class="card-text">
-            <span class="card-title">{shortTitle(p.data.title)}</span>
-            <span class="card-sub">{p.data.tagline ?? p.data.summary}</span>
-          </span>
         </a>
       ))}
-      {thirdProject && (
-        <a href={projectHref(thirdProject)} class="card enter" style="--enter-i: 6">
-          <div class="card-cover">
-            {thirdProject.data.cover && (
-              <Image
-                src={thirdProject.data.cover}
-                alt={`${thirdProject.data.title} cover`}
-                widths={[420, 840]}
-                sizes="(max-width: 768px) 100vw, 410px"
-              />
-            )}
-          </div>
-          <span class="card-text">
-            <span class="card-title">{shortTitle(thirdProject.data.title)}</span>
-            <span class="card-sub">{thirdProject.data.tagline ?? thirdProject.data.summary}</span>
-          </span>
-        </a>
-      )}
     </div>
   </section>
 
@@ -186,22 +159,26 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .section-link:hover .section-link-arrow { translate: var(--arrow-nudge, 3px) 0; }
 
   .work { margin-bottom: 2.625rem; } /* 14 section pad + 28 main gap, per frame */
+  /* Bento — Shellie's dial-tuned composition, locked 2026-08-02:
+     64% Cortex anchor, twin 282px cells stacked right */
   .cards {
-    display: flex;
+    display: grid;
     gap: var(--card-gap);
+    grid-template-columns: calc(64% - var(--card-gap) / 2) 1fr;
+    grid-template-areas: 'a b' 'a c';
   }
+  .card[data-i='0'] { grid-area: a; }
+  .card[data-i='2'] { grid-area: b; }
+  .card[data-i='1'] { grid-area: c; }
+  .card[data-i='0'] .card-cover { height: auto; flex: 1; }
+  .card[data-i='2'] .card-cover { height: 282px; }
+  .card[data-i='1'] .card-cover { height: 282px; }
   .card {
     display: flex;
     flex-direction: column;
-    gap: 0.625rem;
     flex: 1;
     min-width: 0;
     text-decoration: none;
-  }
-  .card-text {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
   }
   .card-cover {
     position: relative;
@@ -210,19 +187,12 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     background: var(--color-rule);
     border-radius: 16px;
     overflow: hidden;
+    /* layered elevation replaces the hairline outline — ring + two soft layers */
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease;
   }
-  /* hairline image outline — sits above the image, keeps cover edges crisp */
-  .card-cover::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    box-shadow: inset 0 0 0 1px oklch(0 0 0 / 0.08);
-    pointer-events: none;
-  }
-  :global(html[data-theme='dark']) .card-cover::after {
-    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.08);
-  }
+  .card:hover .card-cover,
+  .card:focus-visible .card-cover { box-shadow: var(--shadow-card-hover); }
   .card-cover :global(img) {
     width: 100%;
     height: 100%;
@@ -230,20 +200,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     transition: transform var(--hover-card-ms, var(--motion-content)) ease-out;
   }
   .card:hover .card-cover :global(img) { transform: scale(var(--hover-card-scale, 1.02)); }
-  .card-title {
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 20px;
-    color: var(--color-ink);
-    transition: color var(--motion-micro) ease;
-  }
-  .card:hover .card-title { color: var(--color-accent); }
-  .card-sub {
-    font-weight: 300;
-    font-size: 0.75rem;
-    line-height: 16px;
-    color: var(--color-ink-muted);
-  }
+  /* overlay reveal (veil, tag, title, sub, ↗ chip) is shared — global.css */
 
   .writing { max-width: var(--measure); } /* 768 — the frame's writing column */
   .writing .section-title { margin-bottom: 0.875rem; }
@@ -255,6 +212,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .writing-list :global(.archive-row--plain) { padding-block: 10px; }
 
   @media (max-width: 768px) {
-    .cards { flex-direction: column; }
+    .cards { display: flex; flex-direction: column; }
+    .card[data-i='0'] .card-cover { height: 240px; flex: none; }
   }
 </style>

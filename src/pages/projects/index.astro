@@ -14,7 +14,9 @@ const row1 = rest.slice(0, 1); // shares the top row with the emphasis card
 const row2 = rest.slice(1);
 
 const href = (p: (typeof projects)[number]) => p.data.external ?? `/projects/${p.id}`;
-const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
+const shortTitle = (title: string) => title.split('—')[0].trim();
+const tag = (p: (typeof projects)[number]) =>
+  p.data.tags.find((t) => t !== 'work') ?? p.data.year;
 ---
 
 <Base
@@ -41,9 +43,14 @@ const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
               sizes="(max-width: 768px) 100vw, 640px"
             />
           )}
+          <span class="card-veil" aria-hidden="true"></span>
+          <span class="card-overlay">
+            <span class="card-tag">{tag(heroProject)}</span>
+            <span class="card-ov-title">{shortTitle(heroProject.data.title)}</span>
+            <span class="card-ov-sub">{heroProject.data.tagline ?? heroProject.data.summary}</span>
+          </span>
+          <span class="card-go" aria-hidden="true">↗</span>
         </div>
-        <span class="card-title">{heroProject.data.title.toLowerCase()}</span>
-        <span class="card-meta">{kind(heroProject)} · {heroProject.data.year} · current</span>
       </a>
     )}
     {row1.map((p) => (
@@ -57,9 +64,14 @@ const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
               sizes="(max-width: 768px) 100vw, 320px"
             />
           )}
+          <span class="card-veil" aria-hidden="true"></span>
+          <span class="card-overlay">
+            <span class="card-tag">{tag(p)}</span>
+            <span class="card-ov-title">{shortTitle(p.data.title)}</span>
+            <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
+          </span>
+          <span class="card-go" aria-hidden="true">↗</span>
         </div>
-        <span class="card-title">{p.data.title.toLowerCase()}{p.data.external && ' ↗'}</span>
-        <span class="card-meta">{kind(p)} · {p.data.year}</span>
       </a>
     ))}
   </div>
@@ -77,9 +89,14 @@ const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
                 sizes="(max-width: 768px) 100vw, 320px"
               />
             )}
+            <span class="card-veil" aria-hidden="true"></span>
+            <span class="card-overlay">
+              <span class="card-tag">{tag(p)}</span>
+              <span class="card-ov-title">{shortTitle(p.data.title)}</span>
+              <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
+            </span>
+            <span class="card-go" aria-hidden="true">↗</span>
           </div>
-          <span class="card-title">{p.data.title.toLowerCase()}{p.data.external && ' ↗'}</span>
-          <span class="card-meta">{kind(p)} · {p.data.year}</span>
         </a>
       ))}
     </div>
@@ -111,12 +128,17 @@ const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
   }
   .card-emphasis { flex: 2; }
   .card-cover {
+    position: relative;
     width: 100%;
     height: 240px;
     background: var(--color-rule);
     border-radius: 16px;
     overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease;
   }
+  .card:hover .card-cover,
+  .card:focus-visible .card-cover { box-shadow: var(--shadow-card-hover); }
   .card-cover-short { height: 170px; }
   .card-cover :global(img) {
     width: 100%;
@@ -125,18 +147,7 @@ const kind = (p: (typeof projects)[number]) => p.data.tags?.[0] ?? 'case study';
     transition: transform var(--motion-content) ease-out;
   }
   .card:hover .card-cover :global(img) { transform: scale(1.02); }
-  .card-title {
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-ink);
-    transition: color var(--motion-micro) ease;
-  }
-  .card:hover .card-title { color: var(--color-accent); }
-  .card-meta {
-    font-weight: 300;
-    font-size: 0.75rem;
-    color: var(--color-ink-muted);
-  }
+  /* overlay reveal (veil, tag, title, sub, ↗ chip) is shared — global.css */
 
   @media (max-width: 768px) {
     .cards-row { flex-direction: column; }

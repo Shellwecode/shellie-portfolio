@@ -6,13 +6,15 @@
 // anything inside the filter would smear. After Lucas Bebber's gooey
 // technique (via fancycomponents.dev).
 
+// Shellie's hand-drawn icons (charcoal, exported from Paper as webp) carry
+// the set; home + workshop keep stroke glyphs until she draws them.
 const items = [
   { href: '/', label: 'home' },
-  { href: '/about', label: 'about' },
-  { href: '/projects', label: 'work' },
+  { href: '/about', label: 'about', img: '/icons/avatar.webp' },
+  { href: '/projects', label: 'work', img: '/icons/star.webp' },
   { href: '/workshop', label: 'workshop' },
-  { href: '/writing', label: 'writing' },
-  { href: '/doodles', label: 'doodle' },
+  { href: '/writing', label: 'writing', img: '/icons/music-note.webp' },
+  { href: '/doodles', label: 'doodle', img: '/icons/fried-egg.webp' },
 ];
 
 // 24-viewBox glyphs, 1.5px optical stroke at rendered size, round caps.
@@ -48,11 +50,11 @@ const withIndex = items.map((item, idx) => ({
   <svg class="dock-defs" width="0" height="0" aria-hidden="true">
     <defs>
       <filter id="dock-goo">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+        <feGaussianBlur in="SourceGraphic" stdDeviation="7.5" result="blur" />
         <feColorMatrix
           in="blur"
           mode="matrix"
-          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
+          values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"
           result="goo"
         />
         <feComposite in="SourceGraphic" in2="goo" operator="atop" />
@@ -85,18 +87,22 @@ const withIndex = items.map((item, idx) => ({
         style={`--i: ${item.i}`}
         aria-label={item.label}
       >
-        <svg
-          width="30"
-          height="30"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.125"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          set:html={glyphs[item.label]}
-        />
+        {item.img ? (
+          <img class="dock-art" src={item.img} alt="" width="30" height="30" loading="lazy" />
+        ) : (
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.125"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            set:html={glyphs[item.label]}
+          />
+        )}
       </a>
     ))}
     <button
@@ -106,18 +112,7 @@ const withIndex = items.map((item, idx) => ({
       aria-label="Toggle navigation menu"
       aria-expanded="false"
     >
-      <svg
-        width="26"
-        height="26"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.385"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-        set:html={glyphs.library}
-      />
+      <img class="dock-planet" src="/icons/planet.webp" alt="" width="38" height="18" />
     </button>
   </div>
 </nav>
@@ -132,12 +127,15 @@ const withIndex = items.map((item, idx) => ({
     height: 56px; /* anchor box — droplets overflow upward freely */
     /* Droplet geometry — one source of truth for both layers.
        (--lift lives on the items: declared here, its var(--i) would resolve
-       once against the dock and every droplet would share one slot.) */
-    --blob: 44px;
-    --step: 54px;
-    --squish: cubic-bezier(0.3, 1.3, 0.4, 1); /* slight overshoot = liquid */
-    --goo-ms: 420ms;
+       once against the dock and every droplet would share one slot.)
+       Values are Shellie's dial-tuned defaults, locked 2026-08-02. */
+    --blob: 52px;
+    --step: 50px; /* blob > step: open droplets kiss and the goo chains them */
+    --squish: cubic-bezier(0.3, 1.6, 0.4, 1); /* pronounced overshoot = liquid */
+    --goo-ms: 600ms;
     --goo-stagger: 40ms;
+    --peek-lift: 40px; /* the tease droplet escapes far and small */
+    --peek-scale: 0.3;
   }
 
   .dock-defs { position: absolute; }
@@ -169,7 +167,8 @@ const withIndex = items.map((item, idx) => ({
   }
   .shadow-blob {
     background: transparent;
-    box-shadow: 0 8px 28px color-mix(in oklab, var(--color-ink) 13%, transparent);
+    box-shadow: 0 8px var(--dock-shadow-blur, 28px)
+      color-mix(in oklab, var(--color-ink) var(--dock-shadow-pct, 13%), transparent);
   }
   /* Closed, the five twins stack under the toggle and would triple its
      shadow — their shadows only exist while the droplets are out. */
@@ -217,8 +216,8 @@ const withIndex = items.map((item, idx) => ({
   /* Hover tease — a small droplet bulges from the toggle's crown, about to
      escape; the goo filter pulls it into a teardrop. */
   :global(html:not([data-nav='open'])) .dock:hover .goo-item[style*='--i: 0'] {
-    translate: 0 -27px;
-    scale: 0.34;
+    translate: 0 calc(var(--peek-lift, 27px) * -1);
+    scale: var(--peek-scale, 0.34);
   }
   .goo-toggle { transition: scale var(--goo-ms) var(--squish); }
   :global(html:not([data-nav='open'])) .dock:hover .goo-toggle { scale: 1.04; }
@@ -267,6 +266,48 @@ const withIndex = items.map((item, idx) => ({
   .dock-item:hover,
   .dock-item:focus-visible { color: var(--color-ink); }
   .dock-item.active { color: var(--color-accent); }
+
+  /* Hand-drawn artwork icons — fixed-color charcoal, so states speak in
+     opacity; the active page gets a small sienna dot beneath the drawing. */
+  .dock-art {
+    width: auto;
+    height: auto;
+    max-width: 30px;
+    max-height: 30px;
+    opacity: 0.75;
+    transition: opacity var(--motion-micro) ease;
+  }
+  .dock-item:hover .dock-art,
+  .dock-item:focus-visible .dock-art,
+  .dock-item.active .dock-art { opacity: 1; }
+  .dock-item.active:has(.dock-art)::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    translate: -50% 0;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--color-accent);
+  }
+  .dock-planet {
+    width: auto;
+    height: auto;
+    max-width: 38px;
+    max-height: 20px;
+  }
+
+  /* Dark mode: the droplets stay paper — charcoal drawings need a light
+     ground, and cream chips floating on the dark page read as, well, paper. */
+  :global(html[data-theme='dark']) .goo-blob {
+    background: #ece6db;
+  }
+  :global(html[data-theme='dark']) .dock-item { color: #78736c; }
+  :global(html[data-theme='dark']) .dock-item:hover,
+  :global(html[data-theme='dark']) .dock-item:focus-visible { color: #2a2824; }
+  :global(html[data-theme='dark']) .dock-item.active { color: var(--color-accent); }
+  :global(html[data-theme='dark']) .dock-library { color: #2a2824; }
 
   .dock-library {
     position: absolute;

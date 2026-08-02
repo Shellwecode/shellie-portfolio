@@ -102,6 +102,18 @@
   --motion-micro: 380ms;    /* link + hover color — dial-tuned (was 120) */
   --motion-fade: 180ms;     /* theme toggle, page crossfade */
   --motion-content: 240ms;  /* content swaps, dims, staggered children */
+
+  /* Card elevation — layered shadow instead of a border (after jakub.kr's
+     "details that make interfaces feel better"): a 1px transparent ring
+     plus two soft layers; hover deepens each layer a step. */
+  --shadow-card:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
+    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.08),
+    0px 1px 2px -1px rgba(0, 0, 0, 0.08),
+    0px 2px 4px 0px rgba(0, 0, 0, 0.06);
 }
 
 /* Dark mode — same warmth, inverted values */
@@ -112,6 +124,9 @@
   --color-ink-faint: #625c54;
   --color-rule: #2e2a25;
   --color-accent: #d07a52;
+  /* dark mode: the shadow becomes the border — a single white ring */
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --shadow-card-hover: 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 /* ---------------------------------------------------------------------------
@@ -383,6 +398,97 @@ html[data-entrance] .chapter-player {
 }
 .prose li + li {
   margin-top: 0.4em;
+}
+
+/* ---------------------------------------------------------------------------
+   Card overlay reveal — shared by every project cover card (landing bento,
+   work index, workshop heroes). At rest the card is pure image; hover or
+   focus raises a bottom scrim with tag pill, title, subtitle, and a corner
+   ↗ chip. Touch keeps the overlay persistent.
+--------------------------------------------------------------------------- */
+.card-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 42%,
+    color-mix(in oklab, #1b1815 82%, transparent) 100%
+  );
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.card-overlay {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  opacity: 0;
+  translate: 0 6px;
+  transition: opacity 200ms ease-out, translate 200ms ease-out;
+}
+.card-tag {
+  align-self: flex-start;
+  padding: 3px 9px;
+  margin-bottom: 3px;
+  border-radius: 999px;
+  background: rgba(250, 248, 245, 0.92);
+  color: #2a2824;
+  font-size: 0.6875rem;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+}
+.card-ov-title {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 21px;
+  color: #faf8f5;
+}
+.card-ov-sub {
+  font-weight: 300;
+  font-size: 0.75rem;
+  line-height: 16px;
+  color: rgba(250, 248, 245, 0.78);
+}
+.card-go {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(250, 248, 245, 0.94);
+  color: #2a2824;
+  font-size: 0.875rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  scale: 0.25;
+  filter: blur(4px);
+  transition:
+    opacity 300ms cubic-bezier(0.2, 0, 0, 1),
+    scale 300ms cubic-bezier(0.2, 0, 0, 1),
+    filter 300ms cubic-bezier(0.2, 0, 0, 1);
+}
+:is(.card, .card-link):hover .card-veil,
+:is(.card, .card-link):focus-visible .card-veil { opacity: 1; }
+:is(.card, .card-link):hover .card-overlay,
+:is(.card, .card-link):focus-visible .card-overlay { opacity: 1; translate: 0 0; }
+:is(.card, .card-link):hover .card-go,
+:is(.card, .card-link):focus-visible .card-go { opacity: 1; scale: 1; filter: blur(0px); }
+@media (hover: none) {
+  .card-veil { opacity: 1; }
+  .card-overlay { opacity: 1; translate: 0 0; }
+  .card-go { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-veil, .card-overlay, .card-go { transition: opacity 120ms ease; }
+  .card-overlay { translate: 0 0; }
+  .card-go { scale: 1; filter: none; }
 }
 
 /* ---------------------------------------------------------------------------

@@ -36,24 +36,33 @@ const statusLabel = (s: string) => (s === 'in-dev' ? 'in dev' : s);
                   widths={[600, 900, 1200]}
                   sizes="(max-width: 768px) 100vw, 768px"
                 />
+                <span class="card-veil" aria-hidden="true"></span>
+                <span class="card-overlay">
+                  <span class="card-tag">{statusLabel(w.data.status)}</span>
+                  <span class="card-ov-title">{w.data.title}</span>
+                </span>
+                <span class="card-go" aria-hidden="true">↗</span>
               </div>
             </a>
           ) : (
-            <div class="card-hero">
-              <Image
-                src={w.data.hero}
-                alt={`${w.data.title} cover`}
-                widths={[600, 900, 1200]}
-                sizes="(max-width: 768px) 100vw, 768px"
-              />
+            <div class="card-link">
+              <div class="card-hero">
+                <Image
+                  src={w.data.hero}
+                  alt={`${w.data.title} cover`}
+                  widths={[600, 900, 1200]}
+                  sizes="(max-width: 768px) 100vw, 768px"
+                />
+                <span class="card-veil" aria-hidden="true"></span>
+                <span class="card-overlay">
+                  <span class="card-tag">{statusLabel(w.data.status)}</span>
+                  <span class="card-ov-title">{w.data.title}</span>
+                </span>
+              </div>
             </div>
           )
         )}
         <div class="card-meta" style="max-width: var(--measure);">
-          <div class="card-head">
-            <h2 class="card-title">{w.data.title}</h2>
-            <span class={`status status-${w.data.status}`}>{statusLabel(w.data.status)}</span>
-          </div>
           <p class="card-summary">{w.data.summary}</p>
           {w.data.stack.length > 0 && (
             <ul class="card-stack">
@@ -108,11 +117,16 @@ const statusLabel = (s: string) => (s === 'in-dev' ? 'in dev' : s);
   }
 
   .card-hero {
+    position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
     border-radius: 16px;
     background: var(--color-rule);
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 200ms ease;
   }
+  .card-link:hover .card-hero,
+  .card-link:focus-visible .card-hero { box-shadow: var(--shadow-card-hover); }
   .card-hero :global(img) {
     width: 100%;
     height: 100%;
@@ -127,41 +141,6 @@ const statusLabel = (s: string) => (s === 'in-dev' ? 'in dev' : s);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-
-  .card-head {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .card-title {
-    font-size: var(--text-xl);
-    font-weight: 500;
-    color: var(--color-ink);
-  }
-
-  .status {
-    font-weight: 300;
-    font-size: var(--text-xs);
-    text-transform: lowercase;
-    letter-spacing: 0.02em;
-    padding: 0.1rem 0.5rem;
-    border-radius: 999px;
-    border: 1px solid var(--color-rule);
-    white-space: nowrap;
-  }
-  .status-live {
-    color: var(--color-accent);
-    border-color: color-mix(in oklab, var(--color-accent) 40%, transparent);
-  }
-  .status-in-dev {
-    color: var(--color-ink-muted);
-  }
-  .status-concept,
-  .status-archived {
-    color: var(--color-ink-faint);
   }
 
   .card-summary {

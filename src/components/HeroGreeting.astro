@@ -51,7 +51,10 @@ const langs = [
       </span>
     ))}
     <button type="button" class="g-voice" data-voice aria-hidden="true" tabindex="-1">
-      <svg width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      {/* Shellie's rotating universe — the voice made visible. Bars remain as
+          the reduced-motion fallback (looping video can't hold still). */}
+      <video class="g-universe" src="/img/greeting-universe.webm" autoplay muted loop playsinline width="26" height="22"></video>
+      <svg class="g-bars" width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <path class="w1" d="M1 6v0" /><path class="w2" d="M4 4v4" /><path class="w3" d="M7 2v8" /><path class="w4" d="M10 3v6" /><path class="w5" d="M13 5v2" /><path class="w6" d="M16 6v0" />
       </svg>
     </button>
@@ -130,6 +133,16 @@ const langs = [
   .g-voice::after { content: ''; position: absolute; inset: -8px; } /* 40px hit area */
   .g-voice:hover { color: var(--color-ink); }
   .g-voice:active { scale: 0.96; }
+  .g-universe {
+    height: 22px;
+    width: auto;
+    display: block;
+    transition: scale var(--motion-micro) ease;
+  }
+  .g-voice:hover .g-universe { scale: 1.1; }
+  /* While speaking, the universe leans in */
+  .g-wrap[data-playing] .g-universe { scale: 1.14; }
+  .g-bars { display: none; }
   /* While speaking, the bars breathe — feedback, paired with the lyric cue */
   @keyframes bar-breathe {
     0%, 100% { transform: scaleY(0.6); }
@@ -158,6 +171,9 @@ const langs = [
   @media (prefers-reduced-motion: reduce) {
     .g-layer.swapping { animation: none; }
     .g-wrap[data-playing] .g-voice path { animation: none; }
+    /* A GIF can't hold still — swap back to the static bars */
+    .g-universe { display: none; }
+    .g-bars { display: block; }
   }
 </style>
 
