@@ -2,8 +2,7 @@
 import '../styles/global.css';
 import SideNav from '../components/SideNav.astro';
 import TopBar from '../components/TopBar.astro';
-import WhisperPill from '../components/WhisperPill.astro';
-import NowRail from '../components/NowRail.astro';
+import NowPlayer from '../components/NowPlayer.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -94,8 +93,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     </div>
     {fog && <div class="edge-fog edge-fog--bottom" aria-hidden="true"></div>}
     <SideNav />
-    {deck === 'pill' && <WhisperPill />}
-    <NowRail />
+    {deck === 'pill' && <NowPlayer />}
 
     <script>
       // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.

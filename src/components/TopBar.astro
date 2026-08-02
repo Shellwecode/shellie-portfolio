@@ -16,7 +16,7 @@ import ThemeToggle from './ThemeToggle.astro';
     <a href="/writing">writing</a>
     <a href="/doodles">doodles</a>
   </nav>
-  <button type="button" class="topbar-link" data-deck-toggle aria-expanded="false">now</button>
+  <button type="button" class="topbar-link" data-np-open aria-haspopup="dialog" aria-expanded="false">now</button>
   <ThemeToggle />
 </div>
 
@@ -94,7 +94,7 @@ import ThemeToggle from './ThemeToggle.astro';
   }
   .topbar-link:hover { color: var(--color-accent); }
   /* "now" belongs to the main pages — reading pages keep the top clean. */
-  :global(html[data-quiet-dock]) .topbar-link[data-deck-toggle] { display: none; }
+  :global(html[data-quiet-dock]) .topbar-link[data-np-open] { display: none; }
   .topbar-mobile-nav { display: none; }
   @media (max-width: 768px) {
     .topbar-mobile-nav {

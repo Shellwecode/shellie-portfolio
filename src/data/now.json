@@ -1,9 +1,34 @@
 {
-  "listening": { "title": "Wonderwall", "artist": "Oasis", "note": "on repeat this week" },
-  "reading": "[book title]",
+  "listening": {
+    "title": "Wonderwall",
+    "artist": "Oasis",
+    "note": "on repeat this week",
+    "cover": "/img/now-cover.jpg"
+  },
+  "reading": {
+    "title": "The Paper Menagerie",
+    "author": "Ken Liu",
+    "cover": "/img/book-paper-menagerie.jpg"
+  },
+  "podcasts": [
+    {
+      "title": "采访诺兰：你是西方文明黄昏时代的吟游诗人吗？",
+      "show": "独树不成林",
+      "href": "https://open.spotify.com/episode/4aSyC2k5oHnVOz6aidIyza"
+    },
+    {
+      "title": "Charlie Deets — Designing the internet computer",
+      "show": "Dive Club",
+      "href": "https://open.spotify.com/episode/5nUMA4EpKLOEivtLCSWbbm"
+    }
+  ],
   "building": { "label": "strays · chrome extension", "href": "/workshop" },
-  "thought": "drawing more than usual this month.",
+  "thought": "Had a chat with some creative folks yesterday. So how much are we what we consumed and experienced when it comes to creative expression? Can we exist completely without the references and influences?",
   "location": "boston",
   "duolingo": { "streak": 214, "course": "日本語" },
-  "cooked": { "dish": "tomato egg noodles", "meal": "lunch" }
+  "cooked": {
+    "dish": "tomato egg noodles",
+    "meal": "lunch",
+    "photos": ["/img/cooking-1.jpg", "/img/cooking-2.jpg"]
+  }
 }
