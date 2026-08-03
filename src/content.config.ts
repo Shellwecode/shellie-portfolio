@@ -13,6 +13,7 @@ const projects = defineCollection({
       role: z.string().optional(), // e.g. "Product Design"
       company: z.string().optional(),
       cover: image().optional(), // real screenshot, not a logo mark
+      coverVideo: z.string().optional(), // /public path — short muted loop shown over the cover
       tags: z.array(z.string()).default([]),
       external: z.string().url().optional(), // if it links out instead of a case study
       featured: z.boolean().default(false), // show in the homepage featured grid

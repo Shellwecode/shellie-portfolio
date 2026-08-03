@@ -75,6 +75,9 @@ const projectHref = (p: (typeof allProjects)[number]) =>
                 sizes="(max-width: 768px) 100vw, 660px"
               />
             )}
+            {p.data.coverVideo && (
+              <video class="card-video" src={p.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
+            )}
             <span class="card-veil" aria-hidden="true"></span>
             <span class="card-overlay">
               <span class="card-tag">{p.data.tags.find((t) => t !== 'work') ?? p.data.year}</span>

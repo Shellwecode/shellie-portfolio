@@ -43,6 +43,9 @@ const tag = (p: (typeof projects)[number]) =>
               sizes="(max-width: 768px) 100vw, 640px"
             />
           )}
+          {heroProject.data.coverVideo && (
+            <video class="card-video" src={heroProject.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          )}
           <span class="card-veil" aria-hidden="true"></span>
           <span class="card-overlay">
             <span class="card-tag">{tag(heroProject)}</span>
@@ -63,6 +66,9 @@ const tag = (p: (typeof projects)[number]) =>
               widths={[400, 800]}
               sizes="(max-width: 768px) 100vw, 320px"
             />
+          )}
+          {p.data.coverVideo && (
+            <video class="card-video" src={p.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
           )}
           <span class="card-veil" aria-hidden="true"></span>
           <span class="card-overlay">
@@ -88,6 +94,9 @@ const tag = (p: (typeof projects)[number]) =>
                 widths={[400, 800]}
                 sizes="(max-width: 768px) 100vw, 320px"
               />
+            )}
+            {p.data.coverVideo && (
+              <video class="card-video" src={p.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
             )}
             <span class="card-veil" aria-hidden="true"></span>
             <span class="card-overlay">

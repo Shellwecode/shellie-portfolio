@@ -12,7 +12,7 @@ import now from '../data/now.json';
 <div class="now-player" transition:persist="now-player" data-now-player>
   <button
     type="button"
-    class="np-pill glass"
+    class="np-pill"
     data-np-open
     aria-haspopup="dialog"
     aria-expanded="false"
@@ -28,28 +28,17 @@ import now from '../data/now.json';
       <span class="np-pill-artist">{now.listening.artist}</span>
       <span class="np-pill-track" aria-hidden="true"><span class="np-pill-needle"></span></span>
     </span>
-    <span class="np-pill-place">
-      <span class="np-pill-city">{now.location.toUpperCase()}</span>
-      <span class="np-pill-clock" data-np-clock>16:33</span>
-    </span>
+    <span class="np-pill-place" data-np-meta>Boston, 16:33</span>
   </button>
 
   <div class="np-scrim" data-np-close aria-hidden="true"></div>
 
   <section class="np-sheet" role="dialog" aria-modal="true" aria-label="Now playing" aria-hidden="true">
-    {/* the album leaks into the room — oversized cover, heavily blurred */}
-    <div
-      class="np-reflection"
-      style={`background-image: url(${now.listening.cover})`}
-      aria-hidden="true"
-    ></div>
-
-    <button type="button" class="np-handle" data-np-close aria-label="Close now playing"></button>
     <button type="button" class="np-x" data-np-close aria-label="Close now playing">
       <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     </button>
 
-    <div class="np-cols">
+    <div class="np-cols" data-np-cols>
       <div class="np-left">
         <div
           class="np-art np-art-xl"
@@ -136,17 +125,51 @@ import now from '../data/now.json';
       </div>
     </div>
 
-    {/* photo viewer — click a dish, see it big; click anywhere / Esc tucks it away */}
-    <div class="np-lightbox" data-np-lightbox aria-hidden="true">
-      <img class="np-lightbox-img" alt="Cooking photo, enlarged" />
-    </div>
+    {/* the paper's tooth — a whisper of dot grain in the album's ink */}
+    <div class="np-grain" aria-hidden="true"></div>
+
+    {/* content dissolves at the fold when there is more below */}
+    <div class="np-sheet-fog" aria-hidden="true"></div>
   </section>
+
+  {/* photo viewer — click a dish, see it big; ‹ › or arrow keys flip through.
+      Lives OUTSIDE the sheet: the sheet's transform would trap position:fixed,
+      and the viewer's dim should grey the entire screen, not just the panel. */}
+  <div class="np-lightbox" data-np-lightbox aria-hidden="true">
+    <img class="np-lightbox-img" alt="Cooking photo, enlarged" />
+    <button type="button" class="np-lb-nav np-lb-prev" data-np-lb="-1" aria-label="Previous photo">
+      <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1 L1 8 L8 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="np-lb-nav np-lb-next" data-np-lb="1" aria-label="Next photo">
+      <svg width="9" height="16" viewBox="0 0 9 16"><path d="M1 1 L8 8 L1 15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+
 </div>
 
 <style>
   .now-player {
     /* one source for the album's color — pill art, sheet art, reflection */
     --np-art-grad: linear-gradient(145deg, #d9c9b2 0%, #c4ae92 55%, #a98f72 100%);
+    /* the album's dominant ink — drives the riso/wash materials (manual for
+       now; the Spotify swap can sample it from the cover) */
+    --np-ink: #4c6fa5;
+    /* motion — Shellie's dial-tuned values, locked 2026-08-02:
+       quick glide open that inflates from the pill (grow 0.79, rise 117%),
+       slower springy exit, gentle scrim, snappy pill hand-off + lightbox */
+    --np-open-ms: 490ms;
+    --np-open-ease: cubic-bezier(0.2, 0, 0, 1);
+    --np-close-ms: 650ms;
+    --np-close-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --np-rise: 117%;
+    --np-grow: 0.79; /* sheet start scale — inflates from the pill's spot */
+    --np-scrim-a: 0.32;
+    --np-scrim-ms: 560ms;
+    --np-scrim-close-ms: 280ms;
+    --np-pill-pop: 1.12;
+    --np-pill-ms: 240ms;
+    --np-lb-ms: 170ms;
+    --np-lb-scale: 0.91;
   }
 
   /* -------------------------------------------------------------------------
@@ -167,9 +190,14 @@ import now from '../data/now.json';
     z-index: 50;
     cursor: pointer;
     text-align: left;
+    /* paper material, locked aug 2: flat album-ink-tinted paper, soft elevation */
+    background: color-mix(in oklab, var(--np-ink) 9%, var(--color-bg));
+    box-shadow:
+      0px 1px 2px rgb(0 0 0 / 0.05),
+      0px 12px 36px -8px color-mix(in oklab, var(--color-ink) 16%, transparent);
     transition:
-      opacity var(--motion-micro) ease-out,
-      scale var(--motion-micro) ease-out,
+      opacity var(--np-pill-ms) ease-out,
+      scale var(--np-pill-ms) ease-out,
       box-shadow var(--motion-micro) ease;
   }
   .np-pill:hover {
@@ -198,10 +226,8 @@ import now from '../data/now.json';
     min-width: 0;
   }
   .np-pill-title {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-weight: 500;
-    font-size: 1.125rem;
+    font-weight: 600; /* Aileron, matching the sheet's song title voice */
+    font-size: var(--text-lg);
     line-height: 22px;
     color: var(--color-ink);
     white-space: nowrap;
@@ -209,8 +235,8 @@ import now from '../data/now.json';
     text-overflow: ellipsis;
   }
   .np-pill-artist {
-    font-weight: 300;
-    font-size: 0.75rem;
+    font-weight: 400; /* Light at 12px thins below legibility */
+    font-size: var(--text-xs);
     line-height: 15px;
     color: var(--color-ink-muted);
     white-space: nowrap;
@@ -230,22 +256,10 @@ import now from '../data/now.json';
   }
 
   .np-pill-place {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: center;
-    gap: 4px;
+    /* same voice as the sheet's Now meta — one style for Boston everywhere */
     flex-shrink: 0;
-  }
-  .np-pill-city {
-    font-size: 0.625rem;
-    line-height: 12px;
-    letter-spacing: 0.08em;
-    color: var(--color-ink-faint);
-  }
-  .np-pill-clock {
-    font-weight: 300;
-    font-size: 0.8125rem;
+    font-weight: 400;
+    font-size: var(--text-xs);
     line-height: 16px;
     color: var(--color-ink-muted);
     white-space: nowrap;
@@ -254,7 +268,7 @@ import now from '../data/now.json';
   /* pill recedes while the sheet is up */
   :global(html[data-np='open']) .np-pill {
     opacity: 0;
-    scale: 1.06;
+    scale: var(--np-pill-pop);
     pointer-events: none;
   }
 
@@ -265,12 +279,12 @@ import now from '../data/now.json';
     position: fixed;
     inset: 0;
     z-index: 90;
-    background: color-mix(in oklab, #1b1815 45%, transparent);
+    background: rgb(27 24 21 / var(--np-scrim-a));
     opacity: 0;
     visibility: hidden;
     transition:
-      opacity 400ms ease-out,
-      visibility 0s linear 400ms;
+      opacity var(--np-scrim-ms) ease-out,
+      visibility 0s linear var(--np-scrim-ms);
   }
   :global(html[data-np='open']) .np-scrim {
     opacity: 1;
@@ -286,88 +300,55 @@ import now from '../data/now.json';
     height: min(860px, calc(100dvh - 64px));
     z-index: 95;
     border-radius: 28px 28px 0 0;
-    /* translucent paper — the page stays present through it */
-    background: color-mix(in oklab, var(--color-bg) 72%, transparent);
-    box-shadow: 0 -18px 60px -12px rgb(0 0 0 / 0.35);
+    /* paper material: opaque album-ink-tinted paper */
+    background: color-mix(in oklab, var(--np-ink) 11%, var(--color-bg));
+    box-shadow: 0 -18px 60px -12px rgb(0 0 0 / 0.28);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     /* closed */
-    translate: 0 103%;
+    translate: 0 var(--np-rise);
+    scale: var(--np-grow);
+    transform-origin: 50% 100%;
     visibility: hidden;
     transition:
-      translate 550ms cubic-bezier(0.2, 0, 0, 1),
-      visibility 0s linear 550ms;
-  }
-  @supports (backdrop-filter: blur(1px)) {
-    .np-sheet {
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-    }
-  }
-  @supports not (backdrop-filter: blur(1px)) {
-    .np-sheet { background: var(--color-bg); }
+      translate var(--np-open-ms) var(--np-open-ease),
+      scale var(--np-open-ms) var(--np-open-ease),
+      visibility 0s linear var(--np-open-ms);
   }
   :global(html[data-np='open']) .np-sheet {
     translate: 0 0;
+    scale: 1;
     visibility: visible;
-    transition-delay: 0s, 0s;
+    transition-delay: 0s, 0s, 0s;
   }
   /* closing is softer and quicker than opening */
   :global(html:not([data-np='open'])) .np-sheet {
-    transition-duration: 380ms, 0s;
-    transition-timing-function: ease-out, linear;
+    transition-duration: var(--np-close-ms), var(--np-close-ms), 0s;
+    transition-timing-function: var(--np-close-ease), var(--np-close-ease), linear;
+    transition-delay: 0s, 0s, var(--np-close-ms);
   }
   :global(html:not([data-np='open'])) .np-scrim {
-    transition-duration: 300ms, 0s;
+    transition-duration: var(--np-scrim-close-ms), 0s;
+    transition-delay: 0s, var(--np-scrim-close-ms);
   }
 
-  /* the album reflected into the room */
-  .np-reflection {
+  /* the paper's tooth — always on, in the album's ink */
+  .np-grain {
     position: absolute;
-    left: -12%;
-    top: -30%;
-    width: 70%;
-    height: 120%;
-    background: var(--np-art-grad);
-    background-size: cover;
-    background-position: center;
-    border-radius: 50%;
-    filter: blur(110px) saturate(1.15);
-    opacity: 0.5;
+    inset: 0;
     pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='5' height='5'><circle cx='1' cy='1' r='0.55' fill='%234C6FA5'/></svg>");
+    opacity: 0.1;
   }
-
-  .np-handle {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    translate: -50% 0;
-    width: 120px;
-    height: 26px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-  }
-  .np-handle::before {
-    content: '';
-    width: 44px;
-    height: 4px;
-    border-radius: 2px;
-    background: color-mix(in oklab, var(--color-ink) 16%, transparent);
-    transition: background var(--motion-micro) ease;
-  }
-  .np-handle:hover::before {
-    background: color-mix(in oklab, var(--color-ink) 32%, transparent);
-  }
+  :global(html[data-theme='dark']) .np-grain { opacity: 0.07; }
 
   .np-x {
     position: absolute;
-    top: 18px;
-    right: 22px;
-    width: 36px;
-    height: 36px;
+    top: 16px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -411,7 +392,8 @@ import now from '../data/now.json';
     flex-shrink: 0;
   }
   .np-art-xl {
-    width: min(420px, 100%);
+    /* scales with viewport height so the transport never falls off the fold */
+    width: min(420px, 100%, 44dvh);
     aspect-ratio: 1;
     border-radius: 22px;
     box-shadow:
@@ -426,12 +408,12 @@ import now from '../data/now.json';
   }
   .np-song-title {
     font-weight: 600;
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
     line-height: 24px;
     color: var(--color-ink);
   }
   .np-song-artist {
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 19px;
     color: var(--color-ink-muted);
   }
@@ -457,23 +439,22 @@ import now from '../data/now.json';
   .np-progress-times {
     display: flex;
     justify-content: space-between;
-    font-weight: 300;
-    font-size: 0.75rem;
-    color: var(--color-ink-faint);
+    font-weight: 400;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
   }
   .np-transport {
     display: flex;
     align-items: center;
     gap: 40px;
   }
+  /* skips stay quiet until real playback exists — no pointer, no press promise */
   .np-skip {
     color: var(--color-ink-muted);
-    cursor: pointer;
+    opacity: 0.45;
+    cursor: default;
     padding: 10px;
-    transition: color var(--motion-micro) ease, scale var(--motion-micro) ease;
   }
-  .np-skip:hover { color: var(--color-ink); }
-  .np-skip:active { scale: 0.96; }
   .np-play {
     width: 58px;
     height: 58px;
@@ -504,13 +485,13 @@ import now from '../data/now.json';
   }
   .np-now-title {
     font-weight: 600;
-    font-size: 1.125rem;
+    font-size: var(--text-lg);
     line-height: 22px;
     color: var(--color-ink);
   }
   .np-now-meta {
-    font-weight: 300;
-    font-size: 0.75rem;
+    font-weight: 400;
+    font-size: var(--text-xs);
     line-height: 16px;
     color: var(--color-ink-muted);
   }
@@ -521,10 +502,10 @@ import now from '../data/now.json';
     gap: 16px;
   }
   .np-label {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     line-height: 18px;
-    letter-spacing: 0.04em;
-    color: var(--color-ink-faint);
+    letter-spacing: var(--tracking-wide);
+    color: var(--color-ink-muted); /* faint fails contrast on glass — labels carry structure */
   }
 
   .np-book {
@@ -554,12 +535,12 @@ import now from '../data/now.json';
     font-family: var(--font-serif);
     font-style: italic;
     font-weight: 500;
-    font-size: 1.25rem;
+    font-size: var(--text-xl);
     line-height: 21px;
     color: var(--color-ink);
   }
   .np-book-author {
-    font-size: 1rem;
+    font-size: var(--text-base);
     line-height: 19px;
     color: var(--color-ink-muted);
   }
@@ -577,15 +558,15 @@ import now from '../data/now.json';
   .np-row-n {
     width: 20px;
     flex-shrink: 0;
-    font-weight: 300;
-    font-size: 0.75rem;
-    color: var(--color-ink-faint);
+    font-weight: 400;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
   }
   .np-row-title {
     flex: 1;
     min-width: 0;
     font-weight: 500;
-    font-size: 0.9375rem;
+    font-size: var(--text-base);
     line-height: 20px;
     color: var(--color-ink);
     white-space: nowrap;
@@ -596,15 +577,15 @@ import now from '../data/now.json';
   .np-row:hover .np-row-title { color: var(--color-accent); }
   .np-row-kind {
     flex-shrink: 0;
-    font-weight: 300;
-    font-size: 0.75rem;
+    font-weight: 400; /* CJK show names lose strokes at Light — Regular holds */
+    font-size: var(--text-sm);
     color: var(--color-ink-muted);
   }
 
   .np-thought {
-    font-size: 0.875rem;
+    font-size: var(--text-sm);
     line-height: 1.55;
-    letter-spacing: 0.02em;
+    letter-spacing: var(--tracking-normal);
     color: var(--color-ink-muted);
     max-width: 52ch;
   }
@@ -626,10 +607,29 @@ import now from '../data/now.json';
   .np-dish:hover { box-shadow: 0 10px 24px -8px rgb(42 40 36 / 0.4); }
   .np-dish:active { scale: 0.96; }
 
-  .np-lightbox {
+  /* the fold made visible — fog only while more content waits below */
+  .np-sheet-fog {
     position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 72px;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--color-bg) 88%, transparent) 0%,
+      transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 200ms ease-out;
+  }
+  .np-sheet[data-fog] .np-sheet-fog { opacity: 1; }
+
+  .np-lightbox {
+    position: fixed;
     inset: 0;
-    z-index: 10;
+    z-index: 98; /* above the sheet — the dim owns the whole screen */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -638,8 +638,8 @@ import now from '../data/now.json';
     opacity: 0;
     visibility: hidden;
     transition:
-      opacity 250ms ease-out,
-      visibility 0s linear 250ms;
+      opacity var(--np-lb-ms) ease-out,
+      visibility 0s linear var(--np-lb-ms);
   }
   .np-lightbox.open {
     opacity: 1;
@@ -651,10 +651,29 @@ import now from '../data/now.json';
     max-height: 86%;
     border-radius: 12px;
     box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.5);
-    scale: 0.96;
-    transition: scale 250ms cubic-bezier(0.2, 0, 0, 1);
+    scale: var(--np-lb-scale);
+    transition: scale var(--np-lb-ms) cubic-bezier(0.2, 0, 0, 1);
   }
   .np-lightbox.open .np-lightbox-img { scale: 1; }
+  .np-lb-nav {
+    position: absolute;
+    top: 50%;
+    translate: 0 -50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: color-mix(in oklab, var(--color-bg) 92%, transparent);
+    color: var(--color-ink);
+    cursor: pointer;
+    transition: background var(--motion-micro) ease, scale var(--motion-micro) ease;
+  }
+  .np-lb-nav:hover { background: var(--color-bg); }
+  .np-lb-nav:active { scale: 0.96; }
+  .np-lb-prev { left: 26px; }
+  .np-lb-next { right: 26px; }
   @media (prefers-reduced-motion: reduce) {
     .np-lightbox-img { scale: 1; }
   }
@@ -662,13 +681,6 @@ import now from '../data/now.json';
   /* -------------------------------------------------------------------------
      Small screens: single column, pill slims down
   ------------------------------------------------------------------------- */
-  /* dark glass eats the faint tier — one step up for legibility */
-  :global(html[data-theme='dark']) .np-label,
-  :global(html[data-theme='dark']) .np-progress-times,
-  :global(html[data-theme='dark']) .np-row-n {
-    color: var(--color-ink-muted);
-  }
-
   @media (max-width: 768px) {
     .np-pill { height: 72px; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 22px; }
     .np-art-sm { width: 52px; height: 52px; border-radius: 12px; }
@@ -677,7 +689,6 @@ import now from '../data/now.json';
     .np-cols { flex-direction: column; gap: 40px; padding: 56px 24px 40px; }
     .np-left { width: 100%; }
     .np-art-xl { width: min(320px, 78vw); }
-    .np-reflection { width: 130%; left: -15%; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -693,6 +704,8 @@ import now from '../data/now.json';
 <script>
   // Open/close is a class flip on <html>; every motion is a CSS transition,
   // so a mid-flight reversal just retargets (make-interfaces-feel-better).
+  let lastTrigger: HTMLElement | null = null;
+
   function setPlayer(open: boolean) {
     if (open && !document.querySelector('.np-sheet')) return; // page without the player
     const html = document.documentElement;
@@ -705,33 +718,80 @@ import now from '../data/now.json';
     document
       .querySelectorAll('[data-np-open]')
       .forEach((el) => el.setAttribute('aria-expanded', String(open)));
+    // The sheet is truly modal: everything behind it leaves the tab order.
+    document
+      .querySelectorAll('body > *:not(.now-player):not([data-now-dials]):not(script):not(style)')
+      .forEach((el) => (open ? el.setAttribute('inert', '') : el.removeAttribute('inert')));
     // Lenis keeps scrolling through overflow:hidden — stop the instrument itself.
     const lenis = (window as any).lenis;
     if (lenis) open ? lenis.stop() : lenis.start();
-    if (open) (document.querySelector('.np-x') as HTMLElement | null)?.focus();
+    if (open) {
+      (document.querySelector('.np-x') as HTMLElement | null)?.focus({ preventScroll: true });
+      updateFog();
+    } else {
+      // Keyboard users pick up where they left off, not inside a hidden sheet.
+      const back = lastTrigger?.isConnected
+        ? lastTrigger
+        : (document.querySelector('.np-pill') as HTMLElement | null);
+      back?.focus({ preventScroll: true });
+    }
   }
   const playerIsOpen = () => document.documentElement.getAttribute('data-np') === 'open';
+
+  const photoList = () =>
+    [...document.querySelectorAll('[data-np-view]')].map(
+      (el) => (el as HTMLElement).dataset.npView ?? '',
+    );
+  let lbIndex = 0;
 
   function setLightbox(src: string | null) {
     const box = document.querySelector('[data-np-lightbox]');
     if (!box) return;
     const img = box.querySelector('img');
-    if (src && img) img.src = src;
+    if (src && img) {
+      img.src = src;
+      lbIndex = Math.max(0, photoList().indexOf(src));
+    }
+    // ‹ › only exist when there is somewhere to go
+    const single = photoList().length < 2;
+    box.querySelectorAll('.np-lb-nav').forEach((el) => ((el as HTMLElement).hidden = single));
     box.classList.toggle('open', Boolean(src));
     box.setAttribute('aria-hidden', String(!src));
+  }
+  function stepLightbox(dir: number) {
+    const photos = photoList();
+    if (!photos.length) return;
+    lbIndex = (lbIndex + dir + photos.length) % photos.length;
+    const img = document.querySelector('[data-np-lightbox] img') as HTMLImageElement | null;
+    if (img) img.src = photos[lbIndex];
   }
   const lightboxIsOpen = () =>
     document.querySelector('[data-np-lightbox]')?.classList.contains('open') ?? false;
 
+  // Fog appears only while more content waits below the fold.
+  function updateFog() {
+    const cols = document.querySelector('[data-np-cols]');
+    const sheet = document.querySelector('.np-sheet');
+    if (!cols || !sheet) return;
+    const canScroll = cols.scrollHeight - cols.clientHeight > 4;
+    const atBottom = cols.scrollTop + cols.clientHeight >= cols.scrollHeight - 8;
+    sheet.toggleAttribute('data-fog', canScroll && !atBottom);
+  }
+
   function wirePlayer() {
     // The pill persists across view transitions while this re-runs per page —
     // the guard keeps listeners from stacking.
-    const wire = (el: Element, fn: () => void) => {
+    const wire = (el: Element, fn: (e: Event) => void) => {
       if ((el as HTMLElement).dataset.wired) return;
       (el as HTMLElement).dataset.wired = '1';
       el.addEventListener('click', fn);
     };
-    document.querySelectorAll('[data-np-open]').forEach((el) => wire(el, () => setPlayer(true)));
+    document.querySelectorAll('[data-np-open]').forEach((el) =>
+      wire(el, () => {
+        lastTrigger = el as HTMLElement;
+        setPlayer(true);
+      }),
+    );
     document.querySelectorAll('[data-np-close]').forEach((el) => wire(el, () => setPlayer(false)));
     document
       .querySelectorAll('[data-np-view]')
@@ -740,12 +800,28 @@ import now from '../data/now.json';
       );
     const box = document.querySelector('[data-np-lightbox]');
     if (box) wire(box, () => setLightbox(null));
+    document.querySelectorAll('[data-np-lb]').forEach((el) =>
+      wire(el, (e) => {
+        e.stopPropagation(); // flipping is not closing
+        stepLightbox(Number((el as HTMLElement).dataset.npLb) || 1);
+      }),
+    );
+    const cols = document.querySelector('[data-np-cols]');
+    if (cols && !(cols as HTMLElement).dataset.fogWired) {
+      (cols as HTMLElement).dataset.fogWired = '1';
+      cols.addEventListener('scroll', updateFog, { passive: true });
+      window.addEventListener('resize', updateFog);
+    }
   }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && lightboxIsOpen()) {
-      setLightbox(null);
-      return; // one layer at a time — the sheet stays up
+    if (lightboxIsOpen()) {
+      if (e.key === 'Escape') {
+        setLightbox(null); // one layer at a time — the sheet stays up
+        return;
+      }
+      if (e.key === 'ArrowRight') return stepLightbox(1);
+      if (e.key === 'ArrowLeft') return stepLightbox(-1);
     }
     if (e.key === 'Escape' && playerIsOpen()) setPlayer(false);
     // 'n' toggles the sheet (inherited from the retired now rail); only where
@@ -753,7 +829,10 @@ import now from '../data/now.json';
     if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) {
       if (!document.querySelector('.np-sheet')) return;
       const target = e.target as HTMLElement;
-      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') setPlayer(!playerIsOpen());
+      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+        if (!playerIsOpen()) lastTrigger = document.querySelector('.np-pill');
+        setPlayer(!playerIsOpen());
+      }
     }
   });
 
@@ -769,8 +848,6 @@ import now from '../data/now.json';
       hour12: false,
       timeZone: 'America/New_York',
     }).format(new Date());
-    const withTemp = temp ? `${time} · ${temp}` : time;
-    document.querySelectorAll('[data-np-clock]').forEach((el) => (el.textContent = withTemp));
     document
       .querySelectorAll('[data-np-meta]')
       .forEach((el) => (el.textContent = `Boston, ${time}${temp ? `, ${temp}` : ''}`));
@@ -799,6 +876,8 @@ import now from '../data/now.json';
       /* no temperature is a fine temperature */
     }
   }
+
+  localStorage.removeItem('np-mat'); // the evaluation toggle is gone — paper won
 
   wirePlayer();
   paintClock();

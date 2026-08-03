@@ -40,7 +40,7 @@
 /* Source Han Serif — subset to the greeting's glyphs only (~4KB each) */
 @font-face {
   font-family: "Source Han Serif SC";
-  src: url("/fonts/SourceHanSerifSC-greeting.woff2") format("woff2");
+  src: url("/fonts/SourceHanSerifSC-greeting.woff2?v=2") format("woff2"); /* v2: 肖潇 glyphs */
   font-weight: 600;
   font-display: swap;
 }
@@ -59,7 +59,7 @@
   /* Colors — warm cream on warm ink, one earthy accent */
   --color-bg: #faf8f5;
   --color-ink: #2a2824;
-  --color-ink-muted: #78736c;
+  --color-ink-muted: #6c675f; /* darkened aug 2: 4.43→5.29:1 on paper, AA-safe on glass */
   --color-ink-faint: #a8a39c;
   --color-rule: #ebe6dd;
   --color-accent: #a0522d; /* sienna — use sparingly */
@@ -406,6 +406,24 @@ html[data-entrance] .chapter-player {
    focus raises a bottom scrim with tag pill, title, subtitle, and a corner
    ↗ chip. Touch keeps the overlay persistent.
 --------------------------------------------------------------------------- */
+.card-video {
+  /* muted loop over the still cover — hidden at rest, plays on hover (Base.astro wires it) */
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+:is(.card, .card-link):hover .card-video,
+:is(.card, .card-link):focus-visible .card-video { opacity: 1; }
+@media (hover: none) {
+  .card-video { display: none; } /* no hover, no motion — the still carries it */
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-video { display: none; }
+}
 .card-veil {
   position: absolute;
   inset: 0;

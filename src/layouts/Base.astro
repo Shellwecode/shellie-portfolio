@@ -103,6 +103,20 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         (window as any).lenis = new Lenis({ autoRaf: true });
       }
+
+      // Card cover videos play only while hovered; the still cover holds the
+      // frame at rest. Leaving pauses without resetting — a return resumes.
+      function wireCardVideos() {
+        document.querySelectorAll<HTMLVideoElement>('.card-video').forEach((video) => {
+          const card = video.closest('.card, .card-link');
+          if (!card || (card as HTMLElement).dataset.videoWired) return;
+          (card as HTMLElement).dataset.videoWired = '1';
+          card.addEventListener('mouseenter', () => video.play().catch(() => {}));
+          card.addEventListener('mouseleave', () => video.pause());
+        });
+      }
+      wireCardVideos();
+      document.addEventListener('astro:page-load', wireCardVideos);
     </script>
   </body>
 </html>
