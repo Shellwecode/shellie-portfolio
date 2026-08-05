@@ -1,4 +1,61 @@
 ---
+import { galaxyClusters, VIEW } from '../lib/galaxyAnchors';
+
+// The galaxy mark — her orbiting galaxy rebuilt from its parsed pieces
+// (see lib/galaxyAnchors). One dot per stipple stamp, colored like the
+// artwork: gold heart, sienna inner ring, periwinkle arms. The whole
+// thing slowly orbits at rest and stirs when she speaks (CSS below).
+const GAL_COLORS = ['#8f96cc', '#9aa3d0', '#a8a39c'];
+const galaxyDots = galaxyClusters
+  .map((pts, gi) => {
+    let mx = 0;
+    let my = 0;
+    for (const [x, y] of pts) {
+      mx += x;
+      my += y;
+    }
+    const rn = Math.hypot(mx / pts.length - VIEW.cx, my / pts.length - VIEW.cy) / 260;
+    const color = rn < 0.22 ? '#e0b04a' : rn < 0.38 ? '#c97b4f' : GAL_COLORS[gi % 3];
+    const dots = pts
+      .map(
+        ([x, y, s]) =>
+          `<circle cx="${x}" cy="${y}" r="${Math.round(6 + s * 42)}" fill="${color}"/>`,
+      )
+      .join('');
+    return `<g class="gg-c" style="--gi: ${gi}" opacity="0.85">${dots}</g>`;
+  })
+  .join('');
+
+// The sparks mark — her Pinterest refs: a spark burst + a confetti swirl.
+// ~30 seeded hand-drawn flecks (dashes and dots, airy center) that swirl
+// slowly and flicker individually; speaking makes them burst. Deterministic:
+// same seed, same sparks.
+const spkRand = (() => {
+  let a = 41;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();
+const SPK_COLORS = ['#c97b4f', '#e0b04a', '#a0522d', '#e0b04a', '#8f96cc', '#9aa3d0', '#7a9e6e'];
+const sparkFlecks = Array.from({ length: 30 }, (_, i) => {
+  const th = spkRand() * Math.PI * 2;
+  const rr = 7 + spkRand() * 14; // airy center, ragged rim
+  const x = Math.cos(th) * rr;
+  const y = Math.sin(th) * rr;
+  const color = SPK_COLORS[Math.floor(spkRand() * SPK_COLORS.length)];
+  const common = `class="gs-f" style="--fi: ${i}"`;
+  if (spkRand() < 0.7) {
+    /* a dash, roughly tangential with hand jitter */
+    const a2 = th + Math.PI / 2 + (spkRand() - 0.5) * 1.4;
+    const len = 1.6 + spkRand() * 2.6;
+    return `<line ${common} x1="${(x - Math.cos(a2) * len).toFixed(1)}" y1="${(y - Math.sin(a2) * len).toFixed(1)}" x2="${(x + Math.cos(a2) * len).toFixed(1)}" y2="${(y + Math.sin(a2) * len).toFixed(1)}" stroke="${color}" stroke-width="1.7" stroke-linecap="round"/>`;
+  }
+  return `<circle ${common} cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(0.9 + spkRand() * 0.7).toFixed(2)}" fill="${color}"/>`;
+}).join('');
+
 // The karaoke greeting (hero ideation → concept a′):
 // idle — the line quietly cycles EN → 中文 → 日本語 once (6s dwell, pauses on
 // hover); click the waveform — three recordings of Shellie play in sequence,
@@ -46,13 +103,26 @@ const langs = [
     {langs.map((l, li) => (
       <span class="g-layer" lang={l.code} data-lang={l.code} data-active={li === 0 ? '' : undefined}>
         {l.chunks.map((c, ci) => (
-          <span class="g-chunk" data-i={ci}>{c.t}</span>
+          <span class="g-chunk" data-i={ci} style={`--ci: ${ci}`}>{c.t}</span>
         ))}
       </span>
     ))}
     <button type="button" class="g-voice" data-voice aria-hidden="true" tabindex="-1">
-      {/* Shellie's rotating universe — the voice made visible. Bars remain as
-          the reduced-motion fallback (looping video can't hold still). */}
+      {/* The voice blob — the voice UI made visible. It idles with a floaty
+          morph and quickens whenever the text is speaking (language swaps,
+          the karaoke performance) so mark and text read as one object.
+          The old rotating universe stays behind html[data-g-mark='universe']
+          for comparison; bars remain the reduced-motion fallback. */}
+      <span class="g-sparks">
+        <svg class="gs" viewBox="-24 -24 48 48" set:html={sparkFlecks} />
+      </span>
+      <span class="g-galaxy">
+        <svg class="gg" viewBox="0 0 528 458" set:html={galaxyDots} />
+      </span>
+      <span class="g-blob">
+        <span class="g-blob-halo"></span>
+        <span class="g-blob-core"></span>
+      </span>
       <video class="g-universe" src="/img/greeting-universe.webm" autoplay muted loop playsinline width="26" height="22"></video>
       <svg class="g-bars" width="18" height="12" viewBox="0 0 18 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <path class="w1" d="M1 6v0" /><path class="w2" d="M4 4v4" /><path class="w3" d="M7 2v8" /><path class="w4" d="M10 3v6" /><path class="w5" d="M13 5v2" /><path class="w6" d="M16 6v0" />
@@ -77,6 +147,7 @@ const langs = [
   /* Block-level flex: the h1 sizes to this fixed box — no baseline participation,
      so no font's ascent/descent can nudge the layout by even a pixel. */
   .g-wrap {
+    position: relative; /* the leaving language overlays while it exhales */
     display: flex;
     align-items: center;
     gap: 10px;
@@ -89,6 +160,15 @@ const langs = [
     white-space: nowrap;
   }
   .g-layer[data-active] { display: block; }
+  /* The outgoing line: lifted out of flow so the incoming one owns the width
+     (the wrap glides between the two via the JS FLIP below). */
+  .g-layer.leaving {
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    pointer-events: none;
+  }
   /* Junicode has no CJK — Source Han Serif carries 中/日, upright (no faux italics).
      Slightly smaller: CJK squares run optically larger than the serif's lowercase. */
   .g-layer[lang='zh'] {
@@ -103,16 +183,51 @@ const langs = [
     font-size: 17px;
     letter-spacing: 0.06em;
   }
-  /* Language arrival — same recipe as the page entrance, smaller. Dial-tunable. */
-  @keyframes g-swap {
+  /* The breath — out-breath, width glide, in-breath. Chunks carry the motion
+     so each language arrives the way it's spoken: left to right. Dial-tunable
+     (global.css dials block). */
+  @keyframes g-in {
     from { opacity: 0; filter: blur(var(--g-swap-blur, 4px)); translate: 0 var(--g-swap-rise, 4px); }
   }
-  .g-layer.swapping {
-    animation: g-swap var(--g-swap-ms, 300ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  @keyframes g-out {
+    to { opacity: 0; filter: blur(var(--g-swap-blur, 4px)); translate: 0 calc(-1 * var(--g-swap-rise, 4px)); }
+  }
+  .g-layer.swapping .g-chunk {
+    animation: g-in var(--g-swap-ms, 300ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    animation-delay: calc(var(--g-in-delay, 140ms) + var(--ci, 0) * var(--g-swap-stag, 70ms));
+  }
+  .g-layer.leaving .g-chunk {
+    animation: g-out var(--g-out-ms, 260ms) cubic-bezier(0.55, 0, 0.55, 0.2) both;
+    animation-delay: calc(var(--ci, 0) * var(--g-out-stag, 40ms));
+  }
+
+  /* Translator mode — the live-captioner alternative (GreetingLab dials it).
+     No vertical travel: each chunk dissolves in place and its translation
+     streams in as an ASR partial — faint and soft — then commits to ink. */
+  @keyframes g-tr-out {
+    to { opacity: 0; filter: blur(var(--g-tr-blur, 3px)); }
+  }
+  @keyframes g-tr-in {
+    0% { opacity: 0; filter: blur(var(--g-tr-blur, 3px)); color: var(--color-ink-faint); }
+    40% { opacity: 0.75; filter: blur(0.6px); color: var(--color-ink-faint); }
+    72% { opacity: 0.75; filter: blur(0px); color: var(--color-ink-faint); }
+    100% { opacity: 1; filter: blur(0px); color: var(--color-ink); }
+  }
+  :global(html[data-g-mode='translator']) .g-layer.swapping .g-chunk {
+    animation: g-tr-in var(--g-tr-ms, 700ms) ease-out both;
+    animation-delay: calc(var(--ci, 0) * var(--g-tr-stag, 200ms) + var(--g-tr-in-delay, 120ms));
+  }
+  :global(html[data-g-mode='translator']) .g-layer.leaving .g-chunk {
+    animation: g-tr-out var(--g-tr-out-ms, 220ms) ease-in both;
+    animation-delay: calc(var(--ci, 0) * var(--g-tr-stag, 200ms));
   }
 
   /* Lyric states — only while performing */
-  .g-chunk { transition: color var(--g-sung-ms, 120ms) ease; }
+  .g-chunk {
+    display: inline-block; /* translate/filter need a box… */
+    white-space: pre; /*      …and the box must keep its trailing space */
+    transition: color var(--g-sung-ms, 120ms) ease;
+  }
   .g-wrap[data-playing] .g-chunk { color: var(--color-ink-faint); }
   .g-wrap[data-playing] .g-chunk.sung { color: var(--color-ink); }
 
@@ -133,15 +248,190 @@ const langs = [
   .g-voice::after { content: ''; position: absolute; inset: -8px; } /* 40px hit area */
   .g-voice:hover { color: var(--color-ink); }
   .g-voice:active { scale: 0.96; }
+  /* The mark — her galaxy by default; blob and universe stay behind
+     html[data-g-mark] for comparison in the lab. */
   .g-universe {
     height: 22px;
     width: auto;
-    display: block;
+    display: none;
     transition: scale var(--motion-micro) ease;
   }
+  :global(html[data-g-mark='universe']) .g-universe { display: block; }
+  /* sparks is the default mark; each option shows only under its own flag */
+  .g-sparks { display: block; }
+  :global(html[data-g-mark]:not([data-g-mark='sparks'])) .g-sparks { display: none; }
+  .g-galaxy { display: none; }
+  :global(html[data-g-mark='galaxy']) .g-galaxy { display: block; }
   .g-voice:hover .g-universe { scale: 1.1; }
   /* While speaking, the universe leans in */
   .g-wrap[data-playing] .g-universe { scale: 1.14; }
+
+  /* The sparks mark — a hand-drawn spark swirl (her refs: spark burst +
+     confetti orbit). Airy flecks swirl slowly and flicker on their own
+     beats; speaking is a burst: quicker swirl, wider, staccato flicker. */
+  .g-sparks {
+    width: var(--g-spk-size, 26px);
+    height: var(--g-spk-size, 26px);
+    transition: scale var(--motion-micro) ease;
+  }
+  .g-voice:hover .g-sparks { scale: 1.1; }
+  .gs {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 50% 50%;
+    animation: gs-swirl var(--g-spk-ms, 22s) linear infinite;
+    transition: scale 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes gs-swirl {
+    to { rotate: 360deg; }
+  }
+  .gs :global(.gs-f) {
+    animation: gs-flick calc(1700ms + var(--fi, 0) * 230ms) ease-in-out infinite;
+  }
+  @keyframes gs-flick {
+    0%, 100% { opacity: 1; }
+    50% { opacity: var(--g-spk-dim, 0.2); }
+  }
+  /* The burst — speaking pushes the swirl faster and the flecks outward */
+  .g-wrap[data-playing] .gs,
+  .g-wrap[data-swapping] .gs {
+    animation-duration: var(--g-spk-speak-ms, 4s);
+    scale: 1.18;
+  }
+  .g-wrap[data-playing] .gs :global(.gs-f),
+  .g-wrap[data-swapping] .gs :global(.gs-f) {
+    animation-duration: calc(480ms + var(--fi, 0) * 70ms);
+  }
+
+  /* The galaxy mark — the artwork's own pieces, orbiting slowly. When she
+     speaks (a swap, the karaoke) the universe stirs: the orbit quickens. */
+  .g-galaxy {
+    width: var(--g-gal-size, 24px);
+    height: calc(var(--g-gal-size, 24px) * 0.87); /* the viewBox's aspect */
+    transition: scale var(--motion-micro) ease;
+  }
+  .g-voice:hover .g-galaxy { scale: 1.1; }
+  .gg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transform-origin: 50% 50%;
+    animation: gg-spin var(--g-gal-ms, 30s) linear infinite;
+  }
+  @keyframes gg-spin {
+    to { rotate: 360deg; }
+  }
+  /* Each cluster twinkles on its own beat — the drift loops, miniaturized */
+  .gg :global(.gg-c) {
+    animation: gg-tw calc(2600ms + var(--gi, 0) * 130ms) ease-in-out infinite;
+  }
+  @keyframes gg-tw {
+    0%, 100% { opacity: 0.85; }
+    50% { opacity: 0.55; }
+  }
+  .g-wrap[data-playing] .gg,
+  .g-wrap[data-swapping] .gg {
+    animation-duration: var(--g-gal-speak-ms, 5s);
+  }
+  .g-wrap[data-playing] .g-galaxy { scale: 1.12; }
+  /* The hop — while gliding to its new seat the mark dips and softens,
+     then re-brightens on arrival. Runs once per swap, sized to the glide
+     and waiting out the exhale alongside it (--g-mark-delay, set by JS). */
+  .g-wrap[data-swapping] .g-galaxy {
+    animation: gg-hop calc(var(--g-width-ms, 420ms) + 240ms) ease both;
+    animation-delay: var(--g-mark-delay, 0ms);
+  }
+  /* The sparks fly instead — one keyframe owns the whole route, so the
+     horizontal travel (--g-fly-dx, measured per swap by JS), the arc, the
+     lean, and the flock-stretch all share one clock. Departure is soft
+     (each segment carries its own curve: gather speed → cruise → long
+     deceleration into the seat), the route is a genuine arc. */
+  .g-wrap[data-swapping] .g-sparks {
+    animation: gs-fly var(--g-fly-ms, 560ms) linear both;
+    animation-delay: var(--g-mark-delay, 0ms);
+  }
+  @keyframes gs-fly {
+    0% {
+      translate: var(--g-fly-dx, 0px) 0;
+      scale: 1 1;
+      rotate: 0deg;
+      opacity: 1;
+      animation-timing-function: cubic-bezier(0.55, 0, 0.7, 0.4); /* gather speed */
+    }
+    38% {
+      translate: calc(var(--g-fly-dx, 0px) * 0.45) calc(-1 * var(--g-fly-lift, 2.5px));
+      scale: var(--g-fly-stretch, 1.35) var(--g-fly-squash, 0.8);
+      rotate: var(--g-fly-tilt, 0deg);
+      opacity: 0.8;
+      animation-timing-function: cubic-bezier(0.3, 0.5, 0.35, 1); /* cruise → brake */
+    }
+    76% {
+      translate: calc(var(--g-fly-dx, 0px) * 0.08) calc(-0.3 * var(--g-fly-lift, 2.5px));
+      scale: calc(1 + (var(--g-fly-stretch, 1.35) - 1) * 0.3)
+        calc(1 - (1 - var(--g-fly-squash, 0.8)) * 0.3);
+      rotate: calc(var(--g-fly-tilt, 0deg) * 0.25);
+      opacity: 0.92;
+      animation-timing-function: cubic-bezier(0.25, 0.6, 0.4, 1); /* glide in */
+    }
+    100% { translate: 0 0; scale: 1 1; rotate: 0deg; opacity: 1; }
+  }
+  @keyframes gg-hop {
+    0% { opacity: 1; scale: 1; }
+    35% { opacity: var(--g-mark-dim, 0.55); scale: 0.9; }
+    100% { opacity: 1; scale: 1; }
+  }
+
+  /* The voice blob — kept as a lab option (data-g-mark='blob'). */
+  .g-blob {
+    position: relative;
+    display: none;
+    width: var(--g-blob-size, 22px);
+    height: var(--g-blob-size, 22px);
+    transition: scale var(--motion-micro) ease;
+  }
+  :global(html[data-g-mark='blob']) .g-blob { display: block; }
+  .g-voice:hover .g-blob { scale: 1.1; }
+  .g-blob-core {
+    position: absolute;
+    inset: 2px;
+    background: var(--g-blob-color, var(--color-accent));
+    border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%;
+    animation:
+      blob-morph var(--g-blob-ms, 6.5s) ease-in-out infinite alternate,
+      blob-breathe calc(var(--g-blob-ms, 6.5s) * 0.7) ease-in-out infinite;
+  }
+  .g-blob-halo {
+    position: absolute;
+    inset: -1px;
+    background: color-mix(in oklab, var(--g-blob-color, var(--color-accent)) 24%, transparent);
+    border-radius: 55% 45% 44% 56% / 46% 58% 42% 54%;
+    animation:
+      blob-morph var(--g-blob-ms, 6.5s) ease-in-out infinite alternate-reverse,
+      blob-breathe calc(var(--g-blob-ms, 6.5s) * 0.9) ease-in-out infinite reverse;
+  }
+  @keyframes blob-morph {
+    0% { border-radius: 46% 54% 58% 42% / 52% 44% 56% 48%; }
+    33% { border-radius: 58% 42% 46% 54% / 44% 58% 46% 52%; }
+    66% { border-radius: 42% 58% 52% 48% / 58% 44% 54% 42% }
+    100% { border-radius: 52% 48% 42% 58% / 48% 56% 44% 58%; }
+  }
+  @keyframes blob-breathe {
+    0%, 100% { scale: 0.96; }
+    50% { scale: 1.06; }
+  }
+  /* Speaking — swaps and the karaoke performance quicken the same object:
+     the morph runs at speech tempo and the breath deepens. */
+  .g-wrap[data-playing] .g-blob-core,
+  .g-wrap[data-swapping] .g-blob-core,
+  .g-wrap[data-playing] .g-blob-halo,
+  .g-wrap[data-swapping] .g-blob-halo {
+    animation-duration: var(--g-blob-speak-ms, 1.3s), calc(var(--g-blob-speak-ms, 1.3s) * 0.8);
+  }
+  .g-wrap[data-playing] .g-blob-core,
+  .g-wrap[data-swapping] .g-blob-core { inset: 1px; }
   .g-bars { display: none; }
   /* While speaking, the bars breathe — feedback, paired with the lyric cue */
   @keyframes bar-breathe {
@@ -169,11 +459,18 @@ const langs = [
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .g-layer.swapping { animation: none; }
+    .g-layer.swapping .g-chunk,
+    .g-layer.leaving .g-chunk { animation: none; }
+    .g-layer.leaving { display: none; }
     .g-wrap[data-playing] .g-voice path { animation: none; }
-    /* A GIF can't hold still — swap back to the static bars */
+    /* Nothing may move — the drawn marks simply hold still (unlike the
+       webm, they can); video and blob give way. */
     .g-universe { display: none; }
-    .g-bars { display: block; }
+    .g-blob { display: none; }
+    .gg,
+    .gg :global(.gg-c),
+    .gs,
+    .gs :global(.gs-f) { animation: none; }
   }
 </style>
 
@@ -182,6 +479,12 @@ const langs = [
     const wrap = document.querySelector<HTMLElement>('[data-greeting]');
     if (!wrap || wrap.dataset.wired) return;
     wrap.dataset.wired = '1';
+
+    /* Shellie's picked defaults (2026-08-04): translator mode, sparks mark.
+       The dev lab overrides these live; prod gets them here. */
+    if (!document.documentElement.hasAttribute('data-g-mode')) {
+      document.documentElement.setAttribute('data-g-mode', 'translator');
+    }
 
     const langs = JSON.parse(wrap.dataset.langs ?? '[]') as {
       code: string;
@@ -193,21 +496,85 @@ const langs = [
 
     let active = 0;
     let performing = false;
+    let swapTimer: ReturnType<typeof setTimeout> | null = null;
 
+    /* The breath: the old line exhales up and out of flow, the wrap's width
+       glides to the new line (FLIP — the universe button rides it), and the
+       new language inhales up from below, chunk by chunk. */
     function show(i: number, swap = true) {
+      const from = layers[active];
+      const to = layers[i];
       active = i;
-      layers.forEach((l, li) => {
-        if (li === i) {
-          l.setAttribute('data-active', '');
-          if (swap && !reduced) {
-            l.classList.remove('swapping');
-            void l.offsetWidth; // restart animation
-            l.classList.add('swapping');
-          }
+      if (from === to || !swap || reduced) {
+        layers.forEach((l, li) => {
+          l.classList.remove('leaving');
+          if (li === i) l.setAttribute('data-active', '');
+          else l.removeAttribute('data-active');
+        });
+        return;
+      }
+      if (swapTimer) clearTimeout(swapTimer);
+      layers.forEach((l) => l.classList.remove('leaving'));
+      wrap.setAttribute('data-swapping', ''); // the mark speaks along
+
+      /* FLIP the mark itself: flex reseats it instantly when the new line's
+         width lands, so measure its old seat and glide it from there — the
+         wrap's width is left alone (animating it never moved the button).
+         The glide WAITS for the outgoing line's exhale (mode-aware, read
+         from the live dials) so the mark never crosses dissolving words —
+         it leaves last and arrives with the new line. */
+      const cs = getComputedStyle(document.documentElement);
+      const dial = (name: string, fallback: number) => {
+        const v = parseFloat(cs.getPropertyValue(name));
+        return Number.isFinite(v) ? v : fallback;
+      };
+      const translator = document.documentElement.getAttribute('data-g-mode') === 'translator';
+      const lastChunk = (from.querySelectorAll('.g-chunk').length || 3) - 1;
+      const outEnd = translator
+        ? dial('--g-tr-out-ms', 220) + lastChunk * dial('--g-tr-stag', 200)
+        : dial('--g-out-ms', 260) + lastChunk * dial('--g-out-stag', 40);
+      const markDelay = Math.round(outEnd * 0.85); // lift off just before it clears
+      wrap.style.setProperty('--g-mark-delay', `${markDelay}ms`);
+
+      const mark = wrap.querySelector<HTMLElement>('.g-voice');
+      const x0 = mark?.getBoundingClientRect().left ?? 0;
+      from.classList.add('leaving');
+      from.removeAttribute('data-active');
+      to.setAttribute('data-active', '');
+      to.classList.remove('swapping');
+      void to.offsetWidth; // restart the in-breath
+      to.classList.add('swapping');
+      if (mark) {
+        const dx = x0 - mark.getBoundingClientRect().left;
+        const sparks =
+          (document.documentElement.getAttribute('data-g-mark') ?? 'sparks') === 'sparks';
+        if (dx && sparks) {
+          /* sparks: the gs-fly keyframe owns the whole route — hand it the
+             travel distance and the direction-signed lean, nothing inline */
+          const tiltMax = dial('--g-fly-tilt-max', 8);
+          wrap.style.setProperty('--g-fly-tilt', `${dx > 0 ? -tiltMax : tiltMax}deg`);
+          wrap.style.setProperty('--g-fly-dx', `${dx}px`);
+        } else if (dx) {
+          /* other marks: the plain FLIP glide + hop */
+          mark.style.transition = 'none';
+          mark.style.translate = `${dx}px 0`;
+          void mark.offsetWidth;
+          mark.style.transition = `translate var(--g-width-ms, 420ms) cubic-bezier(0.22, 1, 0.36, 1) ${markDelay}ms`;
+          mark.style.translate = '0 0';
         } else {
-          l.removeAttribute('data-active');
+          wrap.style.setProperty('--g-fly-dx', '0px');
+          wrap.style.setProperty('--g-fly-tilt', '0deg');
         }
-      });
+      }
+      swapTimer = setTimeout(() => {
+        from.classList.remove('leaving');
+        wrap.removeAttribute('data-swapping');
+        if (mark) {
+          mark.style.translate = '';
+          mark.style.transition = '';
+        }
+        swapTimer = null;
+      }, Math.max(1800, markDelay + Math.max(dial('--g-width-ms', 420), dial('--g-fly-ms', 560)) + 400)); // outlive the delayed flight
     }
 
     /* Idle cycle — one quiet round, pauses on hover, retires on play */

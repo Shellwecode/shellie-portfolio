@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
+import AlbumSwitchDirector from '../../components/AlbumSwitchDirector';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -43,9 +44,26 @@ const tracks = sections.map((h, i) => {
   const end = h2Matches[i + 1]?.index ?? body.length;
   const w = body.slice(start, end).split(/\s+/).filter(Boolean).length;
   const seconds = Math.max(30, Math.round((w / 200) * 60 / 5) * 5);
-  return { slug: h.slug, title: h.text, seconds, label: fmt(seconds) };
+  return {
+    slug: h.slug,
+    title: h.text,
+    note: project.data.trackNotes?.[h.slug],
+    seconds,
+    label: fmt(seconds),
+  };
 });
 const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
+
+// Album header copy — per the Paper frame "case study — detail (aug 4 edit)":
+// short title, discipline eyebrow, "@company, timeframe" meta.
+const shortTitle = project.data.title.split('—')[0].trim();
+const eyebrow = project.data.discipline ?? project.data.role ?? 'case study';
+const metaLine = [
+  project.data.company ? `@${project.data.company}` : null,
+  project.data.timeframe ?? String(project.data.year),
+]
+  .filter(Boolean)
+  .join(', ');
 ---
 
 <Base
@@ -55,7 +73,12 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
   fog={true}
   quietDock={true}
 >
-  <a href="/projects" class="crumb">← work</a>
+  <a href="/projects" class="crumb">
+    <svg class="crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
+    </svg>
+    <span>work</span>
+  </a>
 
   <header class="album-header">
     <div class="album-cover">
@@ -69,18 +92,17 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
       )}
     </div>
     <div class="album-copy">
-      <span class="album-eyebrow">case study</span>
-      <h1 class="album-title">{project.data.title}</h1>
+      <span class="album-eyebrow">{eyebrow}</span>
+      <h1 class="album-title">{shortTitle}</h1>
       <p class="album-summary">{project.data.summary}</p>
-      <span class="album-meta">
-        {project.data.year}
-        {project.data.role && ` · ${project.data.role}`}
-        {project.data.company && ` · ${project.data.company}`}
-        {sections.length > 0 && ` · ${sections.length} sections, ${readMinutes} min`}
-      </span>
+      <span class="album-meta">{metaLine}</span>
       <div class="album-actions">
-        <a href="#read" class="album-read">▶ read</a>
-        {next && <a href={`/projects/${next.id}`} class="album-next">next project →</a>}
+        <a href="#read" class="album-read">
+          <svg class="album-play" width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
+            <path d="M1.5 0.8 9 5 1.5 9.2Z" />
+          </svg>
+          <span>{readMinutes} min</span>
+        </a>
       </div>
     </div>
   </header>
@@ -88,13 +110,21 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
   {tracks.length > 0 && (
     <nav class="tracklist" aria-label="Sections">
       {tracks.map((t, i) => (
-        <a href={`#${t.slug}`} class="track" style={`--ri: ${tracks.length - 1 - i}`}>
+        <a href={`#${t.slug}`} class="track" style={`--ri: ${tracks.length - 1 - i}; --i: ${i}`}>
           <span class="track-n">{i + 1}</span>
-          <span class="track-title">{t.title.toLowerCase()}</span>
+          <span class="track-title">{t.title}</span>
+          {t.note && <span class="track-note">{t.note}</span>}
           <span class="track-time">{t.label}</span>
         </a>
       ))}
     </nav>
+  )}
+
+  {tracks.length > 0 && (
+    <div class="read-hint" aria-hidden="true">
+      <span>scroll to read</span>
+      <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M1 1l4 4 4-4" /></svg>
+    </div>
   )}
 
   <article class="prose" id="read">
@@ -124,11 +154,15 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
       nextLabel={next?.title}
     />
   )}
+
+  {import.meta.env.DEV && <AlbumSwitchDirector client:only="react" />}
 </Base>
 
 <style>
   .crumb {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     max-width: var(--measure);
     margin-inline: auto;
     font-weight: 300;
@@ -136,52 +170,80 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
     color: var(--color-ink-muted);
     text-decoration: none;
   }
+  .crumb-arrow { flex-shrink: 0; }
   .crumb:hover { color: var(--color-accent); }
 
-  /* Album fold — scrubbed by scroll (--fold set on <html> by the script
-     below). This variant collapses PHYSICALLY: heights, gaps, and the cover
-     itself compress, so the content below genuinely rises as the album
-     folds shut — not a fade-out. */
+  /* The switch — one absolute point (html[data-reading], granted by the
+     script below), no scrubbed in-between. At rest: album + tracklist, no
+     player. On the switch: rows pour downward bottom-first and are caught
+     by the player; the cover flies down into the player's thumbnail (the
+     which-project avatar); the article rises. All timed transitions. */
   .album-header {
     display: flex;
     align-items: flex-end;
-    gap: calc(1.75rem - 0.875rem * var(--fold, 0));
-    padding: calc(1.5rem * (1 - 0.6 * var(--fold, 0))) 0
-      calc(1.75rem * (1 - 0.6 * var(--fold, 0))) 0;
+    gap: 1.75rem;
+    padding: 1.5rem 0 1.75rem 0;
     border-bottom: 1px solid var(--color-rule);
-    margin-bottom: calc(1.5rem * (1 - 0.7 * var(--fold, 0)));
+    margin-bottom: 1.5rem;
     max-width: var(--measure);
     margin-inline: auto;
+    max-height: 340px;
+    /* exit (returning to the album): expand after the article has cleared */
+    transition:
+      max-height 420ms cubic-bezier(0.5, 0, 0.3, 1) 160ms,
+      padding 420ms cubic-bezier(0.5, 0, 0.3, 1) 160ms,
+      margin-bottom 420ms cubic-bezier(0.5, 0, 0.3, 1) 160ms,
+      border-color 200ms ease 160ms;
+  }
+  :global(html[data-reading]) .album-header {
+    max-height: 0;
+    padding-block: 0;
+    margin-bottom: 0;
+    border-color: transparent;
+    /* enter: collapse once the cover has left and the rows are pouring */
+    transition:
+      max-height var(--sw-collapse-dur, 300ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-collapse-delay, 140ms),
+      padding var(--sw-collapse-dur, 300ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-collapse-delay, 140ms),
+      margin-bottom var(--sw-collapse-dur, 300ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-collapse-delay, 140ms),
+      border-color 200ms ease var(--sw-collapse-delay, 140ms);
   }
   .album-cover {
-    width: calc(200px - 136px * var(--fold, 0));
-    height: calc(200px - 136px * var(--fold, 0));
+    width: 200px;
+    height: 200px;
     flex-shrink: 0;
     background: var(--color-rule);
-    border-radius: calc(16px - 8px * var(--fold, 0));
+    border-radius: 16px;
     overflow: hidden;
+    /* exit: return home mid-sequence, materializing on the way */
+    transition:
+      translate 460ms cubic-bezier(0.4, 0, 0.25, 1) 240ms,
+      scale 460ms cubic-bezier(0.4, 0, 0.25, 1) 240ms,
+      opacity 200ms ease 240ms;
   }
-  .album-eyebrow {
-    max-height: calc(1.2rem * (1 - var(--fold, 0)));
-    overflow: hidden;
-    opacity: calc(1 - 2 * var(--fold, 0));
+  :global(html[data-reading]) .album-cover {
+    /* flies to the player thumbnail's MEASURED seat (--fly-x/y, set by the
+       script) and hands off only on arrival, as the player surfaces */
+    translate: var(--fly-x, 270px) var(--fly-y, 52vh);
+    /* a hair above the pill's true 0.26 — the dart dissolves mid-flight
+       (fade at 210ms of 380ms), a gesture toward the thumb, not a merge */
+    scale: var(--sw-fly-scale, 0.31);
+    opacity: 0;
+    transition:
+      translate var(--sw-fly-dur, 380ms) cubic-bezier(0.55, 0, 0.25, 1),
+      scale var(--sw-fly-dur, 380ms) cubic-bezier(0.55, 0, 0.25, 1),
+      opacity 140ms ease var(--sw-fly-fade-delay, 210ms);
   }
-  .album-title { opacity: calc(1 - 0.5 * var(--fold, 0)); }
-  .album-summary {
-    max-height: calc(3.5rem * (1 - var(--fold, 0)));
-    overflow: hidden;
-    opacity: calc(1 - 1.6 * var(--fold, 0));
+  .album-copy {
+    /* exit: the words return last, once their shelf is back */
+    transition: opacity 240ms ease 320ms, translate 300ms ease 320ms, filter 240ms ease 320ms;
   }
-  .album-meta {
-    max-height: calc(1.5rem * (1 - var(--fold, 0)));
-    overflow: hidden;
-    opacity: calc(1 - 2 * var(--fold, 0));
-  }
-  .album-actions {
-    max-height: calc(38px * (1 - var(--fold, 0)));
-    padding-top: calc(0.375rem * (1 - var(--fold, 0)));
-    overflow: hidden;
-    opacity: calc(1 - 2.2 * var(--fold, 0));
+  :global(html[data-reading]) .album-copy {
+    opacity: 0;
+    translate: 0 14px;
+    /* enter: the words exhale first — a soft dissolve (the recede's calm,
+       borrowed), cheap here because it's one small text block */
+    filter: blur(var(--sw-copy-blur, 4.5px));
+    transition: opacity 260ms ease 80ms, translate 380ms ease 80ms, filter 320ms ease 80ms;
   }
   .album-cover :global(img) {
     width: 100%;
@@ -214,10 +276,7 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
     max-width: 32.5rem;
   }
   .album-meta {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-stretch: 87.5%;
-    font-size: var(--text-base);
+    font-size: var(--text-xs);
     color: var(--color-ink-faint);
   }
   .album-actions {
@@ -229,6 +288,7 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
   .album-read {
     display: flex;
     align-items: center;
+    gap: 8px;
     height: 36px;
     padding: 0 1.25rem;
     background: var(--color-ink);
@@ -238,41 +298,60 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
     font-weight: 600;
     text-decoration: none;
   }
+  .album-play { flex-shrink: 0; }
   .album-read:hover { color: var(--color-bg); background: var(--color-accent); }
-  .album-next {
-    font-size: 0.8125rem;
-    color: var(--color-ink-muted);
-    text-decoration: none;
-  }
-  .album-next:hover { color: var(--color-accent); }
 
   .tracklist {
     display: flex;
     flex-direction: column;
     max-width: var(--measure);
     margin-inline: auto;
-    margin-bottom: calc(2.5rem * (1 - 0.6 * var(--fold, 0)));
+    margin-bottom: 1rem;
+    max-height: 480px;
+    /* exit: the shelf reopens early so returning rows have somewhere to land */
+    transition:
+      max-height 400ms cubic-bezier(0.5, 0, 0.3, 1) 120ms,
+      margin-bottom 400ms cubic-bezier(0.5, 0, 0.3, 1) 120ms;
+  }
+  :global(html[data-reading]) .tracklist {
+    max-height: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      max-height var(--sw-shelf-dur, 330ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-shelf-delay, 170ms),
+      margin-bottom var(--sw-shelf-dur, 330ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-shelf-delay, 170ms);
   }
   .track {
     display: flex;
     align-items: baseline;
     gap: 1rem;
-    padding: 0.625rem 0;
-    border-bottom: 1px solid var(--color-rule);
+    padding: 0.75rem 0;
     text-decoration: none;
-    /* Rows fold shut like a drawer closing — bottom row first (--ri is the
-       reverse index), each accordioning to zero height as the fold deepens. */
-    --t: clamp(0, calc((var(--fold, 0) - var(--ri, 0) * 0.055) / 0.32), 1);
-    max-height: calc(46px * (1 - var(--t)));
-    overflow: hidden;
-    opacity: calc(1 - var(--t));
-    border-bottom-color: color-mix(
-      in oklab,
-      var(--color-rule) calc((1 - var(--t)) * 100%),
-      transparent
+    /* exit: rows deal back in top-first (--i is the forward index) */
+    transition:
+      translate 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 280ms ease,
+      scale 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: calc(200ms + var(--i, 0) * 40ms);
+  }
+  :global(html[data-reading]) .track {
+    /* The pour — rows fall toward the player bottom-first (--ri is the
+       reverse index), accelerating, and are caught by its segments.
+       --sw-top-first flips the deal to top-first (0 or 1). */
+    translate: 0 var(--sw-fall, 54px);
+    scale: var(--sw-fall-scale, 0.945);
+    opacity: 0;
+    transition:
+      translate var(--sw-fall-dur, 300ms) var(--sw-fall-ease, cubic-bezier(0.55, 0, 0.7, 0.5)),
+      opacity var(--sw-fall-fade, 240ms) ease,
+      scale var(--sw-fall-dur, 300ms) var(--sw-fall-ease, cubic-bezier(0.55, 0, 0.7, 0.5));
+    /* 16ms: tight by choice — the pour reads as one sheet, not a dealt hand */
+    transition-delay: calc(
+      (var(--ri, 0) * (1 - var(--sw-top-first, 0)) + var(--i, 0) * var(--sw-top-first, 0)) *
+        var(--sw-stagger, 16ms)
     );
   }
-  .track:last-child { border-bottom: none; }
   .track-n {
     width: 1.5rem;
     flex-shrink: 0;
@@ -282,77 +361,249 @@ const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
     color: var(--color-ink-faint);
   }
   .track-title {
-    flex: 1;
+    width: 285px;
+    flex-shrink: 0;
     font-size: var(--text-base);
     color: var(--color-ink);
     transition: color var(--motion-micro) ease;
   }
   .track:hover .track-title { color: var(--color-accent); }
+  .track-note {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-sm);
+    color: var(--color-ink-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .track-time {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-stretch: 87.5%;
-    font-size: var(--text-base);
+    margin-left: auto; /* holds the lane when a row has no note */
+    font-weight: 300;
+    font-size: var(--text-sm);
     color: var(--color-ink-faint);
     white-space: nowrap;
   }
 
+  /* The hint — the album view's only invitation. Gone once reading. */
+  .read-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: var(--measure);
+    margin-inline: auto;
+    padding-bottom: 2rem;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-sm);
+    color: var(--color-ink-faint);
+    transition: opacity 180ms ease;
+  }
+  .read-hint svg { animation: hint-bob 2.2s ease-in-out infinite; }
+  @keyframes hint-bob {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 3px; }
+  }
+  :global(html[data-reading]) .read-hint { opacity: 0; }
+
   .prose {
     margin-inline: auto; /* centered reading column, matching the player */
     padding-bottom: 7.5rem; /* clears the chapter player */
+    opacity: 0;
+    translate: 0 var(--sw-rise, 42px);
+    /* exit: the article clears immediately so the album can take the stage */
+    transition: opacity 200ms ease, translate 240ms ease;
+  }
+  :global(html[data-reading]) .prose {
+    opacity: 1;
+    translate: 0 0;
+    /* enter: the long exhale — rises through the collapse and well past it */
+    transition:
+      opacity var(--sw-rise-dur, 880ms) ease var(--sw-rise-delay, 300ms),
+      translate var(--sw-rise-dur, 880ms) cubic-bezier(0.22, 1, 0.36, 1) var(--sw-rise-delay, 300ms);
+  }
+  /* Arriving as the rows land — the catch reads as one gesture. */
+  :global(html[data-reading]) :global(.chapter-player) {
+    transition-delay: var(--sw-player-delay, 40ms);
+  }
+
+  /* ── Motion experiment: ?motion=recede ─────────────────────────────
+     An alternative switch to compare against the pour: nothing travels
+     except the cover — the album recedes into depth (soft blur, slight
+     shrink, fade) while the article rises over it. Calmer, less vertical
+     violence; the cover flight stays as the signature. */
+  :global(html[data-motion='recede'][data-reading]) .track {
+    translate: 0 0;
+    scale: 1;
+    transition: opacity 300ms ease;
+    transition-delay: 0ms;
+  }
+  :global(html[data-motion='recede'][data-reading]) .tracklist,
+  :global(html[data-motion='recede'][data-reading]) .album-copy {
+    filter: blur(var(--sw-recede-blur, 3.5px));
+    scale: var(--sw-recede-scale, 0.955);
+    opacity: 0;
+    transition:
+      filter 380ms ease,
+      scale 420ms cubic-bezier(0.4, 0, 0.3, 1),
+      opacity 360ms ease,
+      max-height var(--sw-shelf-dur, 330ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-shelf-delay, 170ms),
+      margin-bottom var(--sw-shelf-dur, 330ms) cubic-bezier(0.5, 0, 0.3, 1) var(--sw-shelf-delay, 170ms);
+  }
+  :global(html[data-motion='recede']) .tracklist,
+  :global(html[data-motion='recede']) .album-copy {
+    transform-origin: 50% 20%;
+    transition: filter 320ms ease 160ms, scale 360ms ease 160ms, opacity 320ms ease 160ms,
+      max-height 400ms cubic-bezier(0.5, 0, 0.3, 1) 120ms,
+      margin-bottom 400ms cubic-bezier(0.5, 0, 0.3, 1) 120ms;
   }
   /* Chapter jumps land with air above the heading */
   .prose :global(h2) { scroll-margin-top: 2.5rem; }
 
+  @media (prefers-reduced-motion: reduce) {
+    .album-header,
+    .album-cover,
+    .album-copy,
+    .tracklist,
+    .track,
+    .read-hint,
+    .prose,
+    :global(html[data-reading]) :global(.chapter-player) {
+      transition: none;
+      transition-delay: 0ms;
+    }
+    .read-hint svg { animation: none; }
+  }
+
   @media (max-width: 768px) {
-    .album-header { flex-direction: column; align-items: flex-start; }
+    .album-header {
+      flex-direction: column;
+      align-items: flex-start;
+      max-height: 640px; /* stacked layout runs taller at rest */
+    }
     .album-cover { width: 100%; height: auto; aspect-ratio: 8 / 5; }
+    :global(html[data-reading]) .album-cover { translate: 0 40vh; }
+    .track-title { width: auto; flex: 1; }
+    .track-note { display: none; } /* the note column needs the desktop lane */
   }
 </style>
 
 <script>
-  // Album fold — scroll scrubs --fold (0 at rest → 1 by ~420px), the header
-  // and tracklist dissolve through it, and the chapter player rises in once
-  // reading has begun. Reduced motion: no scrub, player always present.
-  function wireAlbumFold() {
+  // The switch — one absolute point, no scrubbed in-between. Crossing a
+  // small scroll threshold grants html[data-reading]: the album plays its
+  // exit (rows pour into the player, cover flies to the thumbnail), the
+  // article rises. Scrolling back to the very top reverses it. Hysteresis
+  // keeps the boundary from chattering.
+  function wireAlbumRead() {
     const header = document.querySelector('.album-header') as HTMLElement | null;
-    if (!header || header.dataset.foldWired) return;
-    header.dataset.foldWired = '1';
+    if (!header || header.dataset.readWired) return;
+    header.dataset.readWired = '1';
 
     const root = document.documentElement;
-    root.setAttribute('data-album-fold', '');
+    root.removeAttribute('data-reading'); // a soft-nav may have leaked it (see below)
+    root.setAttribute('data-album-fold', ''); // player waits for data-visible
     const player = document.querySelector('[data-chapter-player]');
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      root.style.setProperty('--fold', '0');
-      player?.setAttribute('data-visible', '');
-      return;
+    const cover = document.querySelector('.album-cover');
+    const thumb = player?.querySelector('.cp-thumb');
+
+    /* ── SWITCH TUNING ────────────────────────────────────────────────
+       Experiment via URL, no rebuild needed:
+         ?enter=140        the absolute point (px scrolled)
+         ?land=44          where the switch deposits the reader
+         ?motion=recede    alternative choreography (see CSS above)
+       In dev, AlbumSwitchDirector's dials write window.__albumSwitch and
+       win over these; URL params seed the defaults so links still work. */
+    const q = new URLSearchParams(location.search);
+    const num = (key: string, fallback: number) => {
+      const v = Number(q.get(key));
+      return Number.isFinite(v) && v > 0 ? v : fallback;
+    };
+    const seed = { enter: num('enter', 80), land: num('land', 42), settle: num('settle', 500) };
+    const cfg = () => {
+      const t = (window as any).__albumSwitch ?? {};
+      const enter = t.enter ?? seed.enter; // the absolute point
+      const exit = Math.min(20, enter - 10); // a true return-to-top reopens
+      /* land only needs to clear exit (or landing would instantly reopen
+         the album) — above enter is fine, reading persists until y < exit */
+      const land = Math.max(exit + 10, t.land ?? seed.land);
+      const settle = t.settle ?? seed.settle; // ms the pin holds against inertia
+      return { enter, exit, land, settle };
+    };
+    if (q.get('motion')) root.setAttribute('data-motion', q.get('motion')!);
+    let reading = false;
+
+    /* The cover flies to the player thumbnail's real seat — measured
+       center-to-center at switch time, so the merge lands on every
+       viewport instead of at a guessed offset. */
+    function aimCoverFlight() {
+      if (!cover || !thumb) return;
+      const c = cover.getBoundingClientRect();
+      const t = thumb.getBoundingClientRect();
+      if (!c.height || !t.height) return;
+      root.style.setProperty('--fly-x', `${t.left + t.width / 2 - (c.left + c.width / 2)}px`);
+      root.style.setProperty('--fly-y', `${t.top + t.height / 2 - (c.top + c.height / 2)}px`);
     }
 
-    // Physical collapse: the block shrinks as it scrolls, so it exits faster
-    // than its resting height — scrub over roughly half of it.
-    const tracklist = document.querySelector('.tracklist');
-    const foldEl = (tracklist ?? header) as HTMLElement;
-    let range = 380;
-    function measure() {
-      range = Math.max(
-        320,
-        (foldEl.getBoundingClientRect().bottom + window.scrollY) * 0.55
-      );
-    }
-
-    function update() {
-      const t = Math.min(1, Math.max(0, window.scrollY / range));
-      root.style.setProperty('--fold', String(t));
+    function set(r: boolean) {
+      if (reading === r) return;
+      reading = r;
+      if (r) aimCoverFlight();
+      root.toggleAttribute('data-reading', r);
       if (player) {
-        if (t > 0.5) player.setAttribute('data-visible', '');
+        if (r) player.setAttribute('data-visible', '');
         else player.removeAttribute('data-visible');
       }
     }
-    measure();
-    update();
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    function update() {
+      const y = window.scrollY;
+      const { enter, exit, land, settle } = cfg();
+      if (!reading && y > enter) {
+        const fromAlbum = y < 300; // a real switch, not a deep-link landing
+        set(true);
+        if (fromAlbum) {
+          /* The collapse removes ~700px above the article — pin the reader
+             to a predictable first line instead of momentum roulette. */
+          const lenis = (window as any).lenis;
+          if (lenis?.scrollTo) {
+            lenis.scrollTo(land, { immediate: true });
+            /* A hard flick's trackpad inertia keeps feeding Lenis after the
+               pin, carrying the reader past the article's first line — hold
+               the wheel dead until the tail passes, so every entry starts
+               the case study from the top. */
+            if (settle > 0) {
+              lenis.stop();
+              clearTimeout(settleTimer);
+              settleTimer = setTimeout(() => lenis.start(), settle);
+            }
+          } else window.scrollTo(0, land);
+        }
+      } else if (reading && y < exit) set(false);
+    }
+    update(); // deep links land mid-article → reading immediately
+    /* Dials replay the switch in place, no scrolling — note a forced enter
+       at the top undoes itself on the next scroll (y < exit), by design. */
+    const onForce = (e: Event) => set(!!(e as CustomEvent).detail);
+    /* Soft navigations re-wire per page — unhook the last page's listeners
+       so stale closures (over swapped-out covers/players) stop stacking. */
+    const w = window as any;
+    w.__albumSwitchUnwire?.();
     window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', () => { measure(); update(); });
+    window.addEventListener('album-switch:force', onForce);
+    w.__albumSwitchUnwire = () => {
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('album-switch:force', onForce);
+    };
   }
-  wireAlbumFold();
-  document.addEventListener('astro:page-load', wireAlbumFold);
+  wireAlbumRead();
+  document.addEventListener('astro:page-load', wireAlbumRead);
+  /* ClientRouter swaps the body but keeps <html> — without this, finishing
+     one case study leaves data-reading on the root and every next one opens
+     pre-collapsed, article already up, the switch never seen. Clearing
+     before the swap means the incoming album renders at rest from its very
+     first frame; update() above re-grants reading for true deep links. */
+  document.addEventListener('astro:before-swap', () =>
+    document.documentElement.removeAttribute('data-reading')
+  );
 </script>

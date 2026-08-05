@@ -3,13 +3,26 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import { createLogger } from 'vite';
+
+import react from '@astrojs/react';
+
+// Browsers abort video range requests constantly (hover-video cards, the
+// greeting webm), which the dev server logs as ECONNRESET — harmless noise.
+const logger = createLogger();
+const originalError = logger.error;
+logger.error = (msg, options) => {
+  if (msg.includes('ECONNRESET') || msg.includes('EPIPE')) return;
+  originalError(msg, options);
+};
 
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.shelliehxx.com',
-  integrations: [mdx(), sitemap()],
+  integrations: [mdx(), sitemap(), react()],
   vite: {
     plugins: [tailwindcss()],
+    customLogger: logger,
   },
   markdown: {
     shikiConfig: {

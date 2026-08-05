@@ -12,6 +12,9 @@ const projects = defineCollection({
       year: z.number(),
       role: z.string().optional(), // e.g. "Product Design"
       company: z.string().optional(),
+      discipline: z.string().optional(), // album-header eyebrow, e.g. "Product Design"
+      timeframe: z.string().optional(), // display period, e.g. "August 2025 Ongoing"
+      trackNotes: z.record(z.string()).optional(), // per-section one-liners, keyed by h2 slug
       cover: image().optional(), // real screenshot, not a logo mark
       coverVideo: z.string().optional(), // /public path — short muted loop shown over the cover
       tags: z.array(z.string()).default([]),

@@ -4,6 +4,14 @@ import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ArchiveRow from '../components/ArchiveRow.astro';
 import HeroGreeting from '../components/HeroGreeting.astro';
+import Opening from '../components/Opening.astro';
+import OpeningInk from '../components/OpeningInk.astro';
+
+// Front-door variant: 'galaxy' (stippled SVG morph), 'ink' (generative
+// gold-ink print / falling comet, Opening B), or 'none' (no opening).
+// Parked 2026-08-04 — all variants saved and working; comet earmarked as a
+// possible dark-theme opening. Flip this one word to bring one back.
+const OPENING_VARIANT: 'galaxy' | 'ink' | 'none' = 'none';
 
 // Home: greeting + intro (the greeting owns the name; the intro never repeats it),
 // selected work with the current project as the emphasis card, recent writing rows.
@@ -36,7 +44,12 @@ const projectHref = (p: (typeof allProjects)[number]) =>
 <Base
   title="Shellie Hu — Product Designer"
   description="Product designer in Boston working on AI agent experiences. Designing Cortex, a voice AI agent builder."
+  opening={OPENING_VARIANT !== 'none'}
 >
+  {/* Front door — blooms in, then hands off to the entrance rise. */}
+  {OPENING_VARIANT === 'galaxy' && <Opening />}
+  {OPENING_VARIANT === 'ink' && <OpeningInk />}
+
   {/* Hero — greeting + intro. No illustration, no hairline, per the Landing frame. */}
   <section class="hero">
     <div class="hero-copy">

@@ -1,0 +1,60 @@
+---
+/* Opening B — the generative "gold ink universe" front door (alt to the
+   galaxy opening; index.astro picks one). Same subject as iteration one:
+   Shellie's orbiting galaxy. Here the SVG isn't inlined — its geometry is
+   PARSED at build time: every <use> stamp inside every cluster becomes an
+   anchor point [x, y, scale], grouped by cluster so the director can rebloom
+   them in the same radial order and drift them like the Figma loops. ~20 KB
+   of coordinates instead of 2 MB of paths; the ink is drawn, not shipped. */
+import { galaxyClusters as clusters } from '../lib/galaxyAnchors';
+import OpeningInkDirector from './OpeningInkDirector';
+---
+
+<div id="gi-opening" aria-hidden="true">
+  <canvas class="gi-canvas"></canvas>
+</div>
+<script type="application/json" id="gi-galaxy" set:html={JSON.stringify(clusters)} is:inline />
+
+{/* Pre-paint guard — same contract as the galaxy opening. */}
+<script is:inline data-astro-rerun define:vars={{ dev: import.meta.env.DEV }}>
+  try {
+    var giSkip =
+      !dev &&
+      (sessionStorage.getItem('entered') ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var giEl = document.getElementById('gi-opening');
+    if (giEl && giSkip) giEl.style.display = 'none';
+    else if (giEl) document.documentElement.style.overflow = 'hidden';
+  } catch (e) {}
+</script>
+<noscript>
+  <style>
+    #gi-opening {
+      display: none;
+    }
+  </style>
+</noscript>
+
+<OpeningInkDirector client:load />
+
+<style>
+  #gi-opening {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: #171310; /* the dark paper, pre-hydration; director takes over */
+    cursor: pointer;
+  }
+  .gi-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated; /* the grain stays chunky, print-not-photo */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #gi-opening {
+      display: none;
+    }
+  }
+</style>

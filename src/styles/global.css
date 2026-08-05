@@ -213,6 +213,31 @@ hr {
   --g-swap-ms: 800ms;
   --g-swap-blur: 8px;
   --g-swap-rise: 7px;
+  /* Greeting language swap — the breath (out-breath, width glide, in-breath) */
+  --g-out-ms: 260ms; /*   each outgoing chunk's exhale */
+  --g-out-stag: 40ms; /*  outgoing stagger, left to right */
+  --g-swap-stag: 70ms; /* incoming stagger — reads like speech */
+  --g-in-delay: 140ms; /* in-breath waits for the exhale to lift */
+  --g-width-ms: 420ms; /* the line's width glide (the universe rides it) */
+  /* Greeting translator mode (html[data-g-mode='translator']) — the line
+     retranslates in place, chunk by chunk, like a live captioner.
+     Shellie's dial-tuned defaults, locked 2026-08-04. */
+  --g-dwell-ms: 8300; /*    idle per language (unitless — JS reads it) */
+  --g-tr-ms: 1250ms; /*     each incoming chunk: partial → committed ink */
+  --g-tr-out-ms: 330ms; /*  each outgoing chunk dissolves where it stands */
+  --g-tr-stag: 320ms; /*    one chunk at a time, left to right */
+  --g-tr-in-delay: 160ms; /* the replacement waits for its slot to clear */
+  --g-tr-blur: 6px;
+  /* Sparks mark — swirl + the flight between seats */
+  --g-spk-ms: 21s;
+  --g-spk-speak-ms: 8.5s;
+  --g-spk-size: 38px;
+  --g-spk-dim: 0.43;
+  --g-fly-ms: 450ms;
+  --g-fly-stretch: 1.24;
+  --g-fly-squash: 0.66;
+  --g-fly-lift: 3px;
+  --g-fly-tilt-max: 6deg;
   --g-sung-ms: 100ms;
   --g-bars-ms: 1050ms;
   --hover-card-ms: 260ms;

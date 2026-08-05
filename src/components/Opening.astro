@@ -1,0 +1,193 @@
+---
+/* The front door — a star-dusted paper sky; the stippled galaxy blooms in,
+   then either lifts away or travels home into the greeting's little universe.
+   Choreography lives in OpeningDirector.tsx (DialKit timeline + feel panel,
+   both docked in dev). The SVG is server-inlined so the 2 MB of stipple never
+   enters the JS bundle; its Figma-baked drift keyframes keep looping on the
+   inner groups while we stage the entrance on the .gx-cluster wrappers.
+
+   The dust field is generated here at build time with a seeded PRNG so the
+   sky is identical on every render: mostly ink/periwinkle motes, a few gold,
+   a scatter of print-pixel squares (the risograph nod) and four-point
+   sparkles. About a third of them twinkle on a slow CSS pulse. */
+import galaxyRaw from '../assets/opening/galaxy.svg?raw';
+import OpeningDirector from './OpeningDirector';
+
+/* Deterministic PRNG — same sky every build, no hydration drift. */
+const mulberry32 = (seed: number) => () => {
+  seed |= 0;
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+const rand = mulberry32(7);
+const pick = <T,>(arr: T[]) => arr[Math.floor(rand() * arr.length)];
+
+/* Dust palette — sampled from the galaxy's inks plus the paper's faint ink. */
+const DUST_COLORS = [
+  '#a8a39c', '#a8a39c', '#9aa3d0', '#9aa3d0', '#8f96cc', '#d9b25a', '#c97b4f',
+];
+const sparklePath = (s: number) => {
+  const w = (s * 0.16).toFixed(2);
+  return `M0 ${-s} Q ${w} ${-w} ${s} 0 Q ${w} ${w} 0 ${s} Q -${w} ${w} ${-s} 0 Q -${w} ${-w} 0 ${-s} Z`;
+};
+
+const specks: string[] = [];
+for (let i = 0; i < 150; i++) {
+  const x = (rand() * 1600).toFixed(1);
+  const y = (rand() * 1000).toFixed(1);
+  const color = pick(DUST_COLORS);
+  const o = (0.2 + rand() * 0.5).toFixed(2);
+  const kind = rand();
+  const tw =
+    rand() < 0.36
+      ? ` class="tw" style="--o:${o};animation-duration:${(2.6 + rand() * 4).toFixed(1)}s;animation-delay:${(rand() * 5).toFixed(1)}s"`
+      : '';
+  if (kind < 0.72) {
+    const r = (0.6 + rand() * 1.1).toFixed(2);
+    specks.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${color}" opacity="${o}"${tw}/>`);
+  } else if (kind < 0.92) {
+    const s = (1.4 + rand() * 1.3).toFixed(2);
+    specks.push(
+      `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${color}" opacity="${o}"${tw}/>`,
+    );
+  } else {
+    const s = 2.4 + rand() * 2.2;
+    specks.push(
+      `<path d="${sparklePath(s)}" transform="translate(${x} ${y})" fill="${color}" opacity="${o}"${tw}/>`,
+    );
+  }
+}
+const dustField = specks.join('');
+---
+
+<div id="gx-opening" aria-hidden="true">
+  <div class="gx-wall">
+    <div class="gx-grain"></div>
+  </div>
+  <svg class="gx-dust" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+    <Fragment set:html={dustField} />
+  </svg>
+  <div class="gx-stage">
+    <Fragment set:html={galaxyRaw} />
+  </div>
+  <p class="gx-hint">click anywhere to enter</p>
+</div>
+
+{/* Pre-paint guard: repeat visitors and reduced-motion never see the wall.
+    Dev always plays so the timeline dock has something to direct. */}
+<script is:inline data-astro-rerun define:vars={{ dev: import.meta.env.DEV }}>
+  try {
+    var gxSkip =
+      !dev &&
+      (sessionStorage.getItem('entered') ||
+        matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var gxEl = document.getElementById('gx-opening');
+    if (gxEl && gxSkip) gxEl.style.display = 'none';
+    else if (gxEl) document.documentElement.style.overflow = 'hidden';
+  } catch (e) {}
+</script>
+<noscript>
+  <style>
+    #gx-opening {
+      display: none;
+    }
+  </style>
+</noscript>
+
+<OpeningDirector client:load />
+
+<style>
+  #gx-opening {
+    position: fixed;
+    inset: 0;
+    z-index: 120; /* above every floating instrument (NowPlayer dim is 98) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    cursor: pointer;
+    /* Print treatment dials — the director writes these from the feel panel */
+    --gx-grain: 0.08;
+    --gx-sat: 0.9;
+    --gx-con: 1.02;
+    --gx-blur: 0.3px;
+    --gx-hue: 0deg;
+    --gx-dust-hue: 0deg;
+  }
+  /* Print › Drift off — hold the Figma-baked float loops perfectly still */
+  #gx-opening:global(.gx-still) .gx-stage :global([id^='Vector_']) {
+    animation-play-state: paused;
+  }
+  /* The wall is its own layer so a traveling galaxy can outlive its fade. */
+  .gx-wall {
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg);
+  }
+  /* the paper's tooth — same whisper-dot recipe as the now player, in ink */
+  .gx-grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='5' height='5'><circle cx='1' cy='1' r='0.55' fill='%232a2824'/></svg>");
+    opacity: var(--gx-grain);
+  }
+  .gx-dust {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* the `dust` timeline clip breathes this in */
+    filter: hue-rotate(var(--gx-dust-hue));
+  }
+  .gx-dust :global(.tw) {
+    animation: gx-tw 4s ease-in-out infinite;
+  }
+  @keyframes gx-tw {
+    0%,
+    100% {
+      opacity: var(--o, 0.5);
+    }
+    50% {
+      opacity: calc(var(--o, 0.5) * 0.22);
+    }
+  }
+  .gx-stage {
+    position: relative;
+    width: min(66vmin, 520px);
+    transform-origin: center;
+  }
+  .gx-stage :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    transform-origin: 50% 50%;
+    will-change: transform;
+    filter: saturate(var(--gx-sat)) contrast(var(--gx-con)) blur(var(--gx-blur))
+      hue-rotate(var(--gx-hue));
+  }
+  /* Entrance layer — the director animates these wrappers; the Figma drift
+     loops live on the groups inside and never conflict. */
+  .gx-stage :global(.gx-cluster) {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .gx-hint {
+    position: relative;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #gx-opening {
+      display: none;
+    }
+  }
+</style>

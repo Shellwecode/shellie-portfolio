@@ -14,6 +14,8 @@ interface Props {
   fog?: boolean;
   /** Reading pages: the dock recedes when not hovered/focused. */
   quietDock?: boolean;
+  /** Landing only: the galaxy opening plays first and owns the entrance trigger. */
+  opening?: boolean;
 }
 
 const {
@@ -22,13 +24,14 @@ const {
   deck = 'pill',
   fog = false,
   quietDock = false,
+  opening = false,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-quiet-dock={quietDock || undefined}>
+<html lang="en" data-quiet-dock={quietDock || undefined} data-opening={opening || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -69,9 +72,16 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         apply();
         document.addEventListener('astro:after-swap', apply);
 
-        /* Entrance plays once per session, never on in-app navigations. */
+        /* Entrance plays once per session, never on in-app navigations.
+           When the galaxy opening owns the page (data-opening), it defers:
+           OpeningDirector fires data-entrance + 'entered' at release, so the
+           landing rises as the overlay lifts. Reduced motion skips the
+           opening, so entrance behaves as before there. */
         try {
-          if (!sessionStorage.getItem('entered')) {
+          var deferToOpening =
+            document.documentElement.hasAttribute('data-opening') &&
+            !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          if (!sessionStorage.getItem('entered') && !deferToOpening) {
             document.documentElement.setAttribute('data-entrance', '');
             sessionStorage.setItem('entered', '1');
           }
