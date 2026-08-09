@@ -93,8 +93,11 @@ import ThemeToggle from './ThemeToggle.astro';
     inset: -11px -6px;
   }
   .topbar-link:hover { color: var(--color-accent); }
-  /* "now" belongs to the main pages — reading pages keep the top clean. */
-  :global(html[data-quiet-dock]) .topbar-link[data-np-open] { display: none; }
+  /* "now" belongs to the main pages — reading pages keep the top clean.
+     The theme toggle leaves with it: alone in the corner it reads stranded,
+     so reading pages seat it in the crumb row instead ([slug].astro). */
+  :global(html[data-quiet-dock]) .topbar-link[data-np-open],
+  :global(html[data-quiet-dock]) .topbar :global(.theme-toggle) { display: none; }
   .topbar-mobile-nav { display: none; }
   @media (max-width: 768px) {
     .topbar-mobile-nav {

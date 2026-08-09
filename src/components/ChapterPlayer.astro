@@ -383,9 +383,18 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     const jump = (i: number) => {
       const el = heads[Math.max(0, Math.min(heads.length - 1, i))];
       if (!el) return;
+      /* Seat the heading at the viewport's vertical center — a top-anchored
+         jump left sections floating wherever the offset happened to land.
+         Floored below the switch's exit point so an early section can't
+         scroll the reader back out of the article. */
+      const r = el.getBoundingClientRect();
+      const y = Math.max(
+        48,
+        r.top + window.scrollY - Math.max(0, (window.innerHeight - r.height) / 2)
+      );
       const lenis = (window as any).lenis;
-      if (lenis && !reduced) lenis.scrollTo(el, { offset: -40 });
-      else el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' });
+      if (lenis && !reduced) lenis.scrollTo(y);
+      else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
     };
 
     segs.forEach((seg, i) => seg.addEventListener('click', () => jump(i)));

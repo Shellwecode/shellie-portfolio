@@ -1,0 +1,127 @@
+---
+/* An attachment chip — a file cited in prose stays in the sentence as a small
+   paper object. Hover (or keyboard focus) lifts a frosted-glass peek of the
+   file's shape; click opens the matching FileReader dialog (wired by id).
+   The chip is phrasing content — safe inside a paragraph; the dialog lives
+   in FileReader as its own block so the paragraph's DOM stays valid. */
+interface Props {
+  name: string; //     filename shown in mono
+  lines: number; //    line count, shown faint
+  dialog: string; //   id of the FileReader <dialog> this chip opens
+  peek?: string[]; //  glass-peek lines (real excerpts, pre-formatted)
+}
+const { name, lines, dialog, peek = [] } = Astro.props;
+/* Two rules keep the surrounding paragraph intact: everything here is
+   phrasing content (spans, never pre), and the markup stays newline-free —
+   a stray text node around an inline component renders as a space before
+   the sentence's next punctuation mark. */
+---
+<span class="file-exhibit"><button
+    type="button"
+    class="file-chip paper"
+    data-file-chip={dialog}
+    aria-haspopup="dialog"
+    aria-label={`Open ${name} — ${lines} lines`}
+  ><svg width="11" height="13" viewBox="0 0 11 13" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true"><path d="M1 1h6l3 3v8H1z" /><path d="M7 1v3h3" /></svg><span class="file-chip-name">{name}</span><span class="file-chip-lines">{lines} lines</span></button>{peek.length > 0 && (
+    <span class="file-peek paper" aria-hidden="true"><span class="file-peek-label">{name.toUpperCase()}</span><span class="file-peek-pre">{peek.join('\n')}</span><span class="file-peek-hint">click to read all {lines} lines</span></span>
+  )}</span><script>
+  // One delegated listener for every chip on the site.
+  document.addEventListener('click', (e) => {
+    const chip = (e.target as HTMLElement).closest<HTMLElement>('[data-file-chip]');
+    if (!chip) return;
+    const dialog = document.getElementById(chip.dataset.fileChip!) as HTMLDialogElement | null;
+    dialog?.showModal();
+  });
+</script><style>
+  .file-exhibit {
+    position: relative;
+    display: inline-block;
+  }
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 1px 9px 1px 7px;
+    border: 0; /* paper is cut, not outlined */
+    border-radius: 8px;
+    color: var(--color-ink-muted);
+    font-family: inherit;
+    cursor: pointer;
+    vertical-align: baseline;
+    /* chip-scale elevation — .paper's card shadow is too deep for inline */
+    box-shadow:
+      0px 1px 2px rgb(0 0 0 / 0.04),
+      0px 2px 6px -2px color-mix(in oklab, var(--color-ink) 8%, transparent);
+    transition: box-shadow var(--motion-micro) ease, color var(--motion-micro) ease;
+  }
+  .file-chip:hover {
+    color: var(--color-accent);
+    box-shadow:
+      0px 1px 2px rgb(0 0 0 / 0.04),
+      0px 3px 9px -2px color-mix(in oklab, var(--color-ink) 12%, transparent);
+  }
+  :global(html[data-theme='dark']) .file-chip,
+  :global(html[data-theme='dark']) .file-chip:hover {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); /* the ring, like every dark card */
+  }
+  .file-chip-name {
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    color: var(--color-ink);
+    line-height: 1.4;
+  }
+  .file-chip-lines {
+    font-weight: 300;
+    font-size: 0.65em;
+    color: var(--color-ink-faint);
+    white-space: nowrap;
+  }
+  /* The glass peek — the same frosted card the site floats over content */
+  .file-peek {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 10px);
+    z-index: 40;
+    width: 330px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    opacity: 0;
+    translate: 0 4px;
+    pointer-events: none;
+    transition: opacity 200ms ease-out, translate 200ms ease-out;
+  }
+  .file-exhibit:hover .file-peek,
+  .file-exhibit:focus-within .file-peek {
+    opacity: 1;
+    translate: 0 0;
+  }
+  .file-peek-label {
+    font-weight: 300;
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    color: var(--color-ink-faint);
+  }
+  .file-peek-pre {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.71875rem;
+    line-height: 19px;
+    color: var(--color-ink);
+    white-space: pre;
+    overflow: hidden;
+  }
+  .file-peek-hint {
+    font-weight: 300;
+    font-size: 0.6875rem;
+    color: var(--color-ink-muted);
+  }
+  @media (hover: none) {
+    .file-peek { display: none; } /* touch goes straight to the reader */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .file-peek { transition: opacity 120ms ease; translate: 0 0; }
+  }
+</style>

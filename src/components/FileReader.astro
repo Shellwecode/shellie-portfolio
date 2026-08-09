@@ -1,0 +1,169 @@
+---
+/* The mini reader — a modal that renders a cited file in place, so the
+   reader never leaves the essay. Opened by a FileChip wired to this id.
+   The file's rendered markdown comes in through the slot. */
+interface Props {
+  id: string;
+  name: string;
+  lines: number;
+  href: string; // the file on GitHub
+}
+const { id, name, lines, href } = Astro.props;
+---
+
+<dialog class="file-reader paper" id={id} aria-label={`${name} — ${lines} lines`}>
+  <header class="fr-head">
+    <span class="fr-file">
+      <svg width="11" height="13" viewBox="0 0 11 13" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
+        <path d="M1 1h6l3 3v8H1z" /><path d="M7 1v3h3" />
+      </svg>
+      <span class="fr-name">{name}</span>
+      <span class="fr-lines">{lines} lines</span>
+    </span>
+    <a class="fr-github" href={href} target="_blank" rel="noopener">view on GitHub ↗</a>
+    <button type="button" class="fr-close" data-file-reader-close aria-label="Close">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
+        <path d="M2 2l8 8M10 2l-8 8" />
+      </svg>
+    </button>
+  </header>
+  <div class="fr-body">
+    <slot />
+  </div>
+</dialog>
+
+<script>
+  // Close on the ✕, or on a backdrop click (the dialog itself is the target
+  // only when the click lands outside its children).
+  document.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const closer = t.closest('[data-file-reader-close]');
+    if (closer) (closer.closest('dialog') as HTMLDialogElement).close();
+    else if (t instanceof HTMLDialogElement && t.classList.contains('file-reader')) t.close();
+  });
+</script>
+
+<style>
+  .file-reader {
+    width: min(680px, calc(100vw - 32px));
+    max-height: min(78vh, 720px);
+    margin: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 24px; /* the player pill's radius — same instrument family */
+    color: var(--color-ink);
+    flex-direction: column; /* display comes from [open] */
+    overflow: hidden;
+  }
+  .file-reader[open] { display: flex; }
+  .file-reader::backdrop {
+    background: color-mix(in oklab, #1b1815 36%, transparent);
+  }
+  .fr-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--color-rule);
+    flex-shrink: 0;
+  }
+  .fr-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    color: var(--color-ink-muted);
+  }
+  .fr-name {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--color-ink);
+  }
+  .fr-lines {
+    font-weight: 300;
+    font-size: 0.6875rem;
+    color: var(--color-ink-faint);
+  }
+  .fr-github {
+    font-weight: 300;
+    font-size: 0.75rem;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .fr-github:hover { color: var(--color-accent); }
+  .fr-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .fr-close:hover { color: var(--color-accent); }
+  .fr-body {
+    overflow-y: auto;
+    padding: 20px 24px 28px;
+    overscroll-behavior: contain;
+  }
+  /* Compact typography for the rendered file — a document being examined,
+     not the essay's own voice. */
+  .fr-body :global(h1) {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+  .fr-body :global(h2) {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-top: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .fr-body :global(h3) {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin-top: 1.1rem;
+  }
+  .fr-body :global(p),
+  .fr-body :global(li) {
+    font-size: 0.875rem;
+    line-height: 23px;
+    color: var(--color-ink);
+  }
+  .fr-body :global(* + p) { margin-top: 0.6rem; }
+  .fr-body :global(h1 + p) { margin-top: 0.6rem; }
+  .fr-body :global(ul),
+  .fr-body :global(ol) {
+    padding-left: 1.15rem;
+    margin-top: 0.6rem;
+  }
+  .fr-body :global(ul) { list-style: disc; }
+  .fr-body :global(ol) { list-style: decimal; }
+  .fr-body :global(li::marker) {
+    color: var(--color-ink-faint);
+    font-size: 0.8em;
+  }
+  .fr-body :global(li + li) { margin-top: 0.3rem; }
+  .fr-body :global(em) {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.0625em;
+  }
+  .fr-body :global(strong) { font-weight: 600; }
+  .fr-body :global(code) {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+</style>

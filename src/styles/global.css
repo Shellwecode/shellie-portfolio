@@ -22,6 +22,12 @@
   font-display: swap;
 }
 @font-face {
+  font-family: "Aileron";
+  src: url("/fonts/Aileron-Bold.woff2") format("woff2"); /* latin subset — case-study headings only */
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
   font-family: "Junicode VF";
   src: url("/fonts/JunicodeVF-Roman.woff2") format("woff2-variations");
   font-weight: 300 700;
@@ -350,6 +356,27 @@ html[data-entrance] .chapter-player {
 }
 
 /* ---------------------------------------------------------------------------
+   Paper — the floaty instruments' material (locked aug 2 on the now player):
+   flat ink-tinted paper, soft elevation, a whisper of dot-grain tooth.
+   No borders — paper is cut, not outlined. Shadow here is card-scale;
+   small objects (inline chips) override it down.
+--------------------------------------------------------------------------- */
+.paper {
+  /* barely-tinted — at 8% the warm ink went grey on cream */
+  background-color: color-mix(in oklab, var(--color-ink) 4%, var(--color-bg));
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='5' height='5'><circle cx='1' cy='1' r='0.55' fill='%232A2824' fill-opacity='0.08'/></svg>");
+  box-shadow:
+    0px 1px 2px rgb(0 0 0 / 0.04),
+    0px 8px 24px -10px color-mix(in oklab, var(--color-ink) 12%, transparent);
+}
+:root[data-theme="dark"] .paper {
+  background-color: color-mix(in oklab, var(--color-ink) 7%, var(--color-bg));
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='5' height='5'><circle cx='1' cy='1' r='0.55' fill='%23ECE6DB' fill-opacity='0.07'/></svg>");
+  /* dark mode: the shadow becomes the ring (same move as --shadow-card) */
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* ---------------------------------------------------------------------------
    Prose — long-form reading (writing, case studies)
 --------------------------------------------------------------------------- */
 .prose {
@@ -423,6 +450,45 @@ html[data-entrance] .chapter-player {
 }
 .prose li + li {
   margin-top: 0.4em;
+}
+
+/* Album variant — the case-study reading format. Shellie's dial tune
+   (aug 8): the Paper frame's Bold headings kept, but rhythm opened back up —
+   larger body on a slightly narrower measure, real air between paragraphs.
+   Semibold carries the "bullet" role — numbered lead lines at 30px leading.
+   Every value reads a --pr-* var with the shipped value as fallback: in dev,
+   ProseDirector's dials write the vars; the panel never ships. */
+.prose--album {
+  max-width: var(--pr-measure, 736px);
+  padding-top: var(--pr-top, 0px);
+}
+.prose--album > * + * {
+  margin-top: var(--pr-p-gap, 24px); /* ¶ gap */
+}
+.prose--album :is(p, li) {
+  font-size: var(--pr-body-size, 17.5px);
+  line-height: var(--pr-body-lh, 32px);
+}
+.prose--album h2 {
+  font-weight: var(--pr-h2-weight, 700);
+  font-size: var(--pr-h2-size, 22px);
+  line-height: var(--pr-h2-lh, 36px);
+  margin-top: var(--pr-h2-above, 28px);
+  margin-bottom: var(--pr-h2-below, 20px); /* collapses over the sibling ¶ gap */
+}
+.prose--album h3 {
+  font-weight: var(--pr-h3-weight, 700);
+  font-size: var(--pr-h3-size, var(--text-lg));
+  line-height: var(--pr-h3-lh, 28px);
+  margin-top: var(--pr-h3-above, 20px);
+  margin-bottom: var(--pr-h3-below, 16px);
+}
+.prose--album strong {
+  font-weight: var(--pr-strong-weight, 600); /* the bullet voice — semibold, never Bold */
+  line-height: var(--pr-strong-lh, 32px);
+}
+.prose--album em {
+  font-size: var(--pr-em-size, 1.0625em);
 }
 
 /* ---------------------------------------------------------------------------

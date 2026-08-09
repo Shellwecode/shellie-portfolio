@@ -4,7 +4,8 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
-import AlbumSwitchDirector from '../../components/AlbumSwitchDirector';
+import ThemeToggle from '../../components/ThemeToggle.astro';
+import ProseDirector from '../../components/ProseDirector';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -73,12 +74,15 @@ const metaLine = [
   fog={true}
   quietDock={true}
 >
-  <a href="/projects" class="crumb">
-    <svg class="crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
-    </svg>
-    <span>work</span>
-  </a>
+  <div class="crumb-row">
+    <a href="/projects" class="crumb">
+      <svg class="crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
+      </svg>
+      <span>work</span>
+    </a>
+    <ThemeToggle />
+  </div>
 
   <header class="album-header">
     <div class="album-cover">
@@ -122,12 +126,12 @@ const metaLine = [
 
   {tracks.length > 0 && (
     <div class="read-hint" aria-hidden="true">
-      <span>scroll to read</span>
+      {/* just the bobbing chevron — the words came out aug 9 */}
       <svg width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M1 1l4 4 4-4" /></svg>
     </div>
   )}
 
-  <article class="prose" id="read">
+  <article class="prose prose--album" id="read">
     <Content />
     <footer class="mt-10 pt-8 border-t border-[var(--color-rule)]">
       <a href="/projects" class="text-sm no-underline hover:text-[var(--color-accent)]">
@@ -155,16 +159,24 @@ const metaLine = [
     />
   )}
 
-  {import.meta.env.DEV && <AlbumSwitchDirector client:only="react" />}
+  {import.meta.env.DEV && <ProseDirector client:only="react" />}
 </Base>
 
 <style>
+  /* Crumb row — the reading page's own top strip: crumb left, theme toggle
+     right, both riding the article measure (the topbar's toggle hides on
+     quiet-dock pages; stranded in the corner it read as misplaced). */
+  .crumb-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--measure);
+    margin-inline: auto;
+  }
   .crumb {
     display: flex;
     align-items: center;
     gap: 6px;
-    max-width: var(--measure);
-    margin-inline: auto;
     font-weight: 300;
     font-size: var(--text-xs);
     color: var(--color-ink-muted);
@@ -512,8 +524,10 @@ const metaLine = [
          ?enter=140        the absolute point (px scrolled)
          ?land=44          where the switch deposits the reader
          ?motion=recede    alternative choreography (see CSS above)
-       In dev, AlbumSwitchDirector's dials write window.__albumSwitch and
-       win over these; URL params seed the defaults so links still work. */
+       window.__albumSwitch (set from the console) wins over these; URL
+       params seed the defaults so links still work. The DialKit rig
+       (AlbumSwitchDirector, presets v2–v5) was removed after ver 5
+       shipped — restore it from git history to re-tune. */
     const q = new URLSearchParams(location.search);
     const num = (key: string, fallback: number) => {
       const v = Number(q.get(key));
@@ -595,6 +609,68 @@ const metaLine = [
       window.removeEventListener('scroll', update);
       window.removeEventListener('album-switch:force', onForce);
     };
+
+    /* ── Track clicks: seat the section dead center ────────────────────
+       A native anchor jump lands against the PRE-collapse layout; the
+       fold then removes ~700px above the article and the section drifts
+       off wherever the shelf's exhale leaves it. Instead: play the
+       switch, pin at the article's first line while the fold settles,
+       then glide the chosen heading to the viewport's vertical center.
+       (The read button keeps its meaning — start from the top — so it
+       pins and stays.) */
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let centerTimer: ReturnType<typeof setTimeout> | undefined;
+    const centerOn = (el: Element, attempt = 0) => {
+      const r = el.getBoundingClientRect();
+      const y = Math.max(
+        cfg().land, // never above the article's first line — that would re-open the album
+        r.top + window.scrollY - Math.max(0, (window.innerHeight - r.height) / 2)
+      );
+      const lenis = (window as any).lenis;
+      if (lenis?.scrollTo && !reduced) {
+        lenis.start?.();
+        lenis.scrollTo(y);
+      } else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
+      /* The first pass measures while the article's rise transform is still
+         in flight, so it can land tens of px off. Re-measure once the motion
+         has settled and quietly close any remaining gap. */
+      if (attempt < 2) {
+        clearTimeout(centerTimer);
+        centerTimer = setTimeout(() => {
+          const rr = el.getBoundingClientRect();
+          const ideal = Math.max(
+            cfg().land,
+            rr.top + window.scrollY - Math.max(0, (window.innerHeight - rr.height) / 2)
+          );
+          if (Math.abs(window.scrollY - ideal) > 8) centerOn(el, attempt + 1);
+        }, reduced ? 60 : 900);
+      }
+    };
+    document.querySelectorAll<HTMLAnchorElement>('.track, .album-read').forEach((a) => {
+      if (a.dataset.centerWired) return;
+      a.dataset.centerWired = '1';
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href')?.slice(1);
+        const el = id ? document.getElementById(id) : null;
+        if (!el) return;
+        e.preventDefault();
+        history.pushState(null, '', `#${id}`);
+        set(true);
+        const lenis = (window as any).lenis;
+        if (lenis?.scrollTo) {
+          lenis.scrollTo(cfg().land, { immediate: true });
+          lenis.stop(); // hold the wheel dead while the fold plays
+        } else window.scrollTo(0, cfg().land);
+        clearTimeout(centerTimer);
+        if (id === 'read') {
+          /* reading from the top — just release the wheel after the fold */
+          centerTimer = setTimeout(() => (window as any).lenis?.start?.(), reduced ? 0 : 560);
+        } else {
+          /* transitions are off under reduced motion — layout is already settled */
+          centerTimer = setTimeout(() => centerOn(el), reduced ? 0 : 560);
+        }
+      });
+    });
   }
   wireAlbumRead();
   document.addEventListener('astro:page-load', wireAlbumRead);

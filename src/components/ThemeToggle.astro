@@ -2,7 +2,6 @@
 ---
 
 <button
-  id="theme-toggle"
   type="button"
   aria-label="Toggle color theme"
   title="Toggle theme"
@@ -62,17 +61,14 @@
 </style>
 
 <script>
-  function setupThemeToggle() {
-    const btn = document.getElementById('theme-toggle');
-    if (!btn || btn.dataset.bound === '1') return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      try { localStorage.setItem('theme', next); } catch (e) {}
-    });
-  }
-  setupThemeToggle();
-  document.addEventListener('astro:page-load', setupThemeToggle);
+  /* Delegated — pages can seat more than one toggle (topbar on most pages,
+     the crumb row on reading pages). An id-bound handler only ever wired
+     the first instance, which is exactly the hidden one on reading pages. */
+  document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.theme-toggle')) return;
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch (e) {}
+  });
 </script>

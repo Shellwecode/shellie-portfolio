@@ -17,14 +17,13 @@ const OPENING_VARIANT: 'galaxy' | 'ink' | 'none' = 'none';
 // selected work with the current project as the emphasis card, recent writing rows.
 const allProjects = (await getCollection('projects')).filter((p) => !p.data.draft);
 const heroProject = allProjects.find((p) => p.data.hero) ?? allProjects[0] ?? null;
-const otherProjects = allProjects
-  .filter((p) => p !== heroProject)
-  .sort((a, b) => b.data.year - a.data.year)
-  .slice(0, 1);
-// Third card is hand-picked: the early MIT project balances the two 2026 ones.
+// Second and third cards are hand-picked so new entries don't reshuffle the
+// locked bento: the tester pairs with Cortex, the early MIT project balances
+// the two 2026 ones.
+const secondProject = allProjects.find((p) => p.id === 'synthetic-tester') ?? null;
 const thirdProject = allProjects.find((p) => p.id === 'saving-face') ?? null;
 // The bento's three: Cortex anchors, the other two stack right.
-const featured = [heroProject, ...otherProjects, thirdProject].filter(
+const featured = [heroProject, secondProject, thirdProject].filter(
   (p): p is NonNullable<typeof p> => Boolean(p),
 );
 
