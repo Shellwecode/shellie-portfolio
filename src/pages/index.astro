@@ -78,7 +78,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     <div class="cards">
       {featured.map((p, i) => (
         <a href={projectHref(p)} class="card enter" data-i={i} style={`--enter-i: ${4 + i}`}>
-          <div class="card-cover">
+          <div class="card-cover" style={p.data.coverZoom ? `--cover-zoom: ${p.data.coverZoom}` : undefined}>
             {p.data.cover && (
               <Image
                 src={p.data.cover}
@@ -212,9 +212,10 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scale(var(--cover-zoom, 1));
     transition: transform var(--hover-card-ms, var(--motion-content)) ease-out;
   }
-  .card:hover .card-cover :global(img) { transform: scale(var(--hover-card-scale, 1.02)); }
+  .card:hover .card-cover :global(img) { transform: scale(calc(var(--cover-zoom, 1) * var(--hover-card-scale, 1.02))); }
   /* overlay reveal (veil, tag, title, sub, ↗ chip) is shared — global.css */
 
   .writing { max-width: var(--measure); } /* 768 — the frame's writing column */

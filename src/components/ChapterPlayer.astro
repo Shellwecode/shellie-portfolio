@@ -3,7 +3,8 @@
 // anatomy and paper material (art · title · sub-line · hairline track ·
 // place-voice meta), with one difference: the hairline is a REAL segmented
 // progress bar — six segments sized by section length, filling as you read.
-// Clicking the art opens the queue; segments jump to sections.
+// The track IS the nav: hovering a segment floats its title above the pill,
+// clicking jumps. No queue popup. Clicking the art returns to the cover.
 import { Image } from 'astro:assets';
 
 interface Track {
@@ -15,25 +16,38 @@ interface Track {
 interface Props {
   title: string;
   cover?: ImageMetadata | null;
+  coverZoom?: number;
+  voice?: string | null;
   tracks: Track[];
   totalLabel: string;
   nextHref?: string | null;
   nextLabel?: string | null;
 }
-const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
+const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
 ---
 
 <div class="chapter-player" data-chapter-player>
+  {cover && (
+    <span class="cp-wash" aria-hidden="true">
+      <Image src={cover} alt="" width={520} height={152} />
+    </span>
+  )}
   <button
     type="button"
-    class="cp-queue-toggle"
-    data-cp-queue-toggle
-    aria-expanded="false"
-    aria-controls="cp-queue"
-    aria-label="Sections"
+    class="cp-art"
+    data-cp-art
+    data-voice-src={voice ?? undefined}
+    aria-label={voice ? 'Play the voice note' : 'Back to the album cover'}
+    aria-pressed={voice ? 'false' : undefined}
   >
-    <span class="cp-thumb" aria-hidden="true">
+    <span class="cp-thumb" aria-hidden="true" style={coverZoom ? `--cover-zoom: ${coverZoom}` : undefined}>
       {cover && <Image src={cover} alt="" width={104} height={104} />}
+      {voice && (
+        <span class="cp-art-scrim">
+          <svg class="cp-glyph-play" width="14" height="14" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 0.8 9 5 1.5 9.2Z" /></svg>
+          <svg class="cp-glyph-pause" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M2.5 1.5h2.4v9H2.5zM7.1 1.5h2.4v9H7.1z" /></svg>
+        </span>
+      )}
     </span>
   </button>
 
@@ -49,7 +63,6 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
           data-slug={t.slug}
           data-seconds={t.seconds}
           style={`flex-grow: ${t.seconds}`}
-          title={`${t.title} · ${t.label}`}
           aria-label={`Jump to ${t.title}`}
         >
           <span class="cp-seg-fill"></span>
@@ -58,26 +71,45 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     </div>
   </div>
 
-  <span class="cp-time" data-cp-time>0:00 / {totalLabel}</span>
+  {/* transport — voice-mode furniture: the album playlist is one skip back,
+      the next record one skip forward, like any music app. Projects without
+      a recording keep the quieter reading pill. */}
+  {voice && (
+  <span class="cp-controls">
+    <a href="/projects" class="cp-btn" data-peek="all work" aria-label="Back to all work">
+      <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor" aria-hidden="true">
+        <rect x="1" y="1" width="1.5" height="10" rx="0.75" />
+        <path d="M12.5 1.2 4.6 6l7.9 4.8Z" />
+      </svg>
+    </a>
+    {nextHref && (
+      <a href={nextHref} class="cp-btn" data-peek={`up next · ${nextLabel?.toLowerCase()}`} aria-label={`Next: ${nextLabel}`}>
+        <svg width="14" height="12" viewBox="0 0 14 12" fill="currentColor" aria-hidden="true">
+          <path d="M1.5 1.2 9.4 6l-7.9 4.8Z" />
+          <rect x="11.5" y="1" width="1.5" height="10" rx="0.75" />
+        </svg>
+      </a>
+    )}
+  </span>
+  )}
+
+  <span class="cp-time">
+    {voice && (
+      <span class="cp-time-mode" aria-hidden="true">
+        {/* which clock is this? book = reading progress, speaker = the recording */}
+        <svg class="cp-mode-book" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M6 2.3C5 1.5 3.5 1.2 1.6 1.5v8.1c1.9-.3 3.4 0 4.4.8 1-.8 2.5-1.1 4.4-.8V1.5C8.5 1.2 7 1.5 6 2.3Z" /><path d="M6 2.3v8.1" stroke-linecap="round" /></svg>
+        <svg class="cp-mode-speaker" width="11" height="10" viewBox="0 0 13 11" fill="currentColor"><path d="M1 3.6h2.2L6.4 1v9L3.2 7.4H1z" /><path d="M8.4 3.2c1.5 1.2 1.5 3.4 0 4.6M10 1.6c2.6 2 2.6 5.8 0 7.8" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round" /></svg>
+      </span>
+    )}
+    <span data-cp-time>0:00 / {totalLabel}</span>
+  </span>
 
   {/* the paper's tooth — same whisper grain as the landing pill */}
   <span class="cp-grain" aria-hidden="true"></span>
 
-  <nav class="cp-queue" id="cp-queue" data-cp-queue aria-label="Sections">
-    <span class="cp-queue-head">queue · {title.toLowerCase()} — {tracks.length} sections, {totalLabel}</span>
-    {tracks.map((t, i) => (
-      <button type="button" class="cp-row" data-cp-row data-slug={t.slug}>
-        <span class="cp-row-n">{i + 1}</span>
-        <span class="cp-row-title">{t.title.toLowerCase()}</span>
-        <span class="cp-row-time">{t.label}</span>
-      </button>
-    ))}
-    {nextHref && (
-      <a href={nextHref} class="cp-up-next">
-        up next · {nextLabel?.toLowerCase()} →
-      </a>
-    )}
-  </nav>
+  {/* the floating section title — perches above the pill over whichever
+      segment the cursor (or focus) is resting on */}
+  <span class="cp-peek" data-cp-peek aria-hidden="true"></span>
 </div>
 
 <style>
@@ -103,6 +135,9 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     box-shadow:
       0px 1px 2px rgb(0 0 0 / 0.05),
       0px 12px 36px -8px color-mix(in oklab, var(--color-ink) 16%, transparent);
+    /* gravity: the spring (script) drives the scale property from here,
+       growing upward off the bottom edge */
+    transform-origin: 50% 100%;
   }
   /* The player waits until the album has folded and reading has begun.
      The page's switch script grants data-visible; without one it shows. */
@@ -114,8 +149,77 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
   .chapter-player {
     transition: opacity var(--motion-content) ease, translate var(--motion-content) ease;
   }
+  /* with a cover wash the paper goes neutral — the art supplies the tint,
+     so the stock album-blue doesn't fight it */
+  .chapter-player:has(.cp-wash) {
+    background: color-mix(in oklab, var(--cp-ink) 3%, var(--color-bg));
+  }
+  /* ducked — sustained scrolling says "I'm reading": the pill sinks almost
+     off-stage, leaving a 10px sliver riding the viewport edge as the recall
+     handle. Full opacity — absence with a handle, not a ghost over prose.
+     (No opacity here: the hidden-state rule's opacity must still win.) */
+  .chapter-player[data-ducked]:not(:hover):not(:focus-within) {
+    translate: 0 calc(100% + var(--pill-bottom) - 10px);
+  }
 
-  .cp-queue-toggle {
+  /* Ambient wash — the album art itself, blurred wide and masked so its
+     color pours out of the thumb and dissolves before the time. Keeps the
+     pill's tint consistent with whatever cover it carries. */
+  .cp-wash {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .cp-wash :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.7); /* pull sampled edges past the clip so the blur has no pale halo */
+    filter: blur(24px) saturate(1.2);
+    opacity: 0.32;
+    -webkit-mask-image: linear-gradient(100deg, #000 25%, transparent 92%);
+    mask-image: linear-gradient(100deg, #000 25%, transparent 92%);
+  }
+  :root[data-theme='dark'] .cp-wash :global(img) { opacity: 0.2; }
+  .cp-art,
+  .cp-song,
+  .cp-controls,
+  .cp-time {
+    position: relative; /* seat content above the wash layer */
+  }
+
+  .cp-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* wide enough that the extended hit areas touch, not overlap */
+    flex-shrink: 0;
+  }
+  .cp-btn {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    transition: color var(--motion-micro) ease, background-color var(--motion-micro) ease,
+      scale var(--motion-micro) ease;
+  }
+  .cp-btn::after {
+    content: '';
+    position: absolute;
+    inset: -4px; /* 40px hit area around the 32px face */
+  }
+  .cp-btn:hover {
+    color: var(--color-ink);
+    background: color-mix(in oklab, var(--color-ink) 6%, transparent);
+  }
+  .cp-btn:active { scale: 0.96; }
+
+  .cp-art {
     flex-shrink: 0;
     padding: 0;
     border: 0;
@@ -123,8 +227,8 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     cursor: pointer;
     transition: scale var(--motion-micro) ease;
   }
-  .cp-queue-toggle:hover { scale: 1.04; }
-  .cp-queue-toggle:active { scale: 0.96; }
+  .cp-art:hover { scale: 1.04; }
+  .cp-art:active { scale: 0.96; }
   .cp-thumb {
     display: block;
     width: 52px;
@@ -138,7 +242,28 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scale(var(--cover-zoom, 1));
   }
+  /* voice affordance — a quiet scrim on the art; play at rest, pause while
+     the recording runs (both glyphs stay mounted, cross-faded) */
+  .cp-thumb { position: relative; }
+  .cp-art-scrim {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: inherit;
+    background: rgb(16 15 15 / 0.26);
+    color: #fffcf0;
+  }
+  .cp-art-scrim svg {
+    grid-area: 1 / 1;
+    transition: opacity var(--motion-micro) ease, scale var(--motion-micro) ease;
+  }
+  .cp-glyph-play { translate: 1px 0; /* optical center for the triangle */ }
+  .cp-glyph-pause { opacity: 0; scale: 0.25; }
+  .chapter-player[data-voice-playing] .cp-glyph-play { opacity: 0; scale: 0.25; }
+  .chapter-player[data-voice-playing] .cp-glyph-pause { opacity: 1; scale: 1; }
 
   .cp-song {
     display: flex;
@@ -199,6 +324,10 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
   .cp-time {
     /* the place-voice — same seat as "Boston, 16:33" on the landing */
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
     font-weight: 400;
     font-size: var(--text-xs);
     line-height: 16px;
@@ -208,6 +337,18 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     min-width: 74px;
     text-align: right;
   }
+  .cp-time-mode {
+    display: grid;
+    place-items: center;
+    color: var(--color-ink-faint);
+  }
+  .cp-time-mode svg {
+    grid-area: 1 / 1;
+    transition: opacity var(--motion-micro) ease;
+  }
+  .cp-mode-speaker { opacity: 0; }
+  .chapter-player[data-voice-playing] .cp-mode-book { opacity: 0; }
+  .chapter-player[data-voice-playing] .cp-mode-speaker { opacity: 1; }
 
   .cp-grain {
     position: absolute;
@@ -218,96 +359,36 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     opacity: 0.1;
   }
 
-  /* Queue — the tracklist as a popover above the pill. A touch more solid
-     than the pill so type stays legible over prose. */
-  .cp-queue {
+  /* The peek — a small paper callout that floats above the pill, naming
+     the segment under the cursor. Same material family as the pill, a
+     touch more solid so type stays legible over prose. */
+  .cp-peek {
     position: absolute;
-    bottom: calc(100% + 12px);
-    left: 50%;
-    translate: -50% 6px;
-    width: 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 0.75rem;
-    border-radius: 16px;
-    opacity: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--color-bg) 86%, transparent),
-      color-mix(in srgb, var(--color-bg) 96%, transparent)
-    );
-    border: 1px solid color-mix(in oklab, var(--color-ink) 5%, transparent);
-    box-shadow: 0 10px 32px color-mix(in oklab, var(--color-ink) 7%, transparent);
-    transition: opacity var(--motion-content) ease, translate var(--motion-content) ease;
-  }
-  @supports (backdrop-filter: blur(1px)) {
-    .cp-queue { backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-  }
-  @supports not (backdrop-filter: blur(1px)) {
-    .cp-queue { background: var(--color-bg); }
-  }
-  .chapter-player[data-queue-open] .cp-queue {
-    opacity: 1;
-    pointer-events: auto;
-    translate: -50% 0;
-  }
-  .cp-queue-head {
-    font-weight: 300;
-    font-size: 0.6875rem;
-    letter-spacing: 0.02em;
-    color: var(--color-ink-faint);
-    padding: 0.25rem 0.625rem 0.5rem;
-  }
-  .cp-row {
-    display: flex;
-    align-items: baseline;
-    gap: 0.625rem;
-    padding: 0.45rem 0.625rem;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    font: inherit;
-    font-size: 0.8125rem;
-    color: var(--color-ink-muted);
-    text-align: left;
-    cursor: pointer;
-    transition: background-color var(--motion-micro) ease, color var(--motion-micro) ease;
-  }
-  .cp-row:hover {
-    background: color-mix(in oklab, var(--color-ink) 5%, transparent);
-    color: var(--color-ink);
-  }
-  .cp-row-n {
-    width: 1rem;
-    flex-shrink: 0;
-    font-weight: 300;
-    font-variant-numeric: tabular-nums;
-    font-size: 0.6875rem;
-    color: var(--color-ink-faint);
-  }
-  .cp-row-title { flex: 1; }
-  .cp-row-time {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-stretch: 87.5%;
-    font-size: 0.8125rem;
-    color: var(--color-ink-faint);
-  }
-  .cp-row[aria-current] .cp-row-n { font-weight: 600; color: var(--color-accent); }
-  .cp-row[aria-current] .cp-row-title { color: var(--color-ink); }
-  .cp-row[aria-current] .cp-row-time { color: var(--color-accent); }
-  .cp-up-next {
-    margin-top: 0.375rem;
-    padding: 0.5rem 0.625rem 0.25rem;
-    border-top: 1px solid var(--color-rule);
-    font-weight: 300;
+    bottom: calc(100% + 8px);
+    left: 0; /* JS sets --peek-x to the hovered segment's center */
+    translate: calc(var(--peek-x, 50%) - 50%) 4px;
+    padding: 5px 10px;
+    border-radius: 10px;
+    white-space: nowrap;
     font-size: 0.75rem;
     color: var(--color-ink-muted);
-    text-decoration: none;
+    background: color-mix(in srgb, var(--color-bg) 94%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-ink) 5%, transparent);
+    box-shadow: 0 6px 20px color-mix(in oklab, var(--color-ink) 7%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-micro) ease, translate var(--motion-micro) ease;
   }
-  .cp-up-next:hover { color: var(--color-accent); }
+  @supports (backdrop-filter: blur(1px)) {
+    .cp-peek { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  }
+  .chapter-player[data-peek-open] .cp-peek {
+    opacity: 1;
+    translate: calc(var(--peek-x, 50%) - 50%) 0;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cp-peek { transition: opacity var(--motion-micro) ease; translate: calc(var(--peek-x, 50%) - 50%) 0; }
+  }
 
   @media (max-width: 768px) {
     .chapter-player { height: 72px; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 22px; }
@@ -324,10 +405,10 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     player.dataset.wired = '1';
 
     const segs = Array.from(player.querySelectorAll('[data-cp-seg]')) as HTMLElement[];
-    const rows = Array.from(player.querySelectorAll('[data-cp-row]')) as HTMLElement[];
     const sectionEl = player.querySelector('[data-cp-section]') as HTMLElement | null;
     const timeEl = player.querySelector('[data-cp-time]') as HTMLElement | null;
-    const queueToggle = player.querySelector('[data-cp-queue-toggle]') as HTMLElement | null;
+    const artBtn = player.querySelector('[data-cp-art]') as HTMLElement | null;
+    const peek = player.querySelector('[data-cp-peek]') as HTMLElement | null;
 
     const seconds = segs.map((s) => Number(s.dataset.seconds ?? 60));
     const total = seconds.reduce((a, b) => a + b, 0);
@@ -341,6 +422,7 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
 
     let current = -1;
     let frac = 0;
+    let voicePlaying = false; // while true, the audio owns the time readout
 
     function update() {
       const marker = window.scrollY + window.innerHeight * 0.35;
@@ -360,17 +442,13 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
         const fill = seg.querySelector('.cp-seg-fill') as HTMLElement | null;
         if (fill) fill.style.width = i < current ? '100%' : i === current ? `${frac * 100}%` : '0%';
       });
-      rows.forEach((row, i) => {
-        if (i === current) row.setAttribute('aria-current', 'true');
-        else row.removeAttribute('aria-current');
-      });
       if (sectionEl) {
         sectionEl.textContent =
           current >= 0
             ? `${current + 1} · ${heads[current].textContent?.toLowerCase().trim()}`
             : `${heads.length} sections`;
       }
-      if (timeEl) {
+      if (timeEl && !voicePlaying) {
         const elapsed =
           current < 0
             ? 0
@@ -380,7 +458,10 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let near = false; // cursor is closing in on the pill (set by the gravity spring)
+    let noDuckUntil = 0; // self-initiated smooth scrolls shouldn't duck the pill
     const jump = (i: number) => {
+      noDuckUntil = Date.now() + 1200;
       const el = heads[Math.max(0, Math.min(heads.length - 1, i))];
       if (!el) return;
       /* Seat the heading at the viewport's vertical center — a top-anchored
@@ -398,32 +479,169 @@ const { title, cover, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
     };
 
     segs.forEach((seg, i) => seg.addEventListener('click', () => jump(i)));
-    rows.forEach((row, i) =>
-      row.addEventListener('click', () => {
-        jump(i);
-        player.removeAttribute('data-queue-open');
-        queueToggle?.setAttribute('aria-expanded', 'false');
-      })
-    );
 
-    queueToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const open = player.hasAttribute('data-queue-open');
-      player.toggleAttribute('data-queue-open', !open);
-      queueToggle.setAttribute('aria-expanded', String(!open));
+    // The peek: name whatever the cursor (or keyboard focus) is resting on —
+    // a segment or a transport button — seated over its center, clamped
+    // inside the pill.
+    const showPeek = (text: string, anchor: HTMLElement) => {
+      if (!peek || !text) return;
+      peek.textContent = text;
+      const pr = player.getBoundingClientRect();
+      const ar = anchor.getBoundingClientRect();
+      const half = peek.offsetWidth / 2;
+      const x = Math.min(pr.width - half - 6, Math.max(half + 6, ar.left - pr.left + ar.width / 2));
+      player.style.setProperty('--peek-x', `${x}px`);
+      player.setAttribute('data-peek-open', '');
+    };
+    const hidePeek = () => player.removeAttribute('data-peek-open');
+    segs.forEach((seg) => {
+      const name = () => heads[segs.indexOf(seg)]?.textContent?.trim().toLowerCase() ?? '';
+      seg.addEventListener('pointerenter', () => showPeek(name(), seg));
+      seg.addEventListener('focus', () => showPeek(name(), seg));
+      seg.addEventListener('blur', hidePeek);
     });
-    document.addEventListener('click', (e) => {
-      if (!player.contains(e.target as Node)) {
-        player.removeAttribute('data-queue-open');
-        queueToggle?.setAttribute('aria-expanded', 'false');
+    player.querySelector('.cp-track')?.addEventListener('pointerleave', hidePeek);
+    player.querySelectorAll('[data-peek]').forEach((el) => {
+      const btn = el as HTMLElement;
+      btn.addEventListener('pointerenter', () => showPeek(btn.dataset.peek ?? '', btn));
+      btn.addEventListener('pointerleave', hidePeek);
+      btn.addEventListener('focus', () => showPeek(btn.dataset.peek ?? '', btn));
+      btn.addEventListener('blur', hidePeek);
+    });
+
+    // The art: with a voice note it's the play/pause for the recording;
+    // without one it returns you to the cover (fly-back in reverse).
+    const voiceSrc = artBtn?.dataset.voiceSrc;
+    let audio: HTMLAudioElement | null = null;
+    const setVoiceState = (playing: boolean) => {
+      voicePlaying = playing;
+      player.toggleAttribute('data-voice-playing', playing);
+      artBtn?.setAttribute('aria-pressed', String(playing));
+      document
+        .querySelector('[data-voice-toggle]')
+        ?.setAttribute('aria-pressed', String(playing));
+      if (!playing) update(); // hand the time readout back to reading progress
+    };
+    const toggleVoice = () => {
+      if (!voiceSrc) return;
+      if (!audio) {
+        audio = new Audio(voiceSrc);
+        audio.preload = 'metadata';
+        audio.addEventListener('timeupdate', () => {
+          if (timeEl && voicePlaying && Number.isFinite(audio!.duration)) {
+            timeEl.textContent = `${fmt(audio!.currentTime)} / ${fmt(audio!.duration)}`;
+          }
+        });
+        audio.addEventListener('ended', () => setVoiceState(false));
+        audio.addEventListener('pause', () => setVoiceState(false));
+        audio.addEventListener('play', () => setVoiceState(true));
       }
-    });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        player.removeAttribute('data-queue-open');
-        queueToggle?.setAttribute('aria-expanded', 'false');
+      if (audio.paused) audio.play();
+      else audio.pause();
+    };
+    artBtn?.addEventListener('click', () => {
+      if (voiceSrc) {
+        toggleVoice();
+        return;
       }
+      noDuckUntil = Date.now() + 1200;
+      const lenis = (window as any).lenis;
+      if (lenis && !reduced) lenis.scrollTo(0);
+      else window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
     });
+    // The album header's "listen" button drives the same recording.
+    document.querySelector('[data-voice-toggle]')?.addEventListener('click', toggleVoice);
+
+    // Gravity — the pill swells as the cursor closes in and again under a
+    // press, driven by a real underdamped spring (k below critical damping),
+    // so every release settles with a small, honest wobble.
+    if (!reduced) {
+      let cur = 1;
+      let vel = 0;
+      let prox = 0;
+      let pressed = false;
+      let raf = 0;
+      let rect = player.getBoundingClientRect();
+      const K = 170; // stiffness
+      const C = 14; // damping — critical is ~26, so it wobbles
+      const DT = 1 / 60;
+      const tick = () => {
+        const target = 1 + 0.03 * prox + (pressed ? 0.035 : 0);
+        vel += (K * (target - cur) - C * vel) * DT;
+        cur += vel * DT;
+        if (Math.abs(target - cur) < 0.0004 && Math.abs(vel) < 0.004) {
+          cur = target;
+          vel = 0;
+          raf = 0;
+        } else raf = requestAnimationFrame(tick);
+        player.style.scale = cur === 1 ? '' : String(cur);
+      };
+      const wake = () => {
+        if (!raf) raf = requestAnimationFrame(tick);
+      };
+      window.addEventListener(
+        'pointermove',
+        (e) => {
+          const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+          const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+          const t = Math.max(0, 1 - Math.hypot(dx, dy) / 160);
+          prox = t * t; /* eased ramp — it only swells once you're really closing in */
+          near = prox > 0.1;
+          if (near) player.removeAttribute('data-ducked');
+          wake();
+        },
+        { passive: true }
+      );
+      document.documentElement.addEventListener('mouseleave', () => {
+        prox = 0;
+        wake();
+      });
+      player.addEventListener('pointerdown', () => {
+        pressed = true;
+        wake();
+      });
+      window.addEventListener('pointerup', () => {
+        pressed = false;
+        wake();
+      });
+      window.addEventListener('pointercancel', () => {
+        pressed = false;
+        wake();
+      });
+      window.addEventListener('resize', () => {
+        rect = player.getBoundingClientRect();
+      });
+    }
+
+    // Duck on sustained scroll — reading owns the viewport; the pill sinks
+    // out of the essay's last lines and resurfaces when the scroll rests.
+    // The entrance owns the first beat: when the switch grants visibility
+    // (playlist → overview), the pill arrives at full height and holds the
+    // stage — ducking waits until the reader scrolls on past the landing.
+    let duckTimer = 0;
+    let wasVisible = player.hasAttribute('data-visible');
+    new MutationObserver(() => {
+      const visible = player.hasAttribute('data-visible');
+      if (visible && !wasVisible) {
+        // the switch re-asserts the attribute on every scroll tick — only
+        // the hidden → visible TRANSITION restarts the grace window
+        clearTimeout(duckTimer);
+        player.removeAttribute('data-ducked');
+        noDuckUntil = Date.now() + 1600;
+      }
+      wasVisible = visible;
+    }).observe(player, { attributes: true, attributeFilter: ['data-visible'] });
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (near || Date.now() < noDuckUntil) return;
+        player.setAttribute('data-ducked', '');
+        clearTimeout(duckTimer);
+        duckTimer = window.setTimeout(() => player.removeAttribute('data-ducked'), 900);
+      },
+      { passive: true }
+    );
+    player.addEventListener('focusin', () => player.removeAttribute('data-ducked'));
 
     update();
     window.addEventListener('scroll', update, { passive: true });

@@ -430,14 +430,42 @@ html[data-entrance] .chapter-player {
 .prose img {
   border-radius: 16px;
   margin-block: 2em;
+  background: var(--color-rule); /* paper ground while lazy art loads */
 }
 .prose iframe, .prose video {
   width: 100%;
-  aspect-ratio: 16 / 9;
   border: 0;
   border-radius: 16px;
   margin-block: 2em;
+}
+/* a quiet inside edge so cream artwork can't melt into the cream page —
+   pure black/white, never a tinted neutral (tints read as dirt) */
+.prose img, .prose video {
+  outline: 1px solid oklch(0 0 0 / 0.08);
+  outline-offset: -1px;
+}
+/* Case-study spreads: art breaks out to the furniture width (768) while
+   text keeps the reading measure (648) — narrow prose, wide art. Captions
+   stay on the text column. Collapses when the viewport can't afford it. */
+@media (min-width: 900px) {
+  .prose--album img,
+  .prose--album video,
+  .prose--album iframe {
+    width: calc(100% + 120px);
+    max-width: none;
+    margin-inline: -60px;
+  }
+}
+:root[data-theme='dark'] .prose img,
+:root[data-theme='dark'] .prose video {
+  outline-color: oklch(1 0 0 / 0.1);
+}
+.prose iframe {
+  aspect-ratio: 16 / 9; /* iframes have no intrinsic size */
   background: var(--color-rule); /* quiet placeholder while the player loads */
+}
+.prose video {
+  height: auto; /* natural aspect ratio — no letterbox bars */
 }
 .prose ul, .prose ol {
   padding-left: 1.25rem;
@@ -459,7 +487,7 @@ html[data-entrance] .chapter-player {
    Every value reads a --pr-* var with the shipped value as fallback: in dev,
    ProseDirector's dials write the vars; the panel never ships. */
 .prose--album {
-  max-width: var(--pr-measure, 736px);
+  max-width: var(--pr-measure, 648px); /* ~75 cpl at 17.5px — was 736 (≈90 cpl) */
   padding-top: var(--pr-top, 0px);
 }
 .prose--album > * + * {
@@ -504,6 +532,7 @@ html[data-entrance] .chapter-player {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: scale(var(--cover-zoom, 1)); /* match the still's crop-out-the-chrome zoom */
   opacity: 0;
   transition: opacity 200ms ease-out;
 }

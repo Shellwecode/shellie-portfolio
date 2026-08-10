@@ -1,6 +1,6 @@
 ---
-title: "The Untold Stories — Feminist SF Beyond the Anglophone Canon"
-summary: "A narrative museum of women's science fiction across ten regions and two centuries — and the systems that decided who Anglophone readers ever heard of."
+title: "Mapping Feminist Sci-fi"
+summary: "A web experience tracing women's sci-fi across the globe, and what never reached English."
 tagline: "Narrative museum of global women's SF"
 year: 2026
 role: "Researcher, Writer & Designer"
@@ -13,12 +13,13 @@ trackNotes:
   the-recurring-form-of-absence: "Filed elsewhere, genre-policing, prizes"
   a-more-honest-narrative: "Scattered solitaries, a conditional surge"
   building-the-site: "Three iterations to a storybook"
-  design-system: "One literary voice across five scripts"
   what-i-learned: "The bias is in the sources"
   whats-next: "115 verified names, four rooms to build"
 tags: ["research", "narrative", "web"]
 cover: "./covers/fem-scifi-still.jpg"
 coverVideo: "/video/fem-scifi-cover.mp4"
+coverZoom: 1.25
+voice: "/audio/fem-scifi-voice.m4a" # placeholder silence — swap for the real recording, same path
 featured: false
 draft: false
 ---
@@ -168,21 +169,11 @@ translators.**
 
 ## Building the site
 
-Three build iterations, each a full working site:
-
-— **v0** — a "narrative museum": opening, three vignettes, closing. Proved
-the structure; felt like walking past wall text.
-
-— **v1** — storybook vignettes: vertical scroll drives horizontal page-turns
-inside each vignette (sticky viewport + scroll-mapped `translate3d`); bridges
-became dense filing-card scrolls with sticky mode-headers — deliberately
-different in texture from the storybook pages, because the bridges *are* the
-filing system the vignettes are about.
-
-— **Doodle-style opening** — a hand-drawn illustrated study replaces abstract
-layout: a reader at a desk, a wall of postcards where each postcard is a
-discoverable author, a language-cycling title, and a peel-away video
-transition when the visitor first scrolls.
+Three build iterations, each a full working site: a "narrative museum" that
+proved the structure, storybook vignettes where vertical scroll drives
+horizontal page-turns, and a hand-drawn illustrated study as the opening —
+all vanilla HTML/CSS/JS, fully keyboard-navigable, with
+`prefers-reduced-motion` fallbacks throughout.
 
 <figure>
   <video
@@ -195,39 +186,6 @@ transition when the visitor first scrolls.
   />
   <figcaption>Phase 1 of the site — the illustrated study, postcard hotspots, and the scroll into the first vignette.</figcaption>
 </figure>
-
-Everything is vanilla HTML/CSS/JS. Accessibility carried through: full
-keyboard navigation between spreads, `prefers-reduced-motion` fallbacks for
-every animation, visually-hidden hotspot labels, `lang`-attributed
-multilingual text.
-
-## Design system
-
-**Typography — one literary voice across five scripts.** Libre Caslon for
-Latin; Noto Serif TC, SC, JP, KR for CJK; Public Sans for museum-label UI;
-per-`[lang]` CSS stacks so Traditional Chinese, Simplified Chinese, Japanese,
-and Korean each render in their own glyph tradition instead of whichever CJK
-font loads first. The cycling title — "The Untold Stories" → 未被讲述的故事 →
-語られざる物語 → 들려지지 않은 이야기들 — is the design system's thesis
-statement: every language gets set in its own face.
-
-**Color — Flexoki.** After sampling it against the original warm-sepia
-palette on a single section, I committed to Flexoki's light-mode neutrals:
-paper `#FFFCF0`, ink `#100F0F`, and Flexoki yellow `#D0A215` as the single
-warm accent for hotspot glows and case-file annotations.
-
-**Motion — attention as depth-of-field.** A scroll-progress variable drives
-the opening: image, overlay, title recede (fade + soft blur) as the visitor
-scrolls into the first vignette — the moment you're leaving falls out of
-focus as you enter the next. Transition experiments taught me the quiet
-solution wins: after testing white gradient washes and mask fades, the final
-treatment is a subtle darkening of the scene's own existing tones — no new
-color introduced at the seam.
-
-**Postcard interactions — glass on lamplight.** Hotspots glow with per-card
-lamp-falloff, breathing animations on individual phase offsets, dust motes on
-the three cards nearest the light. Hovering reveals a frosted-glass name
-card; clicking opens a larger glass card with the author's story.
 
 ## What I learned
 

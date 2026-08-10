@@ -34,7 +34,7 @@ const tag = (p: (typeof projects)[number]) =>
   <div class="cards-row">
     {heroProject && (
       <a href={href(heroProject)} class="card card-emphasis">
-        <div class="card-cover">
+        <div class="card-cover" style={heroProject.data.coverZoom ? `--cover-zoom: ${heroProject.data.coverZoom}` : undefined}>
           {heroProject.data.cover && (
             <Image
               src={heroProject.data.cover}
@@ -58,7 +58,7 @@ const tag = (p: (typeof projects)[number]) =>
     )}
     {row1.map((p) => (
       <a href={href(p)} class="card">
-        <div class="card-cover">
+        <div class="card-cover" style={p.data.coverZoom ? `--cover-zoom: ${p.data.coverZoom}` : undefined}>
           {p.data.cover && (
             <Image
               src={p.data.cover}
@@ -86,7 +86,7 @@ const tag = (p: (typeof projects)[number]) =>
     <div class="cards-row cards-row-secondary">
       {row2.map((p) => (
         <a href={href(p)} class="card">
-          <div class="card-cover card-cover-short">
+          <div class="card-cover card-cover-short" style={p.data.coverZoom ? `--cover-zoom: ${p.data.coverZoom}` : undefined}>
             {p.data.cover && (
               <Image
                 src={p.data.cover}
@@ -153,9 +153,10 @@ const tag = (p: (typeof projects)[number]) =>
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scale(var(--cover-zoom, 1));
     transition: transform var(--motion-content) ease-out;
   }
-  .card:hover .card-cover :global(img) { transform: scale(1.02); }
+  .card:hover .card-cover :global(img) { transform: scale(calc(var(--cover-zoom, 1) * 1.02)); }
   /* overlay reveal (veil, tag, title, sub, ↗ chip) is shared — global.css */
 
   @media (max-width: 768px) {

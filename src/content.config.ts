@@ -17,6 +17,8 @@ const projects = defineCollection({
       trackNotes: z.record(z.string()).optional(), // per-section one-liners, keyed by h2 slug
       cover: image().optional(), // real screenshot, not a logo mark
       coverVideo: z.string().optional(), // /public path — short muted loop shown over the cover
+      coverZoom: z.number().optional(), // scale up cover art to crop out recording chrome/margins
+      voice: z.string().optional(), // /public path — narrated read-through; play UI appears only when set
       tags: z.array(z.string()).default([]),
       external: z.string().url().optional(), // if it links out instead of a case study
       featured: z.boolean().default(false), // show in the homepage featured grid
