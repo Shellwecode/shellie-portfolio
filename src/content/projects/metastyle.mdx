@@ -3,9 +3,17 @@ title: "MetaStyle — Mobile AI Art Generator"
 summary: "Bringing Stable Diffusion to a phone for people who'd never prompted before — and refining what prompting even means on mobile."
 tagline: "Mobile AI art generator"
 year: 2023
-role: "UX Designer"
+role: "UX Designer, Prompt Engineer & Researcher"
 company: "MetaStyle AI"
-tags: ["work", "ai", "mobile"]
+discipline: "UX Design"
+timeframe: "May–November 2023"
+trackNotes:
+  overview: "Only designer, six months, two make-or-break moments"
+  the-problem: "Alignment, bodies, and taste"
+  research: "Aesthetic satisfaction, measured by download"
+  design: "Curating the web's everything down to a phone"
+  takeaways: "Three prompting lessons I still use"
+tags: ["others"]
 cover: "./metastyle.svg"
 draft: false
 ---
@@ -15,8 +23,9 @@ draft: false
 MetaStyle is a mobile generative-art app built on Stable Diffusion. I was the
 only designer on the team — one PM, two engineers — working as UX designer,
 prompt engineer, and researcher across a six-month internship (May–November
-2023). The work centered on the two moments that make or break the app:
-how people prompt, and what they get back.
+2023), in Figma and Miro on the design side, Stable Diffusion and Midjourney
+on the model side. The work centered on the two moments that make or break
+the app: how people prompt, and what they get back.
 
 ## The problem
 
@@ -39,9 +48,10 @@ phrase formations. ChatGPT integration opened up alternative prompting
 methods, so we ran participatory sessions where users refined prompts with
 its help and judged the outputs.
 
-Our target users had minimal generative-AI experience and cared about one
-thing: results that matched their conception of attractiveness. We used
-download likelihood as the satisfaction metric — if you'd keep it, it worked.
+Our target users had minimal generative-AI experience, wanted the
+interaction *light and fast*, and cared about one thing: results that
+matched their conception of attractiveness. We used download likelihood as
+the satisfaction metric — if you'd keep it, it worked.
 
 ## Design
 
@@ -54,9 +64,10 @@ The bigger move was re-exploring prompting itself. Research showed segmented
 short phrases outperformed single words, so we refined the feature tree to
 surface only consistently high-performing options as selectable tags —
 predefined labels as starting points, with manual input still there for
-creative freedom. Instead of staring at an empty text box, users compose from
-labels that are known to work. Less typing, lower cognitive load, faster to a
-good image.
+creative freedom. We also capped how many selections a user can stack, a
+system limit that keeps the model inside the range where it performs.
+Instead of staring at an empty text box, users compose from labels that are
+known to work. Less typing, lower cognitive load, faster to a good image.
 
 ## Takeaways
 

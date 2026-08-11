@@ -9,9 +9,12 @@ interface Props {
   external?: boolean;
   /** Plain variant (home): no kind lane, serif italic date */
   plain?: boolean;
+  /** Quiet variant (writing index): no per-row hairline, a touch more air —
+      matches the case-study tracklist's ruleless rows */
+  quiet?: boolean;
 }
 
-const { kind, title, href, date, external = false, plain = false } = Astro.props;
+const { kind, title, href, date, external = false, plain = false, quiet = false } = Astro.props;
 
 const displayDate =
   date instanceof Date
@@ -19,14 +22,14 @@ const displayDate =
     : date;
 ---
 
-<div class:list={['archive-row', { 'archive-row--plain': plain }]}>
+<div class:list={['archive-row', { 'archive-row--plain': plain, 'archive-row--quiet': quiet }]}>
   {!plain && <span class="kind">{kind}</span>}
   <a
     href={href}
     class="title"
     {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
   >
-    {title}{external && <span class="text-[var(--color-ink-faint)]"> ↗</span>}
+    {title}{external && <span class="text-[var(--color-ink-faint)]">&nbsp;↗</span>}
   </a>
   <span class="date">{displayDate}</span>
 </div>

@@ -1,0 +1,77 @@
+---
+// The reading page's top strip — crumb left, theme toggle right, both on one
+// 28px control height, riding the page's reading measure. Shared by case
+// studies and writing entries so the two ends can't drift apart.
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props {
+  href: string;
+  label: string;
+  /** CSS max-width the row rides — pass the page's reading measure. */
+  measure?: string;
+  /** Voice case studies: the pill's ⏮ owns "back" once reading — the crumb bows out. */
+  hasVoice?: boolean;
+}
+const { href, label, measure = 'var(--measure)', hasVoice = false } = Astro.props;
+---
+
+<div class="crumb-row" data-has-voice={hasVoice ? '' : undefined} style={`max-width: ${measure}`}>
+  <a href={href} class="crumb">
+    <svg class="crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
+    </svg>
+    <span>{label}</span>
+  </a>
+  <ThemeToggle />
+</div>
+
+<style>
+  .crumb-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 28px;
+    margin-inline: auto;
+  }
+  .crumb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    margin-left: -10px; /* optical: the arrow sits on the column edge, the pill overhangs */
+    border-radius: 999px;
+    font-weight: 300;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    transition:
+      color var(--motion-micro) ease,
+      background-color var(--motion-fade) ease,
+      opacity 200ms ease,
+      translate 240ms ease;
+  }
+  /* quiet at rest; the pill surfaces only under the cursor */
+  .crumb:hover {
+    color: var(--color-accent);
+    background: color-mix(in oklab, var(--color-rule) 55%, transparent);
+  }
+  .crumb-arrow { flex-shrink: 0; transition: translate var(--motion-micro) ease; }
+  .crumb:hover .crumb-arrow { translate: -2px 0; }
+  /* ~40px hit area without visual weight */
+  .crumb::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+  /* once reading starts on voice projects, the player's ⏮ owns "back" */
+  :global(html[data-reading]) .crumb-row[data-has-voice] .crumb {
+    opacity: 0;
+    translate: -6px 0;
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .crumb, .crumb-arrow { transition: none; }
+  }
+</style>

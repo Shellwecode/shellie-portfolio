@@ -12,10 +12,10 @@ const posts = (await getCollection('writing'))
   title="Writing — Shellie Hu"
   description="Notes on design, people, and the threads between."
 >
-  <div class="mb-10 space-y-4 text-[var(--text-lg)] leading-relaxed" style="max-width: var(--measure);">
-    <h1 class="text-xl font-medium">Writing</h1>
-    <p class="text-[var(--color-ink-muted)]">
-      A way to make sense of the patterns and people behind projects. I write
+  <div class="page-head">
+    <h1 class="page-title">writing</h1>
+    <p class="page-sub">
+      a way to make sense of the patterns and people behind projects — i write
       to slow down, think more deeply, and articulate what might otherwise go
       unspoken.
     </p>
@@ -29,8 +29,26 @@ const posts = (await getCollection('writing'))
           href={post.data.external ?? `/writing/${post.id}`}
           date={post.data.dateLabel ?? post.data.date}
           external={Boolean(post.data.external)}
+          quiet
         />
       ))
     }
   </div>
 </Base>
+
+<style>
+  /* same head voice as the work page */
+  .page-head { margin-bottom: 1.5rem; }
+  .page-title {
+    font-size: var(--text-xl);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+  }
+  .page-sub {
+    font-size: var(--text-base);
+    color: var(--color-ink-muted);
+    line-height: 1.55;
+    max-width: var(--measure);
+  }
+</style>

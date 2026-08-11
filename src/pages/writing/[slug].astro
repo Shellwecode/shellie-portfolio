@@ -1,18 +1,26 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import CrumbRow from '../../components/CrumbRow.astro';
+import InpageEditor from '../../components/InpageEditor.astro';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('writing');
-  return posts
+  const posts = (await getCollection('writing'))
     .filter((p) => !p.data.draft && !p.data.external)
-    .map((post) => ({
+    .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+  // like the case-study playlist, the queue wraps — every piece has a next
+  return posts.map((post, i) => {
+    const n = posts.length;
+    const next = n > 1 ? posts[(i - 1 + n) % n] : null; // newer, wrapping to oldest
+    return {
       params: { slug: post.id },
-      props: { post },
-    }));
+      props: { post, next: next ? { id: next.id, title: next.data.title } : null },
+    };
+  });
 }
 
-const { post } = Astro.props;
+const { post, next } = Astro.props;
 const { Content } = await render(post);
 
 const formattedDate = post.data.date.toLocaleDateString('en-US', {
@@ -21,36 +29,100 @@ const formattedDate = post.data.date.toLocaleDateString('en-US', {
   day: 'numeric',
   timeZone: 'UTC', // frontmatter dates are date-only; local TZ would shift the day
 });
+
+// Reading page in the case-study register, simplified: same crumb, same
+// header voice (eyebrow / title / summary / meta), same 648px prose — no
+// tracklist, no album fold, no player.
+const words = (post.body ?? '').split(/\s+/).filter(Boolean).length;
+const readMinutes = Math.max(1, Math.round(words / 200));
+const eyebrow = post.data.kind ?? 'writing';
+const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min`;
 ---
 
-<Base title={`${post.data.title} — Shellie Hu`} description={post.data.summary} quietDock={true}>
-  <article class="prose">
-    <header class="mb-10">
-      <div
-        class="italic text-[var(--color-ink-muted)] mb-3"
-        style="font-family: var(--font-serif); font-stretch: 87.5%;"
-      >
-        {formattedDate}
-      </div>
-      <h1 class="text-2xl font-medium leading-tight">{post.data.title}</h1>
-      {
-        post.data.summary && (
-          <p class="text-[var(--color-ink-muted)] text-lg mt-3">
-            {post.data.summary}
-          </p>
-        )
-      }
-    </header>
+<Base
+  title={`${post.data.title} — Shellie Hu`}
+  description={post.data.summary}
+  deck="none"
+  fog="thin"
+  quietDock={true}
+>
+  <CrumbRow href="/writing" label="writing" measure="var(--pr-measure, 648px)" />
 
+  <header class="entry-header">
+    <span class="entry-eyebrow">{eyebrow}</span>
+    <h1 class="entry-title" data-ie-fm="title">{post.data.title}</h1>
+    {
+      post.data.summary && (
+        <p class="entry-summary" data-ie-fm="summary">
+          {post.data.summary}
+        </p>
+      )
+    }
+    <span class="entry-meta">{metaLine}</span>
+  </header>
+
+  <article class="prose prose--album">
     <Content />
 
-    <footer class="mt-16 pt-8 border-t border-[var(--color-rule)]">
+    <footer class="mt-10 pt-8 border-t border-[var(--color-rule)] flex items-baseline justify-between gap-4">
       <a
         href="/writing"
         class="text-sm no-underline hover:text-[var(--color-accent)]"
       >
         ← all writing
       </a>
+      {next && (
+        <a
+          href={`/writing/${next.id}`}
+          class="text-sm no-underline text-right hover:text-[var(--color-accent)]"
+        >
+          Next: {next.title}
+        </a>
+      )}
     </footer>
   </article>
+
+  {import.meta.env.DEV && <InpageEditor sourceFile={post.filePath} />}
 </Base>
+
+<style>
+  /* Header — the album header's voice without the album: eyebrow, title,
+     summary, meta, on the shared measure above the narrower prose. */
+  .entry-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    max-width: var(--pr-measure, 648px);
+    margin-inline: auto;
+    /* no rule below — the air alone separates header from prose */
+    padding: 1.5rem 0 0 0;
+    margin-bottom: 2.5rem;
+  }
+  .entry-eyebrow {
+    font-weight: 300;
+    font-size: var(--text-xs);
+    letter-spacing: 0.02em;
+    color: var(--color-ink-muted);
+  }
+  .entry-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .entry-summary {
+    font-size: var(--text-base);
+    color: var(--color-ink-muted);
+    line-height: 1.55;
+    max-width: 32.5rem;
+  }
+  .entry-meta {
+    font-size: var(--text-xs);
+    color: var(--color-ink-faint);
+  }
+
+  .prose {
+    margin-inline: auto; /* centered reading column, like the case studies */
+    padding-bottom: 5rem;
+  }
+</style>

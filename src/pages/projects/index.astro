@@ -2,114 +2,153 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
+import WorkShelfLab from '../../components/WorkShelfLab.tsx';
 
-// Work index: hero project as the emphasis card, everything else in the grid.
-const projects = (await getCollection('projects'))
-  .filter((p) => !p.data.draft)
-  .sort((a, b) => b.data.year - a.data.year);
+// One shelf: case studies + vibe-coded workshop projects, filterable.
+// (Design: Paper board "work v2 / A — one shelf, quiet chips".)
+const projects = (await getCollection('projects')).filter((p) => !p.data.draft);
+const workshop = (await getCollection('workshop')).filter((w) => !w.data.draft);
 
-const heroProject = projects.find((p) => p.data.hero) ?? projects[0] ?? null;
-const rest = projects.filter((p) => p !== heroProject);
-const row1 = rest.slice(0, 1); // shares the top row with the emphasis card
-const row2 = rest.slice(1);
+// The shelf's taxonomy. Case studies carry their category in frontmatter
+// `tags` (the same label the card wears); workshop items are assigned here.
+// One tag each is the norm; a second must earn its place (if most items
+// carry 2–3, the taxonomy is wrong).
+const CATEGORIES = [
+  { key: 'voice-ai', label: 'voice AI' },
+  { key: 'research', label: 'research' },
+  { key: 'thinking-tools', label: 'thinking tools' },
+  { key: 'others', label: 'others' },
+];
+const catKey = (label: string) => label.toLowerCase().replace(/\s+/g, '-');
+const catLabel = (key: string) => CATEGORIES.find((c) => c.key === key)?.label ?? key;
+const WORKSHOP_SHELF: Record<string, string[]> = {
+  'audiobook-marker': ['voice-ai'],
+  'prototype-playground': ['thinking-tools'],
+  strays: ['others'],
+};
 
-const href = (p: (typeof projects)[number]) => p.data.external ?? `/projects/${p.id}`;
 const shortTitle = (title: string) => title.split('—')[0].trim();
-const tag = (p: (typeof projects)[number]) =>
-  p.data.tags.find((t) => t !== 'work') ?? p.data.year;
+
+const items = [
+  ...projects.map((p) => ({
+    id: p.id,
+    href: p.data.external ?? `/projects/${p.id}`,
+    external: !!p.data.external,
+    title: shortTitle(p.data.title),
+    sub: p.data.tagline ?? p.data.summary,
+    kind: 'case' as const,
+    status: null as string | null,
+    cover: p.data.cover,
+    coverVideo: p.data.coverVideo,
+    coverZoom: p.data.coverZoom,
+    year: p.data.year,
+    tags: (p.data.tags.length ? p.data.tags : ['others']).map(catKey),
+    catLabels: p.data.tags.length ? p.data.tags : ['others'],
+    hero: p.data.hero,
+  })),
+  ...workshop.map((w) => ({
+    id: w.id,
+    href: w.data.live ?? w.data.github ?? null, // no destination → card renders unlinked
+    external: !!(w.data.live ?? w.data.github),
+    title: w.data.title,
+    sub: w.data.summary,
+    kind: 'vibe' as const,
+    status: w.data.status === 'in-dev' ? 'in dev' : w.data.status,
+    cover: w.data.hero,
+    coverVideo: undefined,
+    coverZoom: undefined,
+    year: w.data.year,
+    tags: WORKSHOP_SHELF[w.id] ?? ['others'],
+    catLabels: (WORKSHOP_SHELF[w.id] ?? ['others']).map(catLabel),
+    hero: false,
+  })),
+].sort(
+  (a, b) =>
+    Number(b.hero) - Number(a.hero) ||
+    b.year - a.year ||
+    (a.kind === b.kind ? 0 : a.kind === 'case' ? -1 : 1)
+);
+
+const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).length;
 ---
 
 <Base
   title="Work — Shellie Hu"
-  description="Case studies and professional work by Shellie Hu."
+  description="Case studies and vibe-coded projects by Shellie Hu."
 >
   <div class="page-head">
     <h1 class="page-title">work</h1>
     <p class="page-sub">
-      client and professional work — things i've built on my own live in the
-      <a href="/workshop">workshop</a>.
+      case studies and things i vibe-coded for myself — everything i make,
+      minus the <a href="/doodles">drawings</a> and the
+      <a href="/writing">writing</a>.
     </p>
   </div>
 
-  <div class="cards-row">
-    {heroProject && (
-      <a href={href(heroProject)} class="card card-emphasis">
-        <div class="card-cover" style={heroProject.data.coverZoom ? `--cover-zoom: ${heroProject.data.coverZoom}` : undefined}>
-          {heroProject.data.cover && (
-            <Image
-              src={heroProject.data.cover}
-              alt={`${heroProject.data.title} cover`}
-              widths={[600, 1200]}
-              sizes="(max-width: 768px) 100vw, 640px"
-            />
-          )}
-          {heroProject.data.coverVideo && (
-            <video class="card-video" src={heroProject.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          )}
-          <span class="card-veil" aria-hidden="true"></span>
-          <span class="card-overlay">
-            <span class="card-tag">{tag(heroProject)}</span>
-            <span class="card-ov-title">{shortTitle(heroProject.data.title)}</span>
-            <span class="card-ov-sub">{heroProject.data.tagline ?? heroProject.data.summary}</span>
-          </span>
-          <span class="card-go" aria-hidden="true">↗</span>
-        </div>
-      </a>
-    )}
-    {row1.map((p) => (
-      <a href={href(p)} class="card">
-        <div class="card-cover" style={p.data.coverZoom ? `--cover-zoom: ${p.data.coverZoom}` : undefined}>
-          {p.data.cover && (
-            <Image
-              src={p.data.cover}
-              alt={`${p.data.title} cover`}
-              widths={[400, 800]}
-              sizes="(max-width: 768px) 100vw, 320px"
-            />
-          )}
-          {p.data.coverVideo && (
-            <video class="card-video" src={p.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
-          )}
-          <span class="card-veil" aria-hidden="true"></span>
-          <span class="card-overlay">
-            <span class="card-tag">{tag(p)}</span>
-            <span class="card-ov-title">{shortTitle(p.data.title)}</span>
-            <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
-          </span>
-          <span class="card-go" aria-hidden="true">↗</span>
-        </div>
-      </a>
+  <div class="filter-row" role="group" aria-label="Filter work">
+    <button type="button" class="fchip" data-cat="all" aria-pressed="true">
+      <span>all</span><span class="fcount">{items.length}</span>
+    </button>
+    {CATEGORIES.map((c) => (
+      <button type="button" class="fchip" data-cat={c.key} aria-pressed="false">
+        <span>{c.label}</span><span class="fcount">{countOf(c.key)}</span>
+      </button>
     ))}
   </div>
 
-  {row2.length > 0 && (
-    <div class="cards-row cards-row-secondary">
-      {row2.map((p) => (
-        <a href={href(p)} class="card">
-          <div class="card-cover card-cover-short" style={p.data.coverZoom ? `--cover-zoom: ${p.data.coverZoom}` : undefined}>
-            {p.data.cover && (
-              <Image
-                src={p.data.cover}
-                alt={`${p.data.title} cover`}
-                widths={[400, 800]}
-                sizes="(max-width: 768px) 100vw, 320px"
-              />
-            )}
-            {p.data.coverVideo && (
-              <video class="card-video" src={p.data.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
-            )}
-            <span class="card-veil" aria-hidden="true"></span>
-            <span class="card-overlay">
-              <span class="card-tag">{tag(p)}</span>
-              <span class="card-ov-title">{shortTitle(p.data.title)}</span>
-              <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
+  <div class="work-grid" data-work-grid>
+    {items.map((item) => {
+      const El = item.href ? 'a' : 'div'; // concepts with nowhere to go stay cards, not links
+      return (
+      <El
+        href={item.href ?? undefined}
+        class="card"
+        data-kind={item.kind}
+        data-tags={item.tags.join(',')}
+        target={item.external ? '_blank' : undefined}
+        rel={item.external ? 'noopener noreferrer' : undefined}
+      >
+        <div class="card-cover" style={item.coverZoom ? `--cover-zoom: ${item.coverZoom}` : undefined}>
+          {item.cover && (
+            <Image
+              src={item.cover}
+              alt={`${item.title} cover`}
+              widths={[400, 800, 1200]}
+              sizes="(max-width: 768px) 100vw, 640px"
+            />
+          )}
+          {item.coverVideo && (
+            <video class="card-video" src={item.coverVideo} muted loop playsinline preload="metadata" aria-hidden="true"></video>
+          )}
+          <span class="card-veil" aria-hidden="true"></span>
+          <span class="card-overlay">
+            <span class="card-tag-row">
+              {/* the tags are the filter's words — a multi-tagged item wears every one */}
+              {item.catLabels.map((label) => (
+                <span class="card-tag">{label}</span>
+              ))}
+              {item.status && (
+                <span class:list={['card-status', `is-${item.status.replace(' ', '-')}`]}>
+                  <span class="card-status-dot" aria-hidden="true"></span>
+                  {item.status}
+                </span>
+              )}
             </span>
-            <span class="card-go" aria-hidden="true">↗</span>
-          </div>
-        </a>
-      ))}
-    </div>
-  )}
+            <span class="card-ov-title">{item.title}</span>
+            <span class="card-ov-sub">{item.sub}</span>
+          </span>
+          {item.href && <span class="card-go" aria-hidden="true">↗</span>}
+        </div>
+      </El>
+      );
+    })}
+  </div>
+
+  <p class="empty-note" data-empty-note hidden>
+    nothing on this shelf — clear a filter.
+  </p>
+
+  {import.meta.env.DEV && <WorkShelfLab client:load />}
 </Base>
 
 <style>
@@ -127,28 +166,82 @@ const tag = (p: (typeof projects)[number]) =>
     max-width: var(--measure);
   }
 
-  .cards-row { display: flex; gap: 1.25rem; margin-bottom: 1.5rem; }
-  .card {
+  /* ── Filters — quiet chips; the active one is the only solid thing ── */
+  .filter-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.625rem;
-    flex: 1;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 1.75rem;
+  }
+  .fchip {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border: 1px solid var(--color-rule);
+    border-radius: 999px;
+    background: none;
+    color: var(--color-ink-muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: color var(--motion-micro) ease, border-color var(--motion-micro) ease,
+      background-color var(--motion-fade) ease, scale 120ms ease;
+  }
+  .fchip:hover { color: var(--color-accent); }
+  .fchip[aria-pressed='true'] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-bg);
+    font-weight: 600;
+  }
+  .fcount {
+    font-weight: 300;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-ink-faint);
+  }
+  .fchip[aria-pressed='true'] .fcount { color: color-mix(in oklab, var(--color-bg) 65%, transparent); }
+  .fchip:active { scale: 0.96; }
+
+  /* ── The shelf — one grid; the first two visible cards lead ──
+     Sizes ride --shelf-* vars (WorkShelfLab tunes them in dev);
+     the fallbacks ARE the shipped layout. */
+  .work-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--shelf-cols, 12), 1fr);
+    gap: var(--shelf-gap-y, 20px) var(--shelf-gap-x, 20px);
+  }
+  .card {
+    grid-column: span var(--shelf-card-span, 6);
     text-decoration: none;
   }
-  .card-emphasis { flex: 2; }
+  .card.is-lead { grid-column: span var(--shelf-lead-span, 8); }
+  .card.is-co { grid-column: span var(--shelf-co-span, 4); }
   .card-cover {
     position: relative;
     width: 100%;
-    height: 240px;
+    aspect-ratio: var(--shelf-ratio, 1.55); /* ratio sizing is the shipped mode */
     background: var(--color-rule);
-    border-radius: 16px;
+    border-radius: var(--shelf-radius, 16px);
     overflow: hidden;
     box-shadow: var(--shadow-card);
     transition: box-shadow 200ms ease;
   }
+  :is(.is-lead, .is-co) .card-cover { aspect-ratio: var(--shelf-lead-ratio, 1.65); }
+  /* height mode (rig's card › sizing): fixed cover heights instead */
+  :global(html[data-shelf-sizing='height']) .card-cover {
+    aspect-ratio: auto;
+    height: var(--shelf-card-h, 320px);
+  }
+  :global(html[data-shelf-sizing='height']) :is(.is-lead, .is-co) .card-cover {
+    aspect-ratio: auto;
+    height: var(--shelf-lead-h, 270px);
+  }
   .card:hover .card-cover,
   .card:focus-visible .card-cover { box-shadow: var(--shadow-card-hover); }
-  .card-cover-short { height: 170px; }
   .card-cover :global(img) {
     width: 100%;
     height: 100%;
@@ -159,8 +252,141 @@ const tag = (p: (typeof projects)[number]) =>
   .card:hover .card-cover :global(img) { transform: scale(calc(var(--cover-zoom, 1) * 1.02)); }
   /* overlay reveal (veil, tag, title, sub, ↗ chip) is shared — global.css */
 
+  /* status beside the kind tag — color is the cue, the label is the fact */
+  .card-tag-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-tag-row .card-tag { margin-bottom: 0; }
+  .card-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.6875rem;
+    color: rgba(250, 248, 245, 0.82);
+  }
+  .card-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+  }
+  .is-live .card-status-dot { background: #7fb069; }
+  .is-in-dev .card-status-dot { background: #e0b45c; }
+  .is-concept .card-status-dot,
+  .is-archived .card-status-dot { border: 1px solid rgba(250, 248, 245, 0.7); }
+
+  .empty-note {
+    margin-top: 2.5rem;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-sm);
+    color: var(--color-ink-faint);
+  }
+
+  @media (max-width: 1024px) {
+    .card { grid-column: span 6; }
+    .card.is-lead { grid-column: span 12; }
+    .card.is-co { grid-column: span 6; }
+  }
   @media (max-width: 768px) {
-    .cards-row { flex-direction: column; }
-    .card-emphasis { flex: 1; }
+    .card, .card.is-lead, .card.is-co { grid-column: span 12; }
+    .card-cover, :is(.is-lead, .is-co) .card-cover { height: 210px; }
   }
 </style>
+
+<script>
+  // The reveal — don't show the shelf all at once (gabriell_lab's tip):
+  // every card gets a tiny delay from the center out, with a slight swing.
+  // Vanilla WAAPI; all numbers read live from --shelf-* vars so the dev
+  // rig (WorkShelfLab) can tune them — fallbacks are the shipped values.
+  function wireWorkShelf() {
+    const grid = document.querySelector<HTMLElement>('[data-work-grid]');
+    if (!grid || grid.dataset.wired) return;
+    grid.dataset.wired = '1';
+
+    const cards = [...grid.querySelectorAll<HTMLElement>('.card')];
+    const emptyNote = document.querySelector<HTMLElement>('[data-empty-note]');
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('.fchip')];
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let cat = 'all';
+
+    const matches = (el: HTMLElement) =>
+      cat === 'all' || (el.dataset.tags ?? '').split(',').includes(cat);
+
+    const reveal = (els: HTMLElement[]) => {
+      if (reduced || els.length === 0) return;
+      const style = getComputedStyle(document.documentElement);
+      const num = (name: string, fallback: number) => {
+        const v = parseFloat(style.getPropertyValue(name));
+        return Number.isFinite(v) ? v : fallback;
+      };
+      const staggerMs = num('--shelf-stagger', 70);
+      const duration = num('--shelf-dur', 590);
+      const y = num('--shelf-y', 24);
+      const swing = num('--shelf-swing', -2);
+      const easing =
+        style.getPropertyValue('--shelf-ease').trim() || 'cubic-bezier(0.36, -0.18, 0.66, 0.6)';
+      const from = style.getPropertyValue('--shelf-from').trim() || 'first';
+      const origin = from === 'first' ? 0 : from === 'last' ? els.length - 1 : (els.length - 1) / 2;
+      els.forEach((el, i) => {
+        el.animate(
+          [
+            { opacity: 0, transform: `translateY(${y}px) rotate(${swing}deg)` },
+            { opacity: 1, transform: 'translateY(0) rotate(0deg)' },
+          ],
+          {
+            duration,
+            delay: Math.abs(i - origin) * staggerMs, // stagger, measured from the origin card
+            easing,
+            fill: 'backwards', // holds opacity 0 through the delay; no residue after
+          }
+        );
+      });
+    };
+
+    const apply = (animated = true) => {
+      const visible = cards.filter(matches);
+      cards.forEach((el) => {
+        el.style.display = matches(el) ? '' : 'none';
+      });
+      // lead slots are off in the shipped tune — the rig's grid › leadRow re-enables
+      const leadRow =
+        getComputedStyle(document.documentElement).getPropertyValue('--shelf-lead-row').trim() === '1';
+      visible.forEach((el, i) => {
+        el.classList.toggle('is-lead', leadRow && i === 0);
+        el.classList.toggle('is-co', leadRow && i === 1);
+      });
+      if (emptyNote) emptyNote.hidden = visible.length > 0;
+      if (animated) reveal(visible);
+    };
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        if (chip.dataset.cat === cat) return; // already showing — nothing to replay
+        cat = chip.dataset.cat ?? 'all';
+        chips.forEach((c) => c.setAttribute('aria-pressed', String(c === chip)));
+        apply();
+      });
+    });
+
+    // the rig's "Replay reveal" — re-run the entrance on the current filter;
+    // relayout re-slots the lead row without animating (dial changes)
+    const onReplay = () => apply();
+    const onRelayout = () => apply(false);
+    const w = window as any;
+    w.__shelfUnwire?.(); // soft navs re-wire per page; drop the last page's listeners
+    window.addEventListener('shelf:replay', onReplay);
+    window.addEventListener('shelf:relayout', onRelayout);
+    w.__shelfUnwire = () => {
+      window.removeEventListener('shelf:replay', onReplay);
+      window.removeEventListener('shelf:relayout', onRelayout);
+    };
+
+    reveal(cards); // the entrance
+  }
+  wireWorkShelf();
+  document.addEventListener('astro:page-load', wireWorkShelf);
+</script>

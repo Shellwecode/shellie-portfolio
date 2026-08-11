@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* One Chinese font everywhere — Noto Serif SC IS Source Han Serif (the
+   greeting's face, Google's name for it). Self-hosted via fontsource;
+   unicode-range slices mean a page only downloads the glyphs it uses. */
+@import "@fontsource/noto-serif-sc/400.css";
+@import "@fontsource/noto-serif-sc/600.css";
 
 /* ---------------------------------------------------------------------------
    Fonts — self-hosted. Aileron (sans statics) + Junicode VF (serif variable).
@@ -72,9 +77,12 @@
 
   /* Typography — DS v0.3 "crafted type": Aileron content, Junicode VF voice,
      mono only when the data is live */
-  --font-sans: "Aileron", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-    Roboto, "Helvetica Neue", sans-serif;
-  --font-serif: "Junicode VF", Georgia, "Times New Roman", serif;
+  /* "Noto Serif SC" sits before the system fonts so CJK glyphs resolve to
+     the greeting's serif (Source Han Serif) instead of PingFang — Latin
+     never reaches it because Aileron/Junicode cover Latin first. */
+  --font-sans: "Aileron", "Noto Serif SC", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-serif: "Junicode VF", "Noto Serif SC", Georgia, "Times New Roman", serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace; /* code blocks in prose only — no mono in UI */
 
   /* Type scale — one display size; hierarchy is voice, not scale */
@@ -337,6 +345,13 @@ html[data-entrance] .chapter-player {
 }
 .edge-fog--top { top: 0; --fog-dir: 180deg; }
 .edge-fog--bottom { bottom: 0; --fog-dir: 0deg; height: 100px; }
+/* reading strength from the first frame (writing pages) — matches the
+   case-study pages' html[data-reading] values */
+.edge-fog--bottom.edge-fog--thin {
+  height: 64px;
+  --fog-opacity: 0.45;
+  --fog-blur: 2px;
+}
 
 /* ---------------------------------------------------------------------------
    Glass — vellum, not Vision Pro.
@@ -518,6 +533,17 @@ html[data-entrance] .chapter-player {
 .prose--album em {
   font-size: var(--pr-em-size, 1.0625em);
 }
+/* thematic break — a short quiet rule, the essay's held breath
+   (the second selector outweighs the sibling-gap rule's margin-top) */
+.prose hr,
+.prose--album > * + hr {
+  border: 0;
+  width: 64px;
+  height: 1px;
+  background: var(--color-rule);
+  margin-block: 2.75rem;
+  margin-inline: auto;
+}
 
 /* ---------------------------------------------------------------------------
    Card overlay reveal — shared by every project cover card (landing bento,
@@ -669,6 +695,10 @@ html[data-entrance] .chapter-player {
 }
 
 /* Plain variant — home writing list: no kind lane, serif italic dates */
+.archive-row--quiet {
+  border-bottom: none;
+  padding: 0.75rem 0;
+}
 .archive-row--plain {
   grid-template-columns: 1fr auto;
 }

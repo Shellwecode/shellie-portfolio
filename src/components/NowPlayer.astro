@@ -829,7 +829,7 @@ import now from '../data/now.json';
     if ((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey) {
       if (!document.querySelector('.np-sheet')) return;
       const target = e.target as HTMLElement;
-      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
         if (!playerIsOpen()) lastTrigger = document.querySelector('.np-pill');
         setPlayer(!playerIsOpen());
       }

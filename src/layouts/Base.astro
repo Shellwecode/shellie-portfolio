@@ -10,8 +10,10 @@ interface Props {
   description?: string;
   /** 'pill' (default) floats the whisper pill; 'none' for reading pages that dock their own progress bar. */
   deck?: 'pill' | 'none';
-  /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages. */
-  fog?: boolean;
+  /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages.
+      'thin' starts at the reading-mode strength (case studies get there via
+      html[data-reading]; writing pages are born reading). */
+  fog?: boolean | 'thin';
   /** Reading pages: the dock recedes when not hovered/focused. */
   quietDock?: boolean;
   /** Landing only: the galaxy opening plays first and owns the entrance trigger. */
@@ -101,7 +103,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         </main>
       </div>
     </div>
-    {fog && <div class="edge-fog edge-fog--bottom" aria-hidden="true"></div>}
+    {fog && <div class:list={['edge-fog', 'edge-fog--bottom', { 'edge-fog--thin': fog === 'thin' }]} aria-hidden="true"></div>}
     <SideNav />
     {deck === 'pill' && <NowPlayer />}
 

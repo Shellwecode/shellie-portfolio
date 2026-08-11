@@ -4,7 +4,8 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
-import ThemeToggle from '../../components/ThemeToggle.astro';
+import CrumbRow from '../../components/CrumbRow.astro';
+import InpageEditor from '../../components/InpageEditor.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -75,15 +76,7 @@ const metaLine = [
   fog={true}
   quietDock={true}
 >
-  <div class="crumb-row" data-has-voice={project.data.voice ? '' : undefined}>
-    <a href="/projects" class="crumb">
-      <svg class="crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
-      </svg>
-      <span>work</span>
-    </a>
-    <ThemeToggle />
-  </div>
+  <CrumbRow href="/projects" label="work" hasVoice={!!project.data.voice} />
 
   <header class="album-header">
     <div class="album-cover" style={project.data.coverZoom ? `--cover-zoom: ${project.data.coverZoom}` : undefined}>
@@ -98,8 +91,16 @@ const metaLine = [
     </div>
     <div class="album-copy">
       <span class="album-eyebrow">{eyebrow}</span>
-      <h1 class="album-title">{shortTitle}</h1>
-      <p class="album-summary">{project.data.summary}</p>
+      <h1
+        class="album-title"
+        data-ie-fm="title"
+        data-ie-suffix={project.data.title.includes('—')
+          ? ' — ' + project.data.title.split('—').slice(1).join('—').trim()
+          : undefined}
+      >
+        {shortTitle}
+      </h1>
+      <p class="album-summary" data-ie-fm="summary">{project.data.summary}</p>
       <span class="album-meta">{metaLine}</span>
       <div class="album-actions">
         <a href="#read" class="album-read">
@@ -178,40 +179,11 @@ const metaLine = [
     />
   )}
 
+  {import.meta.env.DEV && <InpageEditor sourceFile={project.filePath} />}
+
 </Base>
 
 <style>
-  /* Crumb row — the reading page's own top strip: crumb left, theme toggle
-     right, both riding the article measure (the topbar's toggle hides on
-     quiet-dock pages; stranded in the corner it read as misplaced). */
-  .crumb-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: var(--measure);
-    margin-inline: auto;
-  }
-  .crumb {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 300;
-    font-size: var(--text-xs);
-    color: var(--color-ink-muted);
-    text-decoration: none;
-  }
-  .crumb-arrow { flex-shrink: 0; }
-  .crumb:hover { color: var(--color-accent); }
-  /* once reading starts the pill's ⏮ owns "back to work" — the crumb bows
-     out. Only on voice projects: without the transport, the crumb is the
-     only exit besides scrolling back up. */
-  .crumb { transition: opacity 200ms ease, translate 240ms ease; }
-  :global(html[data-reading]) .crumb-row[data-has-voice] .crumb {
-    opacity: 0;
-    translate: -6px 0;
-    pointer-events: none;
-  }
-
   /* The switch — one absolute point (html[data-reading], granted by the
      script below), no scrubbed in-between. At rest: album + tracklist, no
      player. On the switch: rows pour downward bottom-first and are caught
