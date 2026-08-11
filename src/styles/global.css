@@ -685,10 +685,9 @@ html[data-entrance] .chapter-player {
   color: var(--color-accent);
 }
 .archive-row .date {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-stretch: 87.5%;
-  font-size: var(--text-base);
+  font-weight: 300;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums; /* years hold their lane */
   color: var(--color-ink-muted);
   line-height: 20px;
   white-space: nowrap;

@@ -1,5 +1,9 @@
 ---
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
+import PhotoPile from '../components/PhotoPile.astro';
+import doodleSuitcase from '../assets/about/cutouts/shellie-with-suitcase.png';
+import doodleWalking from '../assets/about/cutouts/shellie-walking.png';
 
 const education = [
   { school: 'Wellesley College (B.A.)', href: 'https://www.wellesley.edu/', program: 'Mathematics & HCI', dates: '2020–2024' },
@@ -22,28 +26,44 @@ const experience = [
   title="About — Shellie Hu"
   description="Product designer in Boston. Currently designing Cortex."
 >
-  <div style="max-width: var(--measure);">
-    <h1 class="section-heading">about</h1>
+  {/* no single cap — text blocks keep the reading measure, the pile
+      breaks out to its own wider stage (the page's one full breath) */}
+  <div class="about-page">
+    <div class="about-hero" data-drag-zone>
+      <h1 class="section-title enter" style="--enter-i: 0">About</h1>
 
-    {/* DRAFT — revise in my voice */}
-    <div class="mt-6 space-y-5 text-[var(--text-lg)] leading-relaxed">
-      <p>
-        I'm a product designer in Boston, currently designing
-        <a href="/projects/cortex">Cortex</a> — a voice AI agent builder
-        platform. I studied math and HCI at Wellesley, with time
-        cross-registered at the MIT Media Lab.
+      {/* the doodled selves escaped the pile — they keep the intro company
+          (and still drag; the whole hero is their yard) */}
+      <figure class="hero-doodle enter" data-draggable style="--enter-i: 2; right: 4%; top: 10px; --rot: 4deg">
+        <Image src={doodleSuitcase} alt="A drawing of me with my suitcase" widths={[320]} sizes="160px" draggable={false} />
+      </figure>
+      <figure class="hero-doodle enter" data-draggable style="--enter-i: 3; right: 24%; top: 64px; --rot: -5deg">
+        <Image src={doodleWalking} alt="A drawing of me mid-stride, luggage in tow" widths={[320]} sizes="150px" draggable={false} />
+      </figure>
+
+      <div class="about-copy">
+      <p class="intro intro-lead enter" style="--enter-i: 1">
+        I was born in Chengdu, China. Growing up with a love of doodling, I
+        learned to understand things by drawing them. I spent my high school
+        years in Auckland, New Zealand, where I learned to walk in the
+        mountains, by the coastlines, on the trail of sunrise. Now, I live in
+        Boston with my cat, designing at Five9.
       </p>
-      <p class="text-[var(--color-ink-muted)]">
-        Outside of work I draw, hike, play badminton, and stargaze. I play
-        guitar in a band. Currently reading
-        <em>Stories of Your Life and Others</em> by Ted Chiang.
+      <p class="intro enter" style="--enter-i: 2">
+        I studied mathematics and human-computer interaction in college. I
+        like sitting with abstract problems before they have a shape, and
+        decomposing them by asking (sometimes wild) questions. I also like
+        sitting with real people and asking them how their day is.
       </p>
+      </div>
     </div>
 
-    <hr class="mt-16" />
+    <div class="pile-stage enter" style="--enter-i: 3">
+      <PhotoPile />
+    </div>
 
-    <section class="mt-16">
-      <h2 class="section-heading">experience</h2>
+    <section class="cv-section enter" style="--enter-i: 4">
+      <h2 class="section-title">Experience</h2>
       <div class="cv-list mt-3">
         {experience.map((x) => (
           <div class="cv-row">
@@ -63,8 +83,8 @@ const experience = [
       </div>
     </section>
 
-    <section class="mt-16">
-      <h2 class="section-heading">education</h2>
+    <section class="cv-section enter" style="--enter-i: 5">
+      <h2 class="section-title">Education</h2>
       <div class="cv-list mt-3">
         {education.map((e) => (
           <div class="cv-row">
@@ -84,25 +104,87 @@ const experience = [
       </div>
     </section>
 
-    <hr class="mt-16" />
-
-    <p class="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-ink-muted)]">
+    <p class="enter mt-14 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-ink-muted)]" style="--enter-i: 6">
       <a href="https://drive.google.com/file/d/1VN7CgJ39HzV7wJgoLg0Dnn6T65Z6hE_l/view?usp=sharing" target="_blank" rel="noopener noreferrer">Resume ↗</a>
       <a href="mailto:shelliehxx@outlook.com">Email</a>
       <a href="https://www.linkedin.com/in/shelliehu/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
       <a href="https://www.instagram.com/shellwedraw/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
+      <a href="https://x.com/shellwetwit1" target="_blank" rel="noopener noreferrer">Twitter ↗</a>
     </p>
   </div>
 </Base>
 
 <style>
-  .section-heading {
-    font-weight: 300;
-    font-size: var(--text-xs);
-    color: var(--color-ink-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+  /* The landing page's DS: serif-italic section voice, the intro measure,
+     whitespace instead of rules between sections. Longer paragraphs here
+     get taller leading than the landing's three-liners. */
+  .about-page {
+    padding-bottom: 7.5rem; /* the links row clears the now-pill's lane */
   }
+  /* the hero is the doodles' yard — full page width so they can wander */
+  .about-hero {
+    position: relative;
+  }
+  .about-hero > .section-title,
+  .about-hero > .about-copy {
+    max-width: var(--measure);
+  }
+  .hero-doodle {
+    position: absolute;
+    width: 160px;
+    margin: 0;
+    rotate: var(--rot, 0deg);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    will-change: translate;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.12));
+  }
+  .hero-doodle.dragging {
+    cursor: grabbing;
+    rotate: calc(var(--rot, 0deg) * 0.4);
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.18));
+    transition: rotate 200ms ease;
+  }
+  .hero-doodle :global(img) {
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+  }
+  @media (max-width: 1023px) {
+    .hero-doodle { display: none; } /* no yard to wander on narrow screens */
+  }
+  .about-page > :not(.pile-stage, .about-hero) {
+    max-width: var(--measure);
+  }
+  .pile-stage {
+    max-width: min(1000px, 100%); /* the one wide element on the page */
+  }
+  .section-title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-section);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 22px;
+  }
+  .about-copy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hero-gap);
+    padding-top: 1rem;
+    padding-bottom: 2.625rem; /* the section beat, not the hero's tighter pad */
+  }
+  .intro {
+    font-size: var(--text-lg);
+    line-height: 1.65; /* fuller paragraphs than the landing's — more air per line */
+    max-width: var(--intro-measure);
+    color: var(--color-ink-muted);
+    text-wrap: pretty; /* balance fights multi-line paragraphs; pretty just tends the rag */
+  }
+  .intro-lead { color: var(--color-ink); } /* the claim carries full ink; the rest stays quiet */
+  .cv-section { margin-top: 2.625rem; } /* the landing's section rhythm */
+  .cv-section .section-title { margin-bottom: 0.875rem; }
 
   .cv-row {
     display: grid;
@@ -134,10 +216,9 @@ const experience = [
     line-height: 1.5;
   }
   .cv-date {
-    font-family: var(--font-serif);
-    font-style: italic;
-    font-stretch: 87.5%;
-    font-size: var(--text-base);
+    font-weight: 300;
+    font-size: var(--text-sm);
+    font-variant-numeric: tabular-nums;
     color: var(--color-ink-muted);
     white-space: nowrap;
   }

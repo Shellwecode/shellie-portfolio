@@ -38,6 +38,17 @@ designers, 3 PMs, 50+ engineers*.
 > between autonomous and rule-based behavior, and be given precise control over
 > agent decisions at enterprise scale.*
 
+<figure>
+  <video
+    src="/video/cortex-2-0.mp4"
+    controls
+    muted
+    playsinline
+    preload="metadata"
+  />
+  <figcaption>An overview of the Cortex 2.0 interface.</figcaption>
+</figure>
+
 ## The problem
 
 Enterprises wanted agentic AI, but every existing solution forced a choice.
@@ -49,6 +60,8 @@ platform where both paradigms were first-class, not a compromise.
 The timeline for 1.0 was tight — I was the only designer when we started. It
 worked, but it was the version built around the deadline, not the one I'd have
 built with time to think.
+
+![Cortex 1.0 Figma screens — an ambitious start](./images/cortex-10-screens.png)
 
 Two problems surfaced after launch:
 
@@ -71,6 +84,8 @@ for agent behavior; others leaned into pure flow-based automation. Almost no
 one had built a seamless hybrid of the two — resolving this tension was a
 category bet, and it confirmed the 1.0 findings were valid.
 
+![AI agent builder platforms in the market](./images/cortex-market.png)
+
 Two patterns kept showing up in how builders actually work: they start from
 prebuilt templates rather than blank prompts, and they iterate with AI — using
 it to draft, revise, and stress-test their work. When Owen joined as design
@@ -88,6 +103,12 @@ building, deploying, and operating an agent. *Configure* holds everything that
 defines an agent; *Test* holds everything for testing and debugging. Builders
 move between stages without losing their place in the work.
 
+![The IA, based on the agent lifecycle](./images/cortex-ia-lifecycle.png)
+
+![Initial wireframes and sketches for 2.0](./images/cortex-wireframes.png)
+
+![The refined menu and agent builder tabs](./images/cortex-nav-tabs.png)
+
 The bigger move was in the language itself. In 1.0, an agent was an
 orchestrator over subagents, each holding prompts, tools, variables, and
 knowledge — too many behaviors happening at once to tell where one piece of
@@ -97,6 +118,10 @@ that applies to every task lives at the agent level; a tool only one task needs
 lives on that task. The hierarchy 1.0 hid in language is the hierarchy 2.0
 makes visible.
 
+![Subagents become Tasks](./images/cortex-agent-task.png)
+
+![Task-level entities, visible in the prompt editor](./images/cortex-task-entities.png)
+
 ## Final design
 
 Templates are the first surface, and AI is built into the authoring experience.
@@ -105,15 +130,33 @@ rewrite an instruction without leaving the surface. The AI behaves differently
 at different levels — at the agent level it generates tasks and guardrails; at
 the task level it drafts and refines prompts and suggests next steps.
 
+![The initial exploration — AI on the side, a co-pilot authoring experience](./images/cortex-ai-copilot.png)
+
+![The update — AI in context, generating a task directly](/images/cortex/cortex-ai-task-generation.gif)
+
+![AI in context: refining guardrails](/images/cortex/cortex-ai-guardrail.gif)
+
+![Enhancing an instruction with AI, in context](/images/cortex/cortex-ai-enhance-instruction.gif)
+
+![Editing an instruction with AI, in context](/images/cortex/cortex-ai-edit-instruction.gif)
+
 The editor lets builders compose with the same primitives the IA defines —
 tools, variables, knowledge dropped inline — and power users move through them
 with keyboard shortcuts.
+
+![Composing with the IA's primitives — inserting a variable from the keyboard](/images/cortex/cortex-insert-variable.gif)
 
 Testing runs alongside authoring. A builder can start a test call while
 configuring a task to see where it holds and where it breaks. The
 build–test–rewrite loop collapses into a single flow: iterate on one section of
 a task prompt, test it in isolation, and trace each outcome back to the
 configuration choice that caused it.
+
+![A unit test during prompt writing](./images/cortex-unit-test.png)
+
+![Testing a voice chat with the current agent](./images/cortex-voice-test.png)
+
+![Editing an eval with quick test](./images/cortex-eval.png)
 
 ## Impact
 
