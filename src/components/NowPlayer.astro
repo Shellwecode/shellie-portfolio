@@ -198,7 +198,7 @@ import now from '../data/now.json';
     transition:
       opacity var(--np-pill-ms) ease-out,
       scale var(--np-pill-ms) ease-out,
-      translate var(--motion-content) ease,
+      translate 460ms var(--np-close-ease),
       box-shadow var(--motion-micro) ease;
   }
   .np-pill:hover {
@@ -207,9 +207,17 @@ import now from '../data/now.json';
   .np-pill:active { scale: 0.96; }
   /* ducked — idle hands say "just browsing": the pill sinks almost off-stage,
      leaving a 10px sliver riding the viewport edge as the recall handle (the
-     case-study player's move). A hand drifting near recalls it. */
+     case-study player's move). A hand drifting near recalls it.
+     Timing is asymmetric on purpose: the sink is a long quiet drift (you
+     shouldn't catch it leaving); the return above rides the sheet's springy
+     close curve (it answers your hand). */
   .np-pill[data-ducked]:not(:hover):not(:focus-visible) {
     translate: -50% calc(100% + var(--pill-bottom) - 10px);
+    transition:
+      opacity var(--np-pill-ms) ease-out,
+      scale var(--np-pill-ms) ease-out,
+      translate 680ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow var(--motion-micro) ease;
   }
 
   .np-art {
