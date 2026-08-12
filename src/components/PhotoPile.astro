@@ -1,8 +1,9 @@
 ---
 // A small pile of draggable polaroids (after fancycomponents.dev's
-// drag-elements, rebuilt vanilla — no framer, no React). Drop photos into
-// src/assets/about/photos/ and they appear; the filename becomes the
-// caption ("walking-in-auckland.jpg" → "walking in auckland").
+// drag-elements, rebuilt vanilla — no framer, no React). Drop photos (or
+// short .mp4s) into src/assets/about/photos/ and they appear; the filename
+// becomes the caption ("walking-in-auckland.jpg" → "walking in auckland").
+// Videos loop mutely in their polaroid; a click plays the full thing.
 // Drag has momentum with soft container bounds; the last-touched photo
 // stays on top, like a real pile.
 import { Image, getImage } from 'astro:assets';
@@ -12,16 +13,42 @@ const globbed = import.meta.glob<{ default: ImageMetadata }>(
   '../assets/about/photos/*.{jpg,jpeg,png,webp}',
   { eager: true }
 );
+const globbedVideos = import.meta.glob<string>('../assets/about/photos/*.{mp4,webm}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+// posters/ carries a first-frame still per video (same basename) — a video
+// element paints nothing until its data arrives; the poster holds the frame
+const globbedPosters = import.meta.glob<string>('../assets/about/photos/posters/*.{jpg,png,webp}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+const basename = (path: string) => (path.split('/').pop() ?? '').replace(/\.[a-z0-9]+$/i, '');
+const posterFor = (videoPath: string) =>
+  Object.entries(globbedPosters).find(([p]) => basename(p) === basename(videoPath))?.[1] ?? null;
 const caption = (path: string) =>
-  (path.split('/').pop() ?? '').replace(/\.[a-z]+$/i, '').replace(/[-_]+/g, ' ');
-const photos = await Promise.all(
-  Object.entries(globbed).map(async ([path, mod]) => ({
-    img: mod.default,
+  (path.split('/').pop() ?? '').replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ');
+const photos = [
+  ...(await Promise.all(
+    Object.entries(globbed).map(async ([path, mod]) => ({
+      img: mod.default as ImageMetadata | null,
+      video: null as string | null,
+      poster: null as string | null,
+      caption: caption(path),
+      // a bigger cut for the click-to-expand view
+      full: (await getImage({ src: mod.default, width: 1400 })).src,
+    }))
+  )),
+  ...Object.entries(globbedVideos).map(([path, url]) => ({
+    img: null,
+    video: url,
+    poster: posterFor(path),
     caption: caption(path),
-    // a bigger cut for the click-to-expand view
-    full: (await getImage({ src: mod.default, width: 1400 })).src,
-  }))
-);
+    full: null as string | null,
+  })),
+];
 
 // seeded scatter, distributed by lane — each piece owns a slice of the
 // board's width (jittered), rows alternate, so the pile fills the table
@@ -49,20 +76,29 @@ const placed = photos.map((p, i) => {
           <figure
             class="polaroid"
             data-draggable
-            data-full={p.full}
+            data-full={p.full ?? undefined}
+            data-video={p.video ?? undefined}
             data-caption={p.caption}
             style={`left: ${p.left}%; top: ${p.top}%; --rot: ${p.rot.toFixed(1)}deg`}
           >
             {/* eager — the pile is the page's moment; blank polaroids flashing in undercut it */}
-            <Image src={p.img} alt={p.caption} widths={[320, 640]} sizes="230px" loading="eager" draggable={false} />
+            {p.img && (
+              <Image src={p.img} alt={p.caption} widths={[320, 640]} sizes="230px" loading="eager" draggable={false} />
+            )}
+            {p.video && (
+              /* the moving polaroid — loops mutely in the pile; click for sound.
+                 The poster paints the first frame instantly, before video data lands. */
+              <video src={p.video} poster={p.poster ?? undefined} muted loop autoplay playsinline preload="metadata" aria-label={p.caption}></video>
+            )}
             <figcaption>{p.caption}</figcaption>
           </figure>
         ))}
       </div>
-      {/* click (a drag that never travelled) expands the photo */}
+      {/* click (a drag that never travelled) expands the photo — or plays the video */}
       <div class="pile-lightbox" data-pile-lightbox role="dialog" aria-modal="true" aria-label="Photo" hidden>
         <figure>
           <img alt="" />
+          <video controls playsinline hidden></video>
           <figcaption></figcaption>
         </figure>
       </div>
@@ -106,7 +142,8 @@ const placed = photos.map((p, i) => {
     rotate: calc(var(--rot, 0deg) * 0.4); /* eases toward level in the hand */
     transition: rotate 200ms ease;
   }
-  .polaroid :global(img) {
+  .polaroid :global(img),
+  .polaroid video {
     display: block;
     width: 100%;
     height: 172px;
@@ -126,7 +163,8 @@ const placed = photos.map((p, i) => {
   @media (max-width: 640px) {
     .pile { height: 300px; }
     .polaroid { width: 150px; }
-    .polaroid :global(img) { height: 112px; }
+    .polaroid :global(img),
+    .polaroid video { height: 112px; }
   }
 
   /* the expanded view — paper veil, the photo held up to the light */
@@ -154,7 +192,8 @@ const placed = photos.map((p, i) => {
     gap: 10px;
     max-width: 88vw;
   }
-  .pile-lightbox img {
+  .pile-lightbox img,
+  .pile-lightbox video {
     max-width: 88vw;
     max-height: 78vh;
     border-radius: 6px;
@@ -162,6 +201,7 @@ const placed = photos.map((p, i) => {
     outline: 1px solid oklch(0 0 0 / 0.08);
     outline-offset: -1px;
   }
+  .pile-lightbox video { cursor: default; } /* clicks here are for the controls, not closing */
   .pile-lightbox figcaption {
     font-family: var(--font-serif);
     font-style: italic;
@@ -262,7 +302,7 @@ const placed = photos.map((p, i) => {
         if (!dragging) return;
         dragging = false;
         card.classList.remove('dragging');
-        if (e.type === 'pointerup' && travelled < 6 && card.dataset.full) {
+        if (e.type === 'pointerup' && travelled < 6 && (card.dataset.full || card.dataset.video)) {
           openLightbox(card); // a click, not a drag
           return;
         }
@@ -278,9 +318,19 @@ const placed = photos.map((p, i) => {
     const box = document.querySelector<HTMLElement>('[data-pile-lightbox]');
     if (!box) return;
     const img = box.querySelector('img')!;
+    const vid = box.querySelector('video')!;
     const cap = box.querySelector('figcaption')!;
-    img.src = card.dataset.full ?? '';
-    img.alt = card.dataset.caption ?? '';
+    const isVideo = Boolean(card.dataset.video);
+    img.hidden = isVideo;
+    vid.hidden = !isVideo;
+    if (isVideo) {
+      img.removeAttribute('src');
+      vid.src = card.dataset.video ?? '';
+      vid.play().catch(() => {}); // held up? the controls are right there
+    } else {
+      img.src = card.dataset.full ?? '';
+      img.alt = card.dataset.caption ?? '';
+    }
     cap.textContent = card.dataset.caption ?? '';
     box.hidden = false;
   }
@@ -288,13 +338,30 @@ const placed = photos.map((p, i) => {
     const box = document.querySelector<HTMLElement>('[data-pile-lightbox]');
     if (!box || box.dataset.wired) return;
     box.dataset.wired = '1';
-    box.addEventListener('click', () => (box.hidden = true));
+    const vid = box.querySelector('video')!;
+    const close = () => {
+      box.hidden = true;
+      vid.pause();
+      vid.removeAttribute('src'); // the pile's mute loop keeps playing; this one lets go
+    };
+    box.addEventListener('click', () => close());
+    vid.addEventListener('click', (e) => e.stopPropagation()); // the controls are not the exit
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !box.hidden) box.hidden = true;
+      if (e.key === 'Escape' && !box.hidden) close();
+    });
+  }
+  // reduced motion: the moving polaroid holds its frame (click still plays)
+  function stillPolaroids() {
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll<HTMLVideoElement>('.polaroid video').forEach((v) => {
+      v.removeAttribute('autoplay');
+      v.pause();
     });
   }
   wireLightbox();
   document.addEventListener('astro:page-load', wireLightbox);
   wireDragZones();
   document.addEventListener('astro:page-load', wireDragZones);
+  stillPolaroids();
+  document.addEventListener('astro:page-load', stillPolaroids);
 </script>

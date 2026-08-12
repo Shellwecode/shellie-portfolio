@@ -80,8 +80,9 @@ GIFs aren't run through Astro's image pipeline. Drop them in
 ### A video walkthrough
 
 Drop the file in `public/videos/`. Keep clips short and muted-by-default
-so autoplay works on mobile. `preload="metadata"` means the browser
-fetches just enough to show the poster frame, not the whole file.
+so autoplay works on mobile. `preload="auto"` starts buffering on page
+load so the clip is ready the moment the reader presses play; the
+`poster` (its first frame) holds the space until then.
 
 <figure>
   <video
@@ -90,7 +91,7 @@ fetches just enough to show the poster frame, not the whole file.
     controls
     muted
     playsinline
-    preload="metadata"
+    preload="auto"
   />
   <figcaption>Prototype recorded on device. No cuts.</figcaption>
 </figure>
