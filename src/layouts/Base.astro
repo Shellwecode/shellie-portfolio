@@ -129,8 +129,23 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
           card.addEventListener('mouseleave', () => video.pause());
         });
       }
+      // Videos arriving via a soft nav never start fetching — the ClientRouter
+      // parses the next page in a detached document, and media elements
+      // adopted from one stay suspended until load() is called. (A hard
+      // refresh never hits this; images recover on their own.)
+      function reviveSwappedVideos() {
+        document.querySelectorAll<HTMLVideoElement>('video[src]').forEach((v) => {
+          const started = v.readyState > 0 || v.networkState === HTMLMediaElement.NETWORK_LOADING;
+          if (started) return;
+          v.load();
+          if (v.autoplay) v.play().catch(() => {});
+        });
+      }
       wireCardVideos();
-      document.addEventListener('astro:page-load', wireCardVideos);
+      document.addEventListener('astro:page-load', () => {
+        wireCardVideos();
+        reviveSwappedVideos();
+      });
     </script>
   </body>
 </html>
