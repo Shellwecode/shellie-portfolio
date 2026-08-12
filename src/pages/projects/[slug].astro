@@ -149,6 +149,20 @@ const metaLine = [
     </footer>
   </article>
 
+  {project.data.comingSoon && (
+    /* the veil — the study exists but isn't ready for readers; the modal
+       holds the door. Blur keeps the shape of the page visible (something
+       real is behind it) without giving the content away. */
+    <div class="cs-gate" role="dialog" aria-modal="true" aria-label="Coming soon">
+      <div class="cs-gate-card">
+        <span class="cs-gate-eyebrow">{eyebrow}</span>
+        <h2 class="cs-gate-title">{shortTitle}</h2>
+        <p class="cs-gate-note">still on the press — the full case study lands soon.</p>
+        <a class="cs-gate-back" href="/projects">← back to work</a>
+      </div>
+    </div>
+  )}
+
   {tracks.length > 0 ? (
     <ChapterPlayer
       title={project.data.title.split('—')[0].trim()}
@@ -517,7 +531,78 @@ const metaLine = [
     .track-title { width: auto; flex: 1; }
     .track-note { display: none; } /* the note column needs the desktop lane */
   }
+
+  /* ── the coming-soon veil ── */
+  .cs-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 200; /* above every floating instrument */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: color-mix(in oklab, var(--color-bg) 55%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .cs-gate-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.625rem;
+    max-width: 400px;
+    padding: 2.5rem 2.75rem;
+    border-radius: 20px;
+    background: var(--color-bg);
+    box-shadow: var(--shadow-card-hover);
+    text-align: center;
+  }
+  .cs-gate-eyebrow {
+    font-weight: 300;
+    font-size: var(--text-xs);
+    letter-spacing: 0.02em;
+    color: var(--color-ink-muted);
+  }
+  .cs-gate-title {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .cs-gate-note {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+  }
+  .cs-gate-back {
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font-size: var(--text-sm);
+    text-decoration: none;
+    transition: opacity var(--motion-micro) ease;
+  }
+  .cs-gate-back:hover { opacity: 0.85; }
+  :global(html.gated) { overflow: hidden; } /* the veiled page doesn't scroll */
 </style>
+
+<script>
+  // The gate holds the scroll too — Lenis keeps gliding through
+  // overflow:hidden, so it gets stopped directly. Soft navs restore it.
+  function wireGate() {
+    const gated = Boolean(document.querySelector('.cs-gate'));
+    document.documentElement.classList.toggle('gated', gated);
+    const lenis = (window as any).lenis;
+    if (lenis) gated ? lenis.stop() : lenis.start();
+  }
+  wireGate();
+  document.addEventListener('astro:page-load', wireGate);
+</script>
 
 <script>
   // The switch — one absolute point, no scrubbed in-between. Crossing a

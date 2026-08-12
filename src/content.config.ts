@@ -23,6 +23,7 @@ const projects = defineCollection({
       external: z.string().url().optional(), // if it links out instead of a case study
       featured: z.boolean().default(false), // show in the homepage featured grid
       hero: z.boolean().default(false), // single homepage hero — exactly one should be true
+      comingSoon: z.boolean().default(false), // page exists but is veiled behind a coming-soon gate
       draft: z.boolean().default(false),
     }),
 });
