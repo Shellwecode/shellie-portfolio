@@ -2,7 +2,6 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import CrumbRow from '../../components/CrumbRow.astro';
-import InpageEditor from '../../components/InpageEditor.astro';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('writing'))
@@ -50,12 +49,10 @@ const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min
 
   <header class="entry-header">
     <span class="entry-eyebrow">{eyebrow}</span>
-    <h1 class="entry-title" data-ie-fm="title">{post.data.title}</h1>
+    <h1 class="entry-title">{post.data.title}</h1>
     {
       post.data.summary && (
-        <p class="entry-summary" data-ie-fm="summary">
-          {post.data.summary}
-        </p>
+        <p class="entry-summary">{post.data.summary}</p>
       )
     }
     <span class="entry-meta">{metaLine}</span>
@@ -81,8 +78,6 @@ const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min
       )}
     </footer>
   </article>
-
-  {import.meta.env.DEV && <InpageEditor sourceFile={post.filePath} />}
 </Base>
 
 <style>

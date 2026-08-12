@@ -53,7 +53,8 @@ const placed = photos.map((p, i) => {
             data-caption={p.caption}
             style={`left: ${p.left}%; top: ${p.top}%; --rot: ${p.rot.toFixed(1)}deg`}
           >
-            <Image src={p.img} alt={p.caption} widths={[320, 640]} sizes="230px" draggable={false} />
+            {/* eager — the pile is the page's moment; blank polaroids flashing in undercut it */}
+            <Image src={p.img} alt={p.caption} widths={[320, 640]} sizes="230px" loading="eager" draggable={false} />
             <figcaption>{p.caption}</figcaption>
           </figure>
         ))}

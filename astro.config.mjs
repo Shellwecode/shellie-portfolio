@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite';
 import { createLogger } from 'vite';
 
 import react from '@astrojs/react';
-import inpageEdit from './src/integrations/inpage-edit.mjs';
 
 // Browsers abort video range requests constantly (hover-video cards, the
 // greeting webm), which the dev server logs as ECONNRESET — harmless noise.
@@ -20,7 +19,7 @@ logger.error = (msg, options) => {
 // https://astro.build/config
 export default defineConfig({
   site: 'https://www.shelliehxx.com',
-  integrations: [mdx(), sitemap(), react(), inpageEdit()],
+  integrations: [mdx(), sitemap(), react()],
   vite: {
     plugins: [tailwindcss()],
     customLogger: logger,

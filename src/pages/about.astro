@@ -4,6 +4,7 @@ import Base from '../layouts/Base.astro';
 import PhotoPile from '../components/PhotoPile.astro';
 import doodleSuitcase from '../assets/about/cutouts/shellie-with-suitcase.png';
 import doodleWalking from '../assets/about/cutouts/shellie-walking.png';
+import doodleReading from '../assets/about/cutouts/shellie-reading-lamp.png';
 
 const education = [
   { school: 'Wellesley College (B.A.)', href: 'https://www.wellesley.edu/', program: 'Mathematics & HCI', dates: '2020–2024' },
@@ -15,10 +16,41 @@ const experience = [
   { org: 'Five9', href: 'https://www.five9.com/', role: 'Product Designer', dates: 'Jul 2025–Present' },
   { org: 'Ikigai Labs', href: 'https://ikigailabs.io/', role: 'UX Designer', dates: 'Feb–Jul 2025' },
   { org: 'UberJets / Virtual Hangar', href: 'https://virtualhangar.com/', role: 'Lead UX/UI Designer', dates: 'Aug–Dec 2024' },
-  { org: 'QuantUniversity', role: 'UX Design Intern', dates: 'Jul–Aug 2024' },
   { org: 'Neural Image AI', role: 'Product Engineering Intern', dates: 'May–Nov 2023' },
   { org: 'MIT Media Lab', href: 'https://www.media.mit.edu/', role: 'Designer, Researcher', dates: 'Jan 2021–Dec 2022' },
   { org: 'MIT CSAIL', href: 'https://www.csail.mit.edu/', role: 'HCI Student Researcher', dates: 'May–Sept 2022' },
+];
+
+// Vector set: Lucide (ISC) — mail, linkedin, instagram; the X mark is a
+// stroke adaptation of the x.com logo so it sits with the Lucide set.
+// Resume stays a worded link — it's the row's highest-intent action and
+// has no universal glyph; the socials are recognizable as marks alone.
+const resumeHref = '/Shellie_Hu_resume_2026.pdf';
+const contacts = [
+  {
+    label: 'Email',
+    href: 'mailto:shelliehxx@outlook.com',
+    glyph:
+      '<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>',
+  },
+  {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/in/shelliehu/',
+    glyph:
+      '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/>',
+  },
+  {
+    label: 'Instagram',
+    href: 'https://www.instagram.com/shellwedraw/',
+    glyph:
+      '<rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>',
+  },
+  {
+    label: 'X',
+    href: 'https://x.com/shellwetwit1',
+    glyph:
+      '<path d="M4 4l11.733 16H20L8.267 4z"/><path d="M4 20l6.768-6.768"/><path d="M12.58 12.58 20 4"/>',
+  },
 ];
 ---
 
@@ -33,12 +65,16 @@ const experience = [
       <h1 class="section-title enter" style="--enter-i: 0">About</h1>
 
       {/* the doodled selves escaped the pile — they keep the intro company
-          (and still drag; the whole hero is their yard) */}
-      <figure class="hero-doodle enter" data-draggable style="--enter-i: 2; right: 4%; top: 10px; --rot: 4deg">
-        <Image src={doodleSuitcase} alt="A drawing of me with my suitcase" widths={[320]} sizes="160px" draggable={false} />
+          (and still drag; the whole hero is their yard). Day gets the
+          travelers; night gets the reading lamp. */}
+      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 2; right: 4%; top: 10px; --rot: 4deg">
+        <Image src={doodleSuitcase} alt="A drawing of me with my suitcase" widths={[320]} sizes="160px" loading="eager" draggable={false} />
       </figure>
-      <figure class="hero-doodle enter" data-draggable style="--enter-i: 3; right: 24%; top: 64px; --rot: -5deg">
-        <Image src={doodleWalking} alt="A drawing of me mid-stride, luggage in tow" widths={[320]} sizes="150px" draggable={false} />
+      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 3; right: 24%; top: 64px; --rot: -5deg">
+        <Image src={doodleWalking} alt="A drawing of me mid-stride, luggage in tow" widths={[320]} sizes="150px" loading="eager" draggable={false} />
+      </figure>
+      <figure class="hero-doodle hero-doodle--dark enter" data-draggable style="--enter-i: 2; right: 8%; top: 4px; --rot: -2deg">
+        <Image src={doodleReading} alt="A drawing of me reading under a lamp at night" widths={[520]} sizes="260px" loading="eager" draggable={false} />
       </figure>
 
       <div class="about-copy">
@@ -104,12 +140,32 @@ const experience = [
       </div>
     </section>
 
-    <p class="enter mt-14 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[var(--color-ink-muted)]" style="--enter-i: 6">
-      <a href="https://drive.google.com/file/d/1VN7CgJ39HzV7wJgoLg0Dnn6T65Z6hE_l/view?usp=sharing" target="_blank" rel="noopener noreferrer">Resume ↗</a>
-      <a href="mailto:shelliehxx@outlook.com">Email</a>
-      <a href="https://www.linkedin.com/in/shelliehu/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
-      <a href="https://www.instagram.com/shellwedraw/" target="_blank" rel="noopener noreferrer">Instagram ↗</a>
-      <a href="https://x.com/shellwetwit1" target="_blank" rel="noopener noreferrer">Twitter ↗</a>
+    <p class="contact-row enter mt-14 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style="--enter-i: 6">
+      <span class="contact-lead">find me</span>
+      <a class="contact-resume" href={resumeHref} target="_blank" rel="noopener noreferrer">Resume ↗</a>
+      {contacts.map((c) => (
+        <a
+          class="contact-link"
+          href={c.href}
+          target={c.href.startsWith('mailto:') ? undefined : '_blank'}
+          rel={c.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
+          aria-label={c.label}
+          title={c.label}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+            set:html={c.glyph}
+          />
+        </a>
+      ))}
     </p>
   </div>
 </Base>
@@ -119,7 +175,7 @@ const experience = [
      whitespace instead of rules between sections. Longer paragraphs here
      get taller leading than the landing's three-liners. */
   .about-page {
-    padding-bottom: 7.5rem; /* the links row clears the now-pill's lane */
+    padding-bottom: 7.5rem; /* clears the dock's corner (no pill on this page) */
   }
   /* the hero is the doodles' yard — full page width so they can wander */
   .about-hero {
@@ -153,6 +209,15 @@ const experience = [
   }
   @media (max-width: 1023px) {
     .hero-doodle { display: none; } /* no yard to wander on narrow screens */
+  }
+  /* each theme keeps one company: the travelers by day, the reading lamp
+     by night (its glow is the one warm thing on the dark page) */
+  .hero-doodle--dark { display: none; }
+  :global(:root[data-theme='dark']) .hero-doodle--light { display: none; }
+  :global(:root[data-theme='dark']) .hero-doodle--dark {
+    display: block;
+    width: 260px; /* a seated scene, not a cutout stride — it earns more room */
+    filter: none; /* no paper-light shadow in the dark */
   }
   .about-page > :not(.pile-stage, .about-hero) {
     max-width: var(--measure);
@@ -227,4 +292,71 @@ const experience = [
     .cv-row { grid-template-columns: 1fr; }
     .cv-date { order: -1; margin-bottom: 0.1rem; }
   }
+
+  /* the row's grammar: a whispered name, the one worded action, then marks.
+     Icons carry no ↗ — outbound is their idiom; worded links keep the arrow. */
+  .contact-lead {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-sm);
+    color: var(--color-ink-faint);
+  }
+  .contact-resume {
+    color: var(--color-ink-muted);
+  }
+  .contact-resume:hover {
+    color: var(--color-accent);
+  }
+  .contact-link {
+    display: inline-flex;
+    padding: 0.25rem; /* nudges each hit target toward 28px without loosening the row */
+    color: var(--color-ink-muted);
+    transition: color 150ms ease;
+  }
+  .contact-link:hover {
+    color: var(--color-accent);
+  }
 </style>
+
+<script>
+  // The landing's rise, replayed here on every arrival. The global entrance
+  // (html[data-entrance]) fires once per session and never on soft navs, so
+  // this page's .enter stagger would otherwise only show when /about is the
+  // session's first page. Same keyframe recipe, read from the --ent-* vars.
+  function riseAbout() {
+    const els = document.querySelectorAll<HTMLElement>('.about-page .enter');
+    if (!els.length) return; // some other page — nothing to do
+    if (document.documentElement.hasAttribute('data-entrance')) return; // CSS entrance already has it
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const style = getComputedStyle(document.documentElement);
+    const num = (name: string, fallback: number) => {
+      const v = parseFloat(style.getPropertyValue(name));
+      return Number.isFinite(v) ? v : fallback;
+    };
+    const dur = num('--ent-ms', 950);
+    const stagger = num('--ent-stagger', 120);
+    const rise = style.getPropertyValue('--ent-rise').trim() || '16px';
+    const blur = style.getPropertyValue('--ent-blur').trim() || '8px';
+    els.forEach((el) => {
+      const i = parseFloat(el.style.getPropertyValue('--enter-i')) || 0;
+      if (reduced) {
+        el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'ease-out', fill: 'backwards' });
+        return;
+      }
+      el.animate(
+        [
+          { opacity: 0, filter: `blur(${blur})`, translate: `0 ${rise}` },
+          { opacity: 1, filter: 'blur(0px)', translate: '0 0' },
+        ],
+        {
+          duration: dur,
+          delay: i * stagger,
+          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+          fill: 'backwards', // holds opacity 0 through the stagger delay
+        }
+      );
+    });
+  }
+  riseAbout();
+  document.addEventListener('astro:page-load', riseAbout);
+</script>

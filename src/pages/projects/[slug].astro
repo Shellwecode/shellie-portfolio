@@ -5,7 +5,6 @@ import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
 import CrumbRow from '../../components/CrumbRow.astro';
-import InpageEditor from '../../components/InpageEditor.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -91,16 +90,8 @@ const metaLine = [
     </div>
     <div class="album-copy">
       <span class="album-eyebrow">{eyebrow}</span>
-      <h1
-        class="album-title"
-        data-ie-fm="title"
-        data-ie-suffix={project.data.title.includes('—')
-          ? ' — ' + project.data.title.split('—').slice(1).join('—').trim()
-          : undefined}
-      >
-        {shortTitle}
-      </h1>
-      <p class="album-summary" data-ie-fm="summary">{project.data.summary}</p>
+      <h1 class="album-title">{shortTitle}</h1>
+      <p class="album-summary">{project.data.summary}</p>
       <span class="album-meta">{metaLine}</span>
       <div class="album-actions">
         <a href="#read" class="album-read">
@@ -178,8 +169,6 @@ const metaLine = [
       nextLabel={next?.title}
     />
   )}
-
-  {import.meta.env.DEV && <InpageEditor sourceFile={project.filePath} />}
 
 </Base>
 

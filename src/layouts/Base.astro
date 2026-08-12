@@ -8,7 +8,9 @@ import { ClientRouter } from 'astro:transitions';
 interface Props {
   title?: string;
   description?: string;
-  /** 'pill' (default) floats the whisper pill; 'none' for reading pages that dock their own progress bar. */
+  /** 'pill' (default) floats the whisper pill (it ducks when idle) — every
+      primary-menu page carries it, matching the top bar's "now". 'none' for
+      reading pages, which keep the top clean and dock their own instrument. */
   deck?: 'pill' | 'none';
   /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages.
       'thin' starts at the reading-mode strength (case studies get there via

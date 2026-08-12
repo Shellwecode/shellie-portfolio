@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
-import WorkShelfLab from '../../components/WorkShelfLab.tsx';
 
 // One shelf: case studies + vibe-coded workshop projects, filterable.
 // (Design: Paper board "work v2 / A — one shelf, quiet chips".)
@@ -55,7 +54,7 @@ const items = [
     kind: 'vibe' as const,
     status: w.data.status === 'in-dev' ? 'in dev' : w.data.status,
     cover: w.data.hero,
-    coverVideo: undefined,
+    coverVideo: w.data.coverVideo,
     coverZoom: undefined,
     year: w.data.year,
     tags: WORKSHOP_SHELF[w.id] ?? ['others'],
@@ -75,6 +74,7 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
 <Base
   title="Work — Shellie Hu"
   description="Case studies and vibe-coded projects by Shellie Hu."
+  quietDock={true}
 >
   <div class="page-head">
     <h1 class="page-title">Work</h1>
@@ -145,8 +145,6 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
   <p class="empty-note" data-empty-note hidden>
     nothing on this shelf — clear a filter.
   </p>
-
-  {import.meta.env.DEV && <WorkShelfLab client:load />}
 </Base>
 
 <style>
@@ -204,39 +202,27 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
   .fchip[aria-pressed='true'] .fcount { color: color-mix(in oklab, var(--color-bg) 65%, transparent); }
   .fchip:active { scale: 0.96; }
 
-  /* ── The shelf — one grid; the first two visible cards lead ──
-     Sizes ride --shelf-* vars (WorkShelfLab tunes them in dev);
-     the fallbacks ARE the shipped layout. */
+  /* ── The shelf — one grid; sizes ride --shelf-* vars, the fallbacks
+     ARE the shipped layout (the WorkShelfLab rig that tuned them is
+     gone — restore from git history to re-tune). */
   .work-grid {
     display: grid;
     grid-template-columns: repeat(var(--shelf-cols, 12), 1fr);
-    gap: var(--shelf-gap-y, 20px) var(--shelf-gap-x, 20px);
+    gap: var(--card-gap); /* the landing grid's gap — one rhythm across both */
   }
   .card {
     grid-column: span var(--shelf-card-span, 6);
     text-decoration: none;
   }
-  .card.is-lead { grid-column: span var(--shelf-lead-span, 8); }
-  .card.is-co { grid-column: span var(--shelf-co-span, 4); }
   .card-cover {
     position: relative;
     width: 100%;
-    aspect-ratio: var(--shelf-ratio, 1.55); /* ratio sizing is the shipped mode */
+    aspect-ratio: var(--shelf-ratio, 1.55);
     background: var(--color-rule);
     border-radius: var(--shelf-radius, 16px);
     overflow: hidden;
     box-shadow: var(--shadow-card);
     transition: box-shadow 200ms ease;
-  }
-  :is(.is-lead, .is-co) .card-cover { aspect-ratio: var(--shelf-lead-ratio, 1.65); }
-  /* height mode (rig's card › sizing): fixed cover heights instead */
-  :global(html[data-shelf-sizing='height']) .card-cover {
-    aspect-ratio: auto;
-    height: var(--shelf-card-h, 320px);
-  }
-  :global(html[data-shelf-sizing='height']) :is(.is-lead, .is-co) .card-cover {
-    aspect-ratio: auto;
-    height: var(--shelf-lead-h, 270px);
   }
   .card:hover .card-cover,
   .card:focus-visible .card-cover { box-shadow: var(--shadow-card-hover); }
@@ -285,20 +271,18 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
 
   @media (max-width: 1024px) {
     .card { grid-column: span 6; }
-    .card.is-lead { grid-column: span 12; }
-    .card.is-co { grid-column: span 6; }
   }
   @media (max-width: 768px) {
-    .card, .card.is-lead, .card.is-co { grid-column: span 12; }
-    .card-cover, :is(.is-lead, .is-co) .card-cover { height: 210px; }
+    .card { grid-column: span 12; }
+    .card-cover { height: 210px; }
   }
 </style>
 
 <script>
   // The reveal — don't show the shelf all at once (gabriell_lab's tip):
   // every card gets a tiny delay from the center out, with a slight swing.
-  // Vanilla WAAPI; all numbers read live from --shelf-* vars so the dev
-  // rig (WorkShelfLab) can tune them — fallbacks are the shipped values.
+  // Vanilla WAAPI; numbers read from --shelf-* vars, fallbacks are the
+  // shipped values.
   function wireWorkShelf() {
     const grid = document.querySelector<HTMLElement>('[data-work-grid]');
     if (!grid || grid.dataset.wired) return;
@@ -350,13 +334,6 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
       cards.forEach((el) => {
         el.style.display = matches(el) ? '' : 'none';
       });
-      // lead slots are off in the shipped tune — the rig's grid › leadRow re-enables
-      const leadRow =
-        getComputedStyle(document.documentElement).getPropertyValue('--shelf-lead-row').trim() === '1';
-      visible.forEach((el, i) => {
-        el.classList.toggle('is-lead', leadRow && i === 0);
-        el.classList.toggle('is-co', leadRow && i === 1);
-      });
       if (emptyNote) emptyNote.hidden = visible.length > 0;
       if (animated) reveal(visible);
     };
@@ -369,19 +346,6 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
         apply();
       });
     });
-
-    // the rig's "Replay reveal" — re-run the entrance on the current filter;
-    // relayout re-slots the lead row without animating (dial changes)
-    const onReplay = () => apply();
-    const onRelayout = () => apply(false);
-    const w = window as any;
-    w.__shelfUnwire?.(); // soft navs re-wire per page; drop the last page's listeners
-    window.addEventListener('shelf:replay', onReplay);
-    window.addEventListener('shelf:relayout', onRelayout);
-    w.__shelfUnwire = () => {
-      window.removeEventListener('shelf:replay', onReplay);
-      window.removeEventListener('shelf:relayout', onRelayout);
-    };
 
     reveal(cards); // the entrance
   }

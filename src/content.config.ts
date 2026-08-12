@@ -67,6 +67,7 @@ const workshop = defineCollection({
       status: z.enum(['live', 'in-dev', 'concept', 'archived']),
       stack: z.array(z.string()).default([]),
       hero: image().optional(),
+      coverVideo: z.string().optional(), // /public path — short muted loop shown over the cover
       live: z.string().url().optional(),
       github: z.string().url().optional(),
       draft: z.boolean().default(false),

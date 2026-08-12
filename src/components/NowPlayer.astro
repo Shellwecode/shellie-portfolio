@@ -198,12 +198,19 @@ import now from '../data/now.json';
     transition:
       opacity var(--np-pill-ms) ease-out,
       scale var(--np-pill-ms) ease-out,
+      translate var(--motion-content) ease,
       box-shadow var(--motion-micro) ease;
   }
   .np-pill:hover {
     box-shadow: 0 10px 36px color-mix(in oklab, var(--color-ink) 14%, transparent);
   }
   .np-pill:active { scale: 0.96; }
+  /* ducked — idle hands say "just browsing": the pill sinks almost off-stage,
+     leaving a 10px sliver riding the viewport edge as the recall handle (the
+     case-study player's move). A hand drifting near recalls it. */
+  .np-pill[data-ducked]:not(:hover):not(:focus-visible) {
+    translate: -50% calc(100% + var(--pill-bottom) - 10px);
+  }
 
   .np-art {
     flex-shrink: 0;
@@ -265,10 +272,11 @@ import now from '../data/now.json';
     white-space: nowrap;
   }
 
-  /* pill recedes while the sheet is up */
+  /* pill recedes while the sheet is up (and never stays sunk beneath it) */
   :global(html[data-np='open']) .np-pill {
     opacity: 0;
     scale: var(--np-pill-pop);
+    translate: -50% 0;
     pointer-events: none;
   }
 
@@ -879,13 +887,60 @@ import now from '../data/now.json';
 
   localStorage.removeItem('np-mat'); // the evaluation toggle is gone — paper won
 
+  // Duck on idle — browsing owns the stage. After a few quiet seconds (or on
+  // scroll) the pill sinks to its sliver, and a hand drifting near recalls it
+  // — the case-study player's manners, retimed for idleness instead of
+  // reading. Focus always recalls it; the open sheet never ducks.
+  const IDLE_MS = 8000;
+  const NEAR_PX = 160;
+  let duckWake: (() => void) | null = null;
+  function wireDuck() {
+    const pill = document.querySelector<HTMLElement>('.np-pill');
+    if (!pill || pill.dataset.duckWired) return;
+    pill.dataset.duckWired = '1';
+    let idleTimer = 0;
+    let near = false;
+    const duck = () => {
+      if (!playerIsOpen()) pill.setAttribute('data-ducked', '');
+    };
+    const rest = () => {
+      clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(duck, IDLE_MS);
+    };
+    const wake = () => {
+      pill.removeAttribute('data-ducked');
+      rest();
+    };
+    duckWake = wake;
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        const r = pill.getBoundingClientRect(); // tracks the sunk position too
+        const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+        const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+        near = Math.hypot(dx, dy) < NEAR_PX;
+        if (near) wake();
+        else rest();
+      },
+      { passive: true },
+    );
+    // scrolling is attention spent elsewhere — sink now, not after the timer
+    window.addEventListener('scroll', () => { if (!near) duck(); }, { passive: true });
+    pill.addEventListener('focusin', wake);
+    pill.addEventListener('pointerdown', wake);
+    rest(); // the entrance holds the stage; idleness starts counting now
+  }
+
   wirePlayer();
+  wireDuck();
   paintClock();
   fetchTemp().then(paintClock);
   setInterval(paintClock, 30_000);
   document.addEventListener('astro:after-swap', () => {
     setPlayer(false); // arriving on a new page closes the sheet
     wirePlayer();
+    wireDuck();
+    duckWake?.(); // a fresh page re-announces the pill, then idleness resumes
     paintClock();
   });
 </script>
