@@ -1,0 +1,257 @@
+---
+// ScrollStage — the deck's walkthrough as a preview card, the way
+// jakub.kr/writing frames its inline demos: a quiet rounded card in the
+// article column (soft shadow, no page takeover, nothing scroll-jacked),
+// stepped by explicit controls at the reader's own pace. Chevrons and dots
+// move between beats; clicking the screen advances too (wrapping around).
+// Each beat swaps the screen with a crossfade and shows its line; beats
+// without a line keep the previous line up ("Human at the helm." holds
+// through the payoff frames). Theme-native: tokens, not a dark stage.
+interface Beat {
+  src: string;
+  alt?: string;
+  line?: string;
+}
+interface Props {
+  label?: string;
+  beats: Beat[];
+}
+const { label, beats } = Astro.props;
+// Each beat shows the most recent line at or before it.
+let last = -1;
+const lineIndex = beats.map((b, i) => {
+  if (b.line) last = i;
+  return last;
+});
+const lines = beats
+  .map((b, i) => ({ line: b.line, i }))
+  .filter((b): b is { line: string; i: number } => Boolean(b.line));
+---
+
+<figure class="pcard" data-sstage data-line-map={lineIndex.join(',')}>
+  <div class="pcard-media" data-advance title="Click to step forward">
+    {label && <span class="pcard-tag">{label}</span>}
+    {beats.map((b, i) => (
+      <img src={b.src} alt={b.alt ?? ''} data-beat={i} loading="lazy" decoding="async" />
+    ))}
+  </div>
+  <figcaption class="pcard-bar">
+    {/* the chapter player's hairline, made a stepper — one segment per beat,
+        accent fill tracking the walk, click any segment to jump */}
+    <div class="pcard-track">
+      {beats.map((_, i) => (
+        <button type="button" class="pcard-seg" data-seg={i} aria-label={`Step ${i + 1} of ${beats.length}`}>
+          <span class="pcard-seg-fill"></span>
+        </button>
+      ))}
+    </div>
+    <div class="pcard-row">
+      <div class="pcard-lines" aria-live="polite">
+        {lines.map((l) => (
+          <p class="pcard-line" data-line={l.i} set:html={l.line} />
+        ))}
+      </div>
+      <span class="pcard-count" data-count>1 / {beats.length}</span>
+    </div>
+  </figcaption>
+</figure>
+
+<style>
+  /* The preview card — full width of the measure, radius + soft shadow,
+     content clipped. The article flows around it like any figure. */
+  /* The frame speaks the article's image language exactly: same radius,
+     same quiet inside edge, same block rhythm, same wide-art breakout. */
+  .pcard {
+    margin-block: 2em;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--color-ink) 3%, var(--color-bg));
+    outline: 1px solid oklch(0 0 0 / 0.08);
+    outline-offset: -1px;
+    overflow: hidden;
+  }
+  :global(:root[data-theme='dark']) .pcard {
+    outline-color: oklch(1 0 0 / 0.1);
+  }
+  @media (min-width: 900px) {
+    :global(.prose--album) .pcard {
+      width: calc(100% + 120px);
+      max-width: none;
+      margin-inline: -60px;
+    }
+  }
+
+  .pcard-media {
+    position: relative;
+    height: clamp(300px, 46vh, 440px);
+    cursor: pointer;
+  }
+  /* The screens fill the frame — centered, as big as contain allows, and
+     stripped of the prose image chrome (no outline, no radius, no margins)
+     so the frame is the only frame. */
+  .pcard-media img,
+  :global(.prose) .pcard-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    margin: 0;
+    object-fit: contain;
+    /* air around the screens — contain letter-boxes inside the padded box,
+       so every frame sits smaller, centered, never tight against the edge */
+    padding: clamp(20px, 4.5%, 40px);
+    box-sizing: border-box;
+    border-radius: 0;
+    outline: none;
+    background: none;
+    opacity: 0;
+    transition: opacity 320ms ease;
+  }
+  .pcard-media img.is-on { opacity: 1; }
+
+  /* The concept tag — jakub's little mono pill, top-left of the demo. */
+  .pcard-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    background: var(--color-bg);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--color-ink-muted);
+    pointer-events: none;
+  }
+
+  .pcard-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    padding: 0.875rem 1.125rem;
+    border-top: 1px solid var(--color-rule);
+    background: var(--color-bg);
+  }
+
+  /* Lines stack in one grid cell — the bar keeps the tallest line's height,
+     so stepping never makes the card jump. */
+  .pcard-lines {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+  }
+  .pcard-line {
+    grid-area: 1 / 1;
+    margin: 0;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--color-ink);
+    opacity: 0;
+    translate: 0 6px;
+    transition: opacity 280ms ease, translate 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pcard-line.is-on { opacity: 1; translate: 0 0; }
+  .pcard-line :global(em) {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+
+  /* The strip — the chapter player's hairline vocabulary exactly: 2px
+     segments (4px under the cursor), 4px chapter gaps, accent fill. */
+  .pcard-track {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    height: 8px; /* hit area around the 2px hairline */
+  }
+  .pcard-seg {
+    position: relative;
+    flex: 1;
+    height: 2px;
+    min-width: 6px;
+    padding: 0;
+    border: 0;
+    border-radius: 1px;
+    background: color-mix(in oklab, var(--color-ink) 12%, transparent);
+    cursor: pointer;
+    overflow: hidden;
+    transition: height var(--motion-micro, 160ms) ease;
+  }
+  .pcard-track:hover .pcard-seg { height: 4px; }
+  .pcard-seg-fill {
+    display: block;
+    width: 0%;
+    height: 100%;
+    background: var(--color-accent);
+    transition: width 200ms ease-out;
+  }
+  .pcard-seg.is-done .pcard-seg-fill { width: 100%; }
+  .pcard-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .pcard-count {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-ink-faint);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .pcard-media { height: clamp(220px, 38vh, 320px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pcard-media img,
+    .pcard-line,
+    .pcard-dot { transition: none; }
+  }
+</style>
+
+<script>
+  function wirePreviewCards() {
+    document.querySelectorAll<HTMLElement>('[data-sstage]').forEach((card) => {
+      if (card.dataset.wired) return;
+      card.dataset.wired = '1';
+
+      const imgs = [...card.querySelectorAll<HTMLElement>('.pcard-media img')];
+      const lines = [...card.querySelectorAll<HTMLElement>('.pcard-line')];
+      const segs = [...card.querySelectorAll<HTMLElement>('.pcard-seg')];
+      const count = card.querySelector<HTMLElement>('[data-count]');
+      const lineMap = (card.dataset.lineMap ?? '').split(',').map(Number);
+      const beats = imgs.length;
+
+      let idx = 0;
+      const apply = () => {
+        imgs.forEach((img) => img.classList.toggle('is-on', Number(img.dataset.beat) === idx));
+        segs.forEach((sg, i) => sg.classList.toggle('is-done', i <= idx));
+        lines.forEach((l) =>
+          l.classList.toggle('is-on', Number(l.dataset.line) === lineMap[idx])
+        );
+        if (count) count.textContent = `${idx + 1} / ${beats}`;
+      };
+      const go = (n: number) => {
+        idx = ((n % beats) + beats) % beats;
+        apply();
+      };
+      apply();
+
+      card.querySelector('[data-advance]')?.addEventListener('click', () => go(idx + 1));
+      segs.forEach((sg, i) => sg.addEventListener('click', () => go(i)));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(idx + 1); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); }
+      });
+    });
+  }
+  wirePreviewCards();
+  document.addEventListener('astro:page-load', wirePreviewCards);
+</script>

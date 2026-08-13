@@ -1,0 +1,42 @@
+---
+// InViewVideo — an ambient clip that plays itself only while the reader is
+// with it. IntersectionObserver starts playback when ~a third of the frame
+// is in view and pauses (without resetting) when it leaves, so scrolling
+// back resumes mid-motion. Muted + playsinline keeps browsers happy about
+// autoplay; reduced motion gets a normal paused player with controls.
+interface Props {
+  src: string;
+  poster?: string;
+  caption?: string;
+}
+const { src, poster, caption } = Astro.props;
+---
+
+<figure>
+  <video data-inview-video src={src} poster={poster} muted loop playsinline preload="metadata" />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<script>
+  function wireInViewVideos() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.querySelectorAll<HTMLVideoElement>('[data-inview-video]').forEach((video) => {
+      if (video.dataset.wired) return;
+      video.dataset.wired = '1';
+      if (reduced) {
+        video.controls = true; // the reader decides; nothing moves on its own
+        return;
+      }
+      const io = new IntersectionObserver(
+        ([e]) => {
+          if (e.isIntersecting) video.play().catch(() => {});
+          else video.pause();
+        },
+        { threshold: 0.35 }
+      );
+      io.observe(video);
+    });
+  }
+  wireInViewVideos();
+  document.addEventListener('astro:page-load', wireInViewVideos);
+</script>
