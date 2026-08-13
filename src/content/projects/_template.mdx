@@ -29,7 +29,7 @@ draft: true
   Rich-content notes (see the body):
 
   • Inline markdown images need the file to exist at build time. The
-    example below points at ./covers/cortex.svg which ships in the repo;
+    example below points at ./covers/voice-ai.svg which ships in the repo;
     swap it for your own asset and delete the old reference.
   • GIFs, videos, iframes use native HTML with absolute /public paths —
     they won't fail the build if the file is missing, they'll just 404
@@ -54,7 +54,7 @@ three sentences — enough to set the stakes without front-loading.
 Markdown image syntax. Astro auto-optimizes relative paths in MDX and
 generates the right `srcset`.
 
-![A placeholder screenshot — replace with your own image](./covers/cortex.svg)
+![A placeholder screenshot — replace with your own image](./covers/voice-ai.svg)
 
 For more control (explicit widths, densities, formats), use Astro's
 `Image` component instead. The import must sit at the top of the file,

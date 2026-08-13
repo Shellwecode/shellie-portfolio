@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="Voice AI Agents cover placeholder">
+  <defs>
+    <linearGradient id="cx" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#efe8dc" />
+      <stop offset="100%" stop-color="#c7b39a" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="500" fill="url(#cx)" />
+  <g fill="none" stroke="#2a2824" stroke-width="1.5" opacity="0.4" stroke-linecap="round">
+    <path d="M90 250 C 140 250, 150 200, 180 250 S 220 310, 250 250 S 290 180, 320 250 S 360 320, 390 250 S 430 190, 460 250 S 500 310, 530 250 S 570 200, 600 250 S 640 300, 670 250 S 710 210, 740 250" />
+  </g>
+  <g fill="#2a2824" opacity="0.35">
+    <circle cx="400" cy="250" r="4" />
+    <circle cx="400" cy="250" r="28" fill="none" stroke="#2a2824" stroke-width="1" opacity="0.5" />
+    <circle cx="400" cy="250" r="58" fill="none" stroke="#2a2824" stroke-width="1" opacity="0.3" />
+    <circle cx="400" cy="250" r="92" fill="none" stroke="#2a2824" stroke-width="1" opacity="0.15" />
+  </g>
+  <text x="400" y="460" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="14" fill="#2a2824" opacity="0.55">voice ai agents · 2026</text>
+</svg>
