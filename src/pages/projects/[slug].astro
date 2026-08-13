@@ -149,10 +149,11 @@ const metaLine = [
     </footer>
   </article>
 
-  {project.data.comingSoon && (
+  {project.data.comingSoon && !import.meta.env.DEV && (
     /* the veil — the study exists but isn't ready for readers; the modal
        holds the door. Blur keeps the shape of the page visible (something
-       real is behind it) without giving the content away. */
+       real is behind it) without giving the content away. Dev skips the
+       veil so the study stays workable while it's being written. */
     <div class="cs-gate" role="dialog" aria-modal="true" aria-label="Coming soon">
       <div class="cs-gate-card">
         <span class="cs-gate-eyebrow">{eyebrow}</span>
