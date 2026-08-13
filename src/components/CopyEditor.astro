@@ -1,0 +1,714 @@
+---
+// The copy editor — dev-only instrument for refining prose in place.
+// Toggle the pencil pill, click any block in the article, and its raw MDX
+// source opens in a side drawer. Saving patches the .mdx file through the
+// dev middleware (src/dev/copy-editor.mjs); Astro's content reload brings
+// the page back with the new text, scroll position restored. Mounted only
+// under import.meta.env.DEV — never rendered in a build.
+interface Props {
+  collection: 'projects' | 'writing';
+  slug: string;
+}
+const { collection, slug } = Astro.props;
+---
+
+<button
+  type="button"
+  class="ce-pill"
+  data-ce-pill
+  data-collection={collection}
+  data-slug={slug}
+  aria-pressed="false"
+  title="edit copy (dev only)"
+>
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M8.3 1.4a1.2 1.2 0 0 1 1.7 0l.6.6a1.2 1.2 0 0 1 0 1.7L4.2 10 1.5 10.5 2 7.8Z" />
+  </svg>
+  <span>copy</span>
+</button>
+
+<aside class="ce-drawer" data-ce-drawer aria-hidden="true" aria-label="Copy editor">
+  <header class="ce-head">
+    <div class="ce-head-copy">
+      <span class="ce-eyebrow">copy editor · dev</span>
+      <span class="ce-slug">{collection}/{slug}.mdx</span>
+    </div>
+    <button type="button" class="ce-close" data-ce-close aria-label="Close">×</button>
+  </header>
+  <textarea class="ce-source" data-ce-source spellcheck="true" placeholder="click a block in the article…"></textarea>
+  <footer class="ce-foot">
+    <span class="ce-status" data-ce-status></span>
+    <span class="ce-hint">⌘⏎ save · esc close</span>
+    <button type="button" class="ce-save" data-ce-save>save</button>
+  </footer>
+</aside>
+
+<div class="ce-mover" data-ce-mover aria-hidden="true">
+  <button type="button" class="ce-move" data-ce-up aria-label="Move media up">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 6.5 5 3l3.5 3.5" /></svg>
+  </button>
+  <button type="button" class="ce-move" data-ce-down aria-label="Move media down">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5 5 7l3.5-3.5" /></svg>
+  </button>
+</div>
+
+<div class="ce-drop-line" data-ce-drop-line aria-hidden="true"></div>
+
+<div class="ce-apply" data-ce-apply aria-hidden="true">
+  <span class="ce-apply-count" data-ce-apply-count></span>
+  <button type="button" class="ce-apply-save" data-ce-apply-save>apply arrangement</button>
+  <button type="button" class="ce-apply-discard" data-ce-apply-discard>discard</button>
+</div>
+
+<style>
+  .ce-pill {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    background: var(--color-bg);
+    color: var(--color-ink-muted);
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    transition: color var(--motion-micro, 160ms) ease, border-color var(--motion-micro, 160ms) ease,
+      background var(--motion-micro, 160ms) ease;
+  }
+  .ce-pill:hover {
+    color: var(--color-accent);
+    border-color: color-mix(in oklab, var(--color-accent) 40%, var(--color-rule));
+  }
+  .ce-pill[aria-pressed='true'] {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: var(--color-bg);
+  }
+
+  .ce-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 260;
+    width: min(460px, 92vw);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.125rem 1.25rem 1.25rem;
+    background: var(--color-bg);
+    border-left: 1px solid var(--color-rule);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.08);
+    translate: 100% 0;
+    visibility: hidden;
+    transition: translate 280ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 280ms;
+  }
+  .ce-drawer[data-open] {
+    translate: 0 0;
+    visibility: visible;
+    transition: translate 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ce-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .ce-head-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .ce-eyebrow {
+    font-weight: 300;
+    font-size: var(--text-xs);
+    letter-spacing: 0.02em;
+    color: var(--color-ink-muted);
+  }
+  .ce-slug {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ce-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    padding: 2px 4px;
+    color: var(--color-ink-faint);
+    cursor: pointer;
+    transition: color var(--motion-micro, 160ms) ease;
+  }
+  .ce-close:hover { color: var(--color-accent); }
+
+  .ce-source {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border: 1px solid var(--color-rule);
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: transparent;
+    color: var(--color-ink);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .ce-source:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--color-accent) 45%, var(--color-rule));
+  }
+
+  .ce-foot {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .ce-status {
+    flex: 1;
+    min-width: 0;
+    font-size: var(--text-xs);
+    color: var(--color-ink-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ce-status[data-tone='error'] { color: var(--color-accent); }
+  .ce-hint {
+    font-size: var(--text-xs);
+    color: var(--color-ink-faint);
+    white-space: nowrap;
+  }
+  .ce-save {
+    height: 32px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--motion-micro, 160ms) ease, opacity var(--motion-micro, 160ms) ease;
+  }
+  .ce-save:hover { background: var(--color-accent); }
+  .ce-save:disabled { opacity: 0.45; cursor: default; }
+
+  /* The mover — a small pill that perches on hovered media in edit mode;
+     ↑ / ↓ swap the block with its neighbor in the source. */
+  .ce-mover {
+    position: fixed;
+    z-index: 270;
+    display: none;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    background: var(--color-bg);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  }
+  .ce-mover[data-show] { display: flex; }
+  .ce-move {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--color-ink-muted);
+    cursor: pointer;
+    transition: color var(--motion-micro, 160ms) ease, background var(--motion-micro, 160ms) ease;
+  }
+  .ce-move:hover { color: var(--color-accent); background: color-mix(in oklab, var(--color-accent) 10%, transparent); }
+  .ce-move:disabled { opacity: 0.4; cursor: default; }
+
+  /* Arrange mode — the insertion line while dragging, and the apply bar
+     once at least one media block has been re-seated. */
+  .ce-drop-line {
+    position: fixed;
+    z-index: 265;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--color-accent);
+    display: none;
+    pointer-events: none;
+  }
+  .ce-drop-line[data-show] { display: block; }
+  .ce-apply {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    translate: -50% 0;
+    z-index: 270;
+    display: none;
+    align-items: center;
+    gap: 0.875rem;
+    height: 40px;
+    padding: 0 8px 0 16px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-bg);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+  }
+  .ce-apply[data-show] { display: flex; }
+  .ce-apply-count {
+    font-size: var(--text-xs);
+    opacity: 0.75;
+    white-space: nowrap;
+  }
+  .ce-apply-save {
+    height: 28px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-bg);
+    color: var(--color-ink);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--motion-micro, 160ms) ease, color var(--motion-micro, 160ms) ease;
+  }
+  .ce-apply-save:hover { background: var(--color-accent); color: var(--color-bg); }
+  .ce-apply-save:disabled { opacity: 0.5; cursor: default; }
+  .ce-apply-discard {
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--color-bg);
+    font: inherit;
+    font-size: 0.8125rem;
+    opacity: 0.7;
+    cursor: pointer;
+  }
+  .ce-apply-discard:hover { opacity: 1; }
+  .ce-apply[data-note] .ce-apply-save,
+  .ce-apply[data-note] .ce-apply-discard { display: none; }
+  .ce-apply[data-note] { padding: 0 18px; }
+  .ce-apply[data-note] .ce-apply-count { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ce-drawer { transition: none; }
+  }
+</style>
+
+<style is:global>
+  /* Edit mode — blocks announce themselves on hover; links pause. */
+  html[data-ce-edit] .prose :is(p, h2, h3, h4, ul, ol, blockquote):hover {
+    outline: 1px dashed color-mix(in oklab, var(--color-accent) 55%, transparent);
+    outline-offset: 6px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  html[data-ce-edit] .prose [data-ce-active] {
+    outline: 1px solid color-mix(in oklab, var(--color-accent) 70%, transparent);
+    outline-offset: 6px;
+    border-radius: 2px;
+  }
+  html[data-ce-edit] .prose [draggable='true'] { cursor: grab; }
+  html[data-ce-edit] .prose .ce-dragging { opacity: 0.45; }
+</style>
+
+<script>
+  function wireCopyEditor() {
+    const pill = document.querySelector('[data-ce-pill]') as HTMLButtonElement | null;
+    if (!pill || pill.dataset.wired) return;
+    pill.dataset.wired = '1';
+
+    const drawer = document.querySelector('[data-ce-drawer]') as HTMLElement;
+    const source = document.querySelector('[data-ce-source]') as HTMLTextAreaElement;
+    const status = document.querySelector('[data-ce-status]') as HTMLElement;
+    const saveBtn = document.querySelector('[data-ce-save]') as HTMLButtonElement;
+    const closeBtn = document.querySelector('[data-ce-close]') as HTMLButtonElement;
+    const article = document.querySelector('article.prose');
+    if (!drawer || !source || !article) return;
+
+    const collection = pill.dataset.collection!;
+    const slug = pill.dataset.slug!;
+    const KEY = 'ce:restore';
+
+    let on = false;
+    let original: string | null = null; // the raw MDX block being edited
+    let active: Element | null = null;
+    let dirty = false;
+
+    const say = (msg: string, tone: 'ok' | 'error' = 'ok') => {
+      status.textContent = msg;
+      status.dataset.tone = tone;
+    };
+
+    const setActive = (el: Element | null) => {
+      active?.removeAttribute('data-ce-active');
+      active = el;
+      active?.setAttribute('data-ce-active', '');
+    };
+
+    const openDrawer = () => drawer.setAttribute('data-open', '');
+    const closeDrawer = () => {
+      drawer.removeAttribute('data-open');
+      setActive(null);
+      original = null;
+      dirty = false;
+      say('');
+    };
+
+    const setOn = (v: boolean) => {
+      on = v;
+      pill.setAttribute('aria-pressed', String(v));
+      document.documentElement.toggleAttribute('data-ce-edit', v);
+      if (!v) {
+        closeDrawer();
+        document.querySelector('[data-ce-mover]')?.removeAttribute('data-show');
+      }
+      queueMicrotask(() => (window as any).__ceRefreshDraggables?.(v));
+    };
+
+    pill.addEventListener('click', () => setOn(!on));
+    closeBtn?.addEventListener('click', closeDrawer);
+    source.addEventListener('input', () => (dirty = true));
+
+    // Rendered text of a block, with image alts standing in for images —
+    // the same meeting point the server normalizes the source to.
+    const blockText = (el: Element) => {
+      const alts = [...el.querySelectorAll('img')].map((i) => i.alt).join(' ');
+      const own = el.tagName === 'IMG' ? (el as HTMLImageElement).alt : (el as HTMLElement).innerText ?? '';
+      return `${own} ${alts}`.replace(/\s+/g, ' ').trim();
+    };
+
+    const post = async (endpoint: string, payload: object) => {
+      const r = await fetch(`/__copyedit/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collection, slug, ...payload }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error ?? `${endpoint} failed`);
+      return data;
+    };
+
+    const openBlock = async (el: Element) => {
+      if (dirty && !confirm('Discard the unsaved edit?')) return;
+      setActive(el);
+      openDrawer();
+      say('finding source…');
+      try {
+        const { block } = await post('resolve', { text: blockText(el) });
+        original = block;
+        source.value = block;
+        dirty = false;
+        say('');
+        source.focus();
+      } catch (e) {
+        original = null;
+        source.value = '';
+        say(e instanceof Error ? e.message : String(e), 'error');
+      }
+    };
+
+    article.addEventListener(
+      'click',
+      (e) => {
+        if (!on || dragged) return;
+        const t = e.target as Element;
+        const el =
+          t.closest('article.prose :is(p, h2, h3, h4, ul, ol, blockquote, pre)') ??
+          (t.tagName === 'IMG' ? t.closest('p, figure') : null);
+        if (!el || drawer.contains(t)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openBlock(el);
+      },
+      true
+    );
+
+    const save = async () => {
+      if (original == null) return;
+      saveBtn.disabled = true;
+      say('saving…');
+      try {
+        await post('save', { original, updated: source.value });
+        dirty = false;
+        say('saved — reloading…');
+        sessionStorage.setItem(KEY, JSON.stringify({ slug, y: window.scrollY }));
+        // Astro's content watcher reloads the page; this is the fallback.
+        setTimeout(() => location.reload(), 1500);
+      } catch (e) {
+        saveBtn.disabled = false;
+        say(e instanceof Error ? e.message : String(e), 'error');
+      }
+    };
+    saveBtn?.addEventListener('click', save);
+
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && drawer.hasAttribute('data-open')) {
+        e.preventDefault();
+        save();
+      } else if (e.key === 'Escape') {
+        if (drawer.hasAttribute('data-open')) closeDrawer();
+        else if (on) setOn(false);
+      }
+    });
+
+    // ── The mover — hover media in edit mode, nudge it through the source ──
+    const mover = document.querySelector<HTMLElement>('[data-ce-mover]');
+    let moveTarget: Element | null = null;
+
+    const mediaBlock = (t: Element): Element | null => {
+      const stage = t.closest('[data-sstage]');
+      if (stage) return stage;
+      const fig = t.closest('figure');
+      if (fig && fig.querySelector('video, img')) return fig;
+      const par = t.closest('p');
+      if (par && par.querySelector('img')) return par;
+      return null;
+    };
+    // A string that finds this block verbatim in the raw MDX.
+    const mediaNeedle = (el: Element): string | null => {
+      if (el.hasAttribute('data-sstage')) {
+        const label = el.querySelector('.pcard-tag')?.textContent?.trim();
+        return label ? `label="${label}"` : null;
+      }
+      const video = el.querySelector('video[src]');
+      if (video) return video.getAttribute('src');
+      const img = el.querySelector('img');
+      if (img?.alt) return `![${img.alt}]`;
+      return null;
+    };
+
+    const hideMover = () => {
+      mover?.removeAttribute('data-show');
+      moveTarget = null;
+    };
+    const showMover = (el: Element) => {
+      if (!mover) return;
+      moveTarget = el;
+      const r = el.getBoundingClientRect();
+      mover.style.top = `${Math.max(8, r.top + 10)}px`;
+      mover.style.left = `${r.right - 74}px`;
+      mover.setAttribute('data-show', '');
+    };
+
+    article.addEventListener('mouseover', (e) => {
+      if (!on) return;
+      const el = mediaBlock(e.target as Element);
+      if (el) showMover(el);
+      else if (!mover?.contains(e.target as Node)) hideMover();
+    });
+    window.addEventListener('scroll', hideMover, { passive: true });
+
+    const move = async (dir: -1 | 1) => {
+      if (!moveTarget) return;
+      const needle = mediaNeedle(moveTarget);
+      if (!needle) {
+        say('cannot identify this block in source', 'error');
+        openDrawer();
+        return;
+      }
+      mover?.querySelectorAll('button').forEach((b) => (b.disabled = true));
+      try {
+        await post('move', { needle, dir });
+        sessionStorage.setItem(KEY, JSON.stringify({ slug, y: window.scrollY }));
+        setTimeout(() => location.reload(), 1200); // fallback; HMR usually beats it
+      } catch (e) {
+        mover?.querySelectorAll('button').forEach((b) => (b.disabled = false));
+        say(e instanceof Error ? e.message : String(e), 'error');
+        openDrawer();
+      }
+    };
+    mover?.querySelector('[data-ce-up]')?.addEventListener('click', () => move(-1));
+    mover?.querySelector('[data-ce-down]')?.addEventListener('click', () => move(1));
+
+    // ── Arrange mode: drag media freely, apply the whole arrangement once ──
+    const dropLine = document.querySelector<HTMLElement>('[data-ce-drop-line]');
+    const applyBar = document.querySelector<HTMLElement>('[data-ce-apply]');
+    const applyCount = document.querySelector<HTMLElement>('[data-ce-apply-count]');
+    const applySave = document.querySelector<HTMLButtonElement>('[data-ce-apply-save]');
+    const moved = new Set<Element>();
+    let dragEl: HTMLElement | null = null;
+    let dropRef: Element | null = null; // insert BEFORE this element (null = before footer/end)
+    let dragged = false; // suppress the click-to-edit that follows a drop
+
+    const articleBlocks = () =>
+      [...article.children].filter((el) => el.tagName !== 'FOOTER' && el !== dragEl);
+    const isMedia = (el: Element) =>
+      el.hasAttribute('data-sstage') ||
+      (el.tagName === 'FIGURE' && !!el.querySelector('video, img')) ||
+      (el.tagName === 'P' && !!el.querySelector('img'));
+
+    (window as any).__ceRefreshDraggables = (v: boolean) => refreshDraggables(v);
+    const refreshDraggables = (enable: boolean) => {
+      [...article.children].filter(isMedia).forEach((el) => {
+        if (enable) {
+          el.setAttribute('draggable', 'true');
+          el.querySelectorAll('img').forEach((i) => i.setAttribute('draggable', 'false'));
+        } else {
+          el.removeAttribute('draggable');
+          el.classList.remove('ce-dragging');
+        }
+      });
+    };
+
+    const updateApplyBar = () => {
+      if (!applyBar || !applyCount) return;
+      if (moved.size > 0) {
+        applyCount.textContent = `${moved.size} moved`;
+        applyBar.setAttribute('data-show', '');
+      } else applyBar.removeAttribute('data-show');
+    };
+
+    article.addEventListener('dragstart', (e) => {
+      if (!on) return;
+      const el = (e.target as Element).closest?.('[draggable="true"]') as HTMLElement | null;
+      if (!el || el.parentElement !== article) return;
+      dragEl = el;
+      dragged = true;
+      el.classList.add('ce-dragging');
+      e.dataTransfer?.setData('text/plain', 'ce-media');
+      if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+    });
+
+    article.addEventListener('dragover', (e) => {
+      if (!dragEl) return;
+      e.preventDefault();
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      // Edge autoscroll so long journeys don't need a second drag.
+      const lenis = (window as any).lenis;
+      const nudge =
+        e.clientY < 90 ? -14 : e.clientY > window.innerHeight - 90 ? 14 : 0;
+      if (nudge) {
+        if (lenis?.scrollTo) lenis.scrollTo(window.scrollY + nudge, { immediate: true });
+        else window.scrollBy(0, nudge);
+      }
+      // Nearest boundary: above the block whose midpoint the pointer is over,
+      // or below it when the pointer is past the midpoint.
+      const blocks = articleBlocks();
+      dropRef = null;
+      let lineY: number | null = null;
+      for (const b of blocks) {
+        const r = b.getBoundingClientRect();
+        if (e.clientY < r.top + r.height / 2) {
+          dropRef = b;
+          lineY = r.top - 6;
+          break;
+        }
+        lineY = r.bottom + 6;
+      }
+      if (dropLine && lineY !== null) {
+        const ar = article.getBoundingClientRect();
+        dropLine.style.top = `${lineY}px`;
+        dropLine.style.left = `${ar.left}px`;
+        dropLine.style.width = `${ar.width}px`;
+        dropLine.setAttribute('data-show', '');
+      }
+    });
+
+    article.addEventListener('drop', (e) => {
+      if (!dragEl) return;
+      e.preventDefault();
+      const footer = article.querySelector(':scope > footer');
+      article.insertBefore(dragEl, dropRef ?? footer);
+      moved.add(dragEl);
+      updateApplyBar();
+    });
+
+    article.addEventListener('dragend', () => {
+      dragEl?.classList.remove('ce-dragging');
+      dragEl = null;
+      dropRef = null;
+      dropLine?.removeAttribute('data-show');
+      hideMover();
+      setTimeout(() => (dragged = false), 0);
+    });
+
+    const anchorFor = (el: Element | null): object | null => {
+      if (!el || el.tagName === 'FOOTER') return null;
+      const n = isMedia(el) ? mediaNeedle(el) : null;
+      if (n) return { kind: 'needle', value: n };
+      const t = blockText(el);
+      return t ? { kind: 'text', value: t } : null;
+    };
+    const applyArrangement = async () => {
+      const ops: object[] = [];
+      for (const el of [...article.children].filter((el) => moved.has(el))) {
+        const elNeedle = mediaNeedle(el);
+        if (!elNeedle) {
+          say('cannot identify a moved block in source', 'error');
+          openDrawer();
+          return;
+        }
+        // Both neighbors travel as anchors — the server prefers `after`,
+        // falls back to `before`, and skips (not aborts) if neither lands.
+        ops.push({
+          needle: elNeedle,
+          after: anchorFor(el.previousElementSibling),
+          before: anchorFor(el.nextElementSibling),
+        });
+      }
+      if (applySave) applySave.disabled = true;
+      try {
+        const res = await post('arrange', { ops });
+        const note =
+          res.skipped?.length > 0
+            ? `${res.moved} moved · ${res.skipped.length} couldn't be placed — left in original spot`
+            : null;
+        sessionStorage.setItem(KEY, JSON.stringify({ slug, y: window.scrollY, note }));
+        setTimeout(() => location.reload(), 1200);
+      } catch (e) {
+        if (applySave) applySave.disabled = false;
+        say(e instanceof Error ? e.message : String(e), 'error');
+        openDrawer();
+      }
+    };
+    applySave?.addEventListener('click', applyArrangement);
+    document
+      .querySelector('[data-ce-apply-discard]')
+      ?.addEventListener('click', () => location.reload());
+
+    // After a saved reload: re-arm edit mode and put the reader back.
+    try {
+      const raw = sessionStorage.getItem(KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        if (s.slug === slug) {
+          sessionStorage.removeItem(KEY);
+          setOn(true);
+          setTimeout(() => {
+            const lenis = (window as any).lenis;
+            if (lenis?.scrollTo) lenis.scrollTo(s.y, { immediate: true });
+            else window.scrollTo(0, s.y);
+          }, 60);
+          if (s.note && applyBar && applyCount) {
+            applyCount.textContent = s.note;
+            applyBar.setAttribute('data-note', '');
+            applyBar.setAttribute('data-show', '');
+            setTimeout(() => {
+              applyBar.removeAttribute('data-show');
+              applyBar.removeAttribute('data-note');
+            }, 6000);
+          }
+        }
+      }
+    } catch {}
+  }
+  wireCopyEditor();
+  document.addEventListener('astro:page-load', wireCopyEditor);
+</script>
