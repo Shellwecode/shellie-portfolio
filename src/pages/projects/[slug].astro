@@ -66,6 +66,16 @@ const metaLine = [
 ]
   .filter(Boolean)
   .join(', ');
+
+// The password veil — the word is hashed here at build time so it never
+// ships; the browser hashes what the reader types and compares digests.
+// Case and stray spaces are forgiven before hashing.
+const password = project.data.password;
+let gateHash: string | null = null;
+if (password) {
+  const { createHash } = await import('node:crypto');
+  gateHash = createHash('sha256').update(password.trim().toLowerCase()).digest('hex');
+}
 ---
 
 <Base
@@ -149,16 +159,36 @@ const metaLine = [
     </footer>
   </article>
 
-  {project.data.comingSoon && !import.meta.env.DEV && (
-    /* the veil — the study exists but isn't ready for readers; the modal
-       holds the door. Blur keeps the shape of the page visible (something
-       real is behind it) without giving the content away. Dev skips the
-       veil so the study stays workable while it's being written. */
-    <div class="cs-gate" role="dialog" aria-modal="true" aria-label="Coming soon">
+  {gateHash && !import.meta.env.DEV && (
+    /* the veil — the modal holds the door until the reader knows the word.
+       Blur keeps the shape of the page visible (something real is behind it)
+       without giving the content away. Dev skips the veil so the study
+       stays workable while it's being written. */
+    <div
+      class="cs-gate"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Password required"
+      data-gate-hash={gateHash}
+    >
       <div class="cs-gate-card">
         <span class="cs-gate-eyebrow">{eyebrow}</span>
         <h2 class="cs-gate-title">{shortTitle}</h2>
-        <p class="cs-gate-note">in progress. to be landing soon</p>
+        <p class="cs-gate-note">this one's under wraps — ask me for the word</p>
+        <form class="cs-gate-form" data-gate-form novalidate>
+          <input
+            class="cs-gate-input"
+            type="password"
+            name="gate"
+            placeholder="password"
+            autocomplete="off"
+            aria-label="Password"
+          />
+          <button class="cs-gate-unlock" type="submit" aria-label="Unlock">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 6h8M7 3l3 3-3 3" /></svg>
+          </button>
+        </form>
+        <p class="cs-gate-error" data-gate-error hidden>not quite — try again</p>
         <a class="cs-gate-back" href="/projects">← back to work</a>
       </div>
     </div>
@@ -575,31 +605,117 @@ const metaLine = [
     font-size: var(--text-sm);
     color: var(--color-ink-muted);
   }
-  .cs-gate-back {
+  :global(html.gated) { overflow: hidden; } /* the veiled page doesn't scroll */
+
+  /* one pill holds the word and the way in */
+  .cs-gate { transition: opacity var(--motion-content) ease; }
+  .cs-gate.is-open { opacity: 0; pointer-events: none; }
+  .cs-gate-form {
     margin-top: 1rem;
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    height: 34px;
-    padding: 0 18px;
+    gap: 6px;
+    height: 40px;
+    padding: 0 6px 0 16px;
+    border-radius: 999px;
+    border: 1px solid var(--color-rule);
+    background: color-mix(in oklab, var(--color-ink) 3%, transparent);
+    transition: border-color var(--motion-micro) ease;
+  }
+  .cs-gate-form:focus-within { border-color: var(--color-ink-faint); }
+  .cs-gate-form.is-wrong { border-color: var(--color-accent); }
+  .cs-gate-input {
+    width: 150px;
+    border: 0;
+    background: none;
+    outline: none;
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--color-ink);
+    letter-spacing: 0.08em; /* the dots breathe */
+  }
+  .cs-gate-input::placeholder { color: var(--color-ink-faint); letter-spacing: 0.02em; }
+  .cs-gate-unlock {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border: 0;
     border-radius: 999px;
     background: var(--color-ink);
     color: var(--color-bg);
-    font-size: var(--text-sm);
-    text-decoration: none;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
     transition: opacity var(--motion-micro) ease;
   }
-  .cs-gate-back:hover { opacity: 0.85; }
-  :global(html.gated) { overflow: hidden; } /* the veiled page doesn't scroll */
+  .cs-gate-unlock:hover { opacity: 0.85; }
+  .cs-gate-error {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: var(--text-xs);
+    color: var(--color-accent);
+  }
+  .cs-gate-back {
+    margin-top: 0.75rem;
+    font-size: var(--text-sm);
+    color: var(--color-ink-muted);
+    text-decoration: underline;
+    text-decoration-color: var(--color-ink-faint);
+    text-underline-offset: 3px;
+    transition: color var(--motion-micro) ease;
+  }
+  .cs-gate-back:hover { color: var(--color-accent); }
 </style>
 
 <script>
   // The gate holds the scroll too — Lenis keeps gliding through
   // overflow:hidden, so it gets stopped directly. Soft navs restore it.
+  // The password veil compares SHA-256 digests — the word itself never
+  // shipped — and a session that has unlocked once stays unlocked.
+  async function sha256(text: string) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
   function wireGate() {
+    const gate = document.querySelector<HTMLElement>('.cs-gate');
+    const hash = gate?.dataset.gateHash;
+    const key = `cs-unlocked:${location.pathname}`;
+    if (gate && hash && sessionStorage.getItem(key) === hash) gate.remove();
+
     const gated = Boolean(document.querySelector('.cs-gate'));
     document.documentElement.classList.toggle('gated', gated);
     const lenis = (window as any).lenis;
     if (lenis) gated ? lenis.stop() : lenis.start();
+
+    const form = gate?.querySelector<HTMLFormElement>('[data-gate-form]');
+    if (!gated || !gate || !hash || !form || form.dataset.wired) return;
+    form.dataset.wired = '1';
+    const input = form.querySelector('input')!;
+    const error = gate.querySelector<HTMLElement>('[data-gate-error]')!;
+    input.focus();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const digest = await sha256(input.value.trim().toLowerCase());
+      if (digest === hash) {
+        sessionStorage.setItem(key, digest);
+        gate.classList.add('is-open');
+        setTimeout(() => {
+          gate.remove();
+          document.documentElement.classList.remove('gated');
+          (window as any).lenis?.start();
+        }, 260);
+      } else {
+        error.hidden = false;
+        form.classList.add('is-wrong');
+        input.select();
+      }
+    });
+    input.addEventListener('input', () => {
+      error.hidden = true;
+      form.classList.remove('is-wrong');
+    });
   }
   wireGate();
   document.addEventListener('astro:page-load', wireGate);
