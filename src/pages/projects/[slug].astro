@@ -678,9 +678,11 @@ if (password) {
   }
 
   function wireGate() {
+    // One key for the whole session: knowing the word opens every study it
+    // matches — a mismatched digest still holds pages with their own word.
     const gate = document.querySelector<HTMLElement>('.cs-gate');
     const hash = gate?.dataset.gateHash;
-    const key = `cs-unlocked:${location.pathname}`;
+    const key = 'cs-unlocked';
     if (gate && hash && sessionStorage.getItem(key) === hash) gate.remove();
 
     const gated = Boolean(document.querySelector('.cs-gate'));
