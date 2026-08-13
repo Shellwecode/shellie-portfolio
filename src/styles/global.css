@@ -161,6 +161,14 @@ html {
 }
 :root[data-theme="dark"] { color-scheme: dark; }
 
+/* The whole site was designed against Chrome at 90% zoom — bake that in.
+   zoom scales every length uniformly (px tokens included), while viewport
+   units still resolve against the real viewport, so full-bleed stays full-bleed.
+   Desktop only: mobile was judged at natural scale. */
+@media (min-width: 900px) {
+  html { zoom: 0.9; }
+}
+
 body {
   min-height: 100dvh;
   display: flex;

@@ -167,9 +167,12 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
        wide desktop: true centering takes over. */
     padding: 48px var(--shell-pad-r) 5.5rem var(--shell-pad-l);
   }
-  @media (min-width: 1600px) {
+  /* 1440px real = 1600px layout px under the baked-in 0.9 zoom; 100% (the
+     shell's laid-out width) instead of 100dvw so the centering math sees the
+     zoom-stretched width, not the raw viewport. */
+  @media (min-width: 1440px) {
     .shell-main {
-      padding-left: max(var(--shell-pad-l), calc((100dvw - var(--content-cap)) / 2));
+      padding-left: max(var(--shell-pad-l), calc((100% - var(--content-cap)) / 2));
     }
   }
   .shell-main > :global(*) { max-width: var(--content-cap); }
