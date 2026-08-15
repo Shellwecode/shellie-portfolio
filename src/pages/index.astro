@@ -17,13 +17,14 @@ const OPENING_VARIANT: 'galaxy' | 'ink' | 'none' = 'none';
 // selected work with the current project as the emphasis card, recent writing rows.
 const allProjects = (await getCollection('projects')).filter((p) => !p.data.draft);
 const heroProject = allProjects.find((p) => p.data.hero) ?? allProjects[0] ?? null;
-// Second and third cards are hand-picked so new entries don't reshuffle the
-// locked bento: the tester pairs with the agent builder, the early MIT project balances
-// the two 2026 ones.
+// The other three cards are hand-picked so new entries don't reshuffle the
+// grid: the tester pairs with the agent builder, the early MIT project and
+// the sci-fi research balance the two 2026 ones.
 const secondProject = allProjects.find((p) => p.id === 'synthetic-tester') ?? null;
 const thirdProject = allProjects.find((p) => p.id === 'saving-face') ?? null;
-// The bento's three: the agent builder anchors, the other two stack right.
-const featured = [heroProject, secondProject, thirdProject].filter(
+const fourthProject = allProjects.find((p) => p.id === 'feminist-scifi') ?? null;
+// The four: builder, tester, saving face, women in sci-fi — equal stage.
+const featured = [heroProject, secondProject, thirdProject, fourthProject].filter(
   (p): p is NonNullable<typeof p> => Boolean(p),
 );
 
@@ -67,9 +68,8 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     </div>
   </section>
 
-  {/* Selected work — bento, Shellie's dial-tuned composition (aug 2):
-      The builder anchors 64%, twin 282px cells stack right. Cards are pure image
-      at rest; hover reveals tag, title, subtitle (shared styles, global.css) */}
+  {/* Selected work — 2×2 grid, four equal 282px cells (aug 14). Cards are pure
+      image at rest; hover reveals tag, title, subtitle (shared styles, global.css) */}
   <section class="work">
     <div class="section-head enter" style="--enter-i: 3">
       <h2 class="section-title">Selected work</h2>
@@ -106,10 +106,10 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   {/* Writing — single column per the Landing frame; (me) strip parked for now. */}
   {writing.length > 0 && (
     <section class="writing">
-      <h2 class="section-title enter" style="--enter-i: 7">Writing</h2>
+      <h2 class="section-title enter" style="--enter-i: 8">Writing</h2>
       <div class="writing-list">
         {writing.map((w, i) => (
-          <div class="enter" style={`--enter-i: ${8 + i}`}>
+          <div class="enter" style={`--enter-i: ${9 + i}`}>
             <ArchiveRow
               plain
               title={w.data.title}
@@ -174,20 +174,14 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .section-link:hover .section-link-arrow { translate: var(--arrow-nudge, 3px) 0; }
 
   .work { margin-bottom: 2.625rem; } /* 14 section pad + 28 main gap, per frame */
-  /* Bento — Shellie's dial-tuned composition, locked 2026-08-02:
-     64% agent-builder anchor, twin 282px cells stacked right */
+  /* 2×2 grid — four featured, equal stage (was the 64% anchor bento,
+     retired 2026-08-14 when women in sci-fi joined the row) */
   .cards {
     display: grid;
     gap: var(--card-gap);
-    grid-template-columns: calc(64% - var(--card-gap) / 2) 1fr;
-    grid-template-areas: 'a b' 'a c';
+    grid-template-columns: repeat(2, 1fr);
   }
-  .card[data-i='0'] { grid-area: a; }
-  .card[data-i='2'] { grid-area: b; }
-  .card[data-i='1'] { grid-area: c; }
-  .card[data-i='0'] .card-cover { height: auto; flex: 1; }
-  .card[data-i='2'] .card-cover { height: 282px; }
-  .card[data-i='1'] .card-cover { height: 282px; }
+  .card .card-cover { height: 340px; }
   .card {
     display: flex;
     flex-direction: column;
@@ -229,6 +223,6 @@ const projectHref = (p: (typeof allProjects)[number]) =>
 
   @media (max-width: 768px) {
     .cards { display: flex; flex-direction: column; }
-    .card[data-i='0'] .card-cover { height: 240px; flex: none; }
+    .card .card-cover { height: 240px; flex: none; }
   }
 </style>
