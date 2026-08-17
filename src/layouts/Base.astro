@@ -1,9 +1,10 @@
 ---
 import '../styles/global.css';
-import SideNav from '../components/SideNav.astro';
 import TopBar from '../components/TopBar.astro';
 import NowPlayer from '../components/NowPlayer.astro';
 import { ClientRouter } from 'astro:transitions';
+// SideNav (the droplet dock) is parked — the girl + worn word nav carries
+// wayfinding now. import SideNav from '../components/SideNav.astro';
 
 interface Props {
   title?: string;
@@ -106,7 +107,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       </div>
     </div>
     {fog && <div class:list={['edge-fog', 'edge-fog--bottom', { 'edge-fog--thin': fog === 'thin' }]} aria-hidden="true"></div>}
-    <SideNav />
+    {/* <SideNav /> — parked for the girl + worn word nav; the dock returns by
+        uncommenting this and its import. */}
     {deck === 'pill' && <NowPlayer />}
 
     <script>

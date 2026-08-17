@@ -62,30 +62,32 @@ const contacts = [
       breaks out to its own wider stage (the page's one full breath) */}
   <div class="about-page">
     <div class="about-hero" data-drag-zone>
-      <h1 class="section-title enter" style="--enter-i: 0">About</h1>
+      {/* the tree in the menu already says where we are — no serif "About"
+          repeating it. The h1 stays for the document outline, unseen. */}
+      <h1 class="sr-title">About</h1>
 
       {/* the doodled selves escaped the pile — they keep the intro company
           (and still drag; the whole hero is their yard). Day gets the
           travelers; night gets the reading lamp. */}
-      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 2; right: 4%; top: 10px; --rot: 4deg">
+      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 1; right: 4%; top: 10px; --rot: 4deg">
         <Image src={doodleSuitcase} alt="A drawing of me with my suitcase" widths={[320]} sizes="160px" loading="eager" draggable={false} />
       </figure>
-      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 3; right: 24%; top: 64px; --rot: -5deg">
+      <figure class="hero-doodle hero-doodle--light enter" data-draggable style="--enter-i: 2; right: 24%; top: 64px; --rot: -5deg">
         <Image src={doodleWalking} alt="A drawing of me mid-stride, luggage in tow" widths={[320]} sizes="150px" loading="eager" draggable={false} />
       </figure>
-      <figure class="hero-doodle hero-doodle--dark enter" data-draggable style="--enter-i: 2; right: 8%; top: 4px; --rot: -2deg">
+      <figure class="hero-doodle hero-doodle--dark enter" data-draggable style="--enter-i: 1; right: 8%; top: 4px; --rot: -2deg">
         <Image src={doodleReading} alt="A drawing of me reading under a lamp at night" widths={[520]} sizes="260px" loading="eager" draggable={false} />
       </figure>
 
       <div class="about-copy">
-      <p class="intro intro-lead enter" style="--enter-i: 1">
+      <p class="intro intro-lead enter" style="--enter-i: 0">
         I was born in Chengdu, China. Growing up with a love of doodling, I
         learned to understand things by drawing them. I spent my high school
         years in Auckland, New Zealand, where I learned to walk in the
         mountains, by the coastlines, on the trail of sunrise. Now, I live in
         Boston with my cat, designing at Five9.
       </p>
-      <p class="intro enter" style="--enter-i: 2">
+      <p class="intro enter" style="--enter-i: 1">
         I studied mathematics and human-computer interaction in college. I
         like sitting with abstract problems before they have a shape, and
         decomposing them by asking (sometimes wild) questions. I also like
@@ -94,11 +96,11 @@ const contacts = [
       </div>
     </div>
 
-    <div class="pile-stage enter" style="--enter-i: 3">
+    <div class="pile-stage enter" style="--enter-i: 2">
       <PhotoPile />
     </div>
 
-    <section class="cv-section enter" style="--enter-i: 4">
+    <section class="cv-section enter" style="--enter-i: 3">
       <h2 class="section-title">Experience</h2>
       <div class="cv-list mt-3">
         {experience.map((x) => (
@@ -119,7 +121,7 @@ const contacts = [
       </div>
     </section>
 
-    <section class="cv-section enter" style="--enter-i: 5">
+    <section class="cv-section enter" style="--enter-i: 4">
       <h2 class="section-title">Education</h2>
       <div class="cv-list mt-3">
         {education.map((e) => (
@@ -140,7 +142,7 @@ const contacts = [
       </div>
     </section>
 
-    <p class="contact-row enter mt-14 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style="--enter-i: 6">
+    <p class="contact-row enter mt-14 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm" style="--enter-i: 5">
       <span class="contact-lead">find me</span>
       <a class="contact-resume" href={resumeHref} target="_blank" rel="noopener noreferrer">Resume ↗</a>
       {contacts.map((c) => (
@@ -181,9 +183,17 @@ const contacts = [
   .about-hero {
     position: relative;
   }
-  .about-hero > .section-title,
   .about-hero > .about-copy {
     max-width: var(--measure);
+  }
+  /* the page's h1, for the outline and screen readers only */
+  .sr-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .hero-doodle {
     position: absolute;

@@ -73,7 +73,16 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   <section class="work">
     <div class="section-head enter" style="--enter-i: 3">
       <h2 class="section-title">Selected work</h2>
-      <a href="/projects" class="section-link">show all <span class="section-link-arrow">→</span></a>
+      {/* The arrow is riso ink like the menu: grey at rest, catching the
+          rust on hover — the icons' language echoed once more on the page. */}
+      <a href="/projects" class="section-link">show all
+        <span class="section-link-arrow">
+          <svg width="15" height="10" viewBox="0 0 15 10" aria-hidden="true">
+            <path d="M1.2 5.4 C 4.2 4.7, 7.6 4.9, 10.4 5.1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none" />
+            <path fill="currentColor" d="M9.6 1.5 C 11 2.9, 12.5 4.1, 14 4.9 C 12.5 5.9, 11 7.1, 9.7 8.5 C 9.3 8.2, 9.4 7.9, 9.6 7.5 C 10.1 6.7, 10.6 5.8, 10.7 5 C 10.6 4.2, 10 3.4, 9.4 2.5 C 9.2 2.2, 9.3 1.8, 9.6 1.5 Z" />
+          </svg>
+        </span>
+      </a>
     </div>
     <div class="cards">
       {featured.map((p, i) => (
@@ -166,11 +175,14 @@ const projectHref = (p: (typeof allProjects)[number]) =>
     text-decoration: none;
     transition: color var(--motion-micro) ease;
   }
-  .section-link:hover { color: var(--color-accent); }
+  /* hover catches the same rust as the icon menu — one ink system */
+  .section-link:hover { color: #D36B41; }
   .section-link-arrow {
     display: inline-block;
+    vertical-align: -1px;
     transition: translate var(--motion-micro) ease-out;
   }
+  .section-link-arrow svg { display: inline; }
   .section-link:hover .section-link-arrow { translate: var(--arrow-nudge, 3px) 0; }
 
   .work { margin-bottom: 2.625rem; } /* 14 section pad + 28 main gap, per frame */
