@@ -4,18 +4,16 @@
 // first page. Same keyframe recipe as global.css, read from the --ent-* vars.
 // Each page calls this with a selector only its own markup matches — the
 // page-load listeners outlive soft navs, so the scope is also the guard.
+import { cssMs } from './css-time';
+
 export function riseEnter(scope: string) {
   const els = document.querySelectorAll<HTMLElement>(scope);
   if (!els.length) return; // some other page — nothing to do
   if (document.documentElement.hasAttribute('data-entrance')) return; // CSS entrance already has it
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const style = getComputedStyle(document.documentElement);
-  const num = (name: string, fallback: number) => {
-    const v = parseFloat(style.getPropertyValue(name));
-    return Number.isFinite(v) ? v : fallback;
-  };
-  const dur = num('--ent-ms', 950);
-  const stagger = num('--ent-stagger', 120);
+  const dur = cssMs(style.getPropertyValue('--ent-ms'), 950);
+  const stagger = cssMs(style.getPropertyValue('--ent-stagger'), 120);
   const rise = style.getPropertyValue('--ent-rise').trim() || '16px';
   const blur = style.getPropertyValue('--ent-blur').trim() || '8px';
   els.forEach((el) => {

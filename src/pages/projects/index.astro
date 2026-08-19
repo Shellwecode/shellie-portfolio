@@ -282,6 +282,8 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
 </style>
 
 <script>
+  import { cssMs } from '../../scripts/css-time';
+
   // The reveal — don't show the shelf all at once (gabriell_lab's tip):
   // every card gets a tiny delay from the center out, with a slight swing.
   // Vanilla WAAPI; numbers read from --shelf-* vars, fallbacks are the
@@ -308,8 +310,8 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
         const v = parseFloat(style.getPropertyValue(name));
         return Number.isFinite(v) ? v : fallback;
       };
-      const staggerMs = num('--shelf-stagger', 70);
-      const duration = num('--shelf-dur', 590);
+      const staggerMs = cssMs(style.getPropertyValue('--shelf-stagger'), 70);
+      const duration = cssMs(style.getPropertyValue('--shelf-dur'), 590);
       const y = num('--shelf-y', 24);
       const swing = num('--shelf-swing', -2);
       const easing =

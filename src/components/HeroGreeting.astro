@@ -475,6 +475,8 @@ const langs = [
 </style>
 
 <script>
+  import { cssMs } from '../scripts/css-time';
+
   function initGreeting() {
     const wrap = document.querySelector<HTMLElement>('[data-greeting]');
     if (!wrap || wrap.dataset.wired) return;
@@ -524,10 +526,7 @@ const langs = [
          from the live dials) so the mark never crosses dissolving words —
          it leaves last and arrives with the new line. */
       const cs = getComputedStyle(document.documentElement);
-      const dial = (name: string, fallback: number) => {
-        const v = parseFloat(cs.getPropertyValue(name));
-        return Number.isFinite(v) ? v : fallback;
-      };
+      const dial = (name: string, fallback: number) => cssMs(cs.getPropertyValue(name), fallback);
       const translator = document.documentElement.getAttribute('data-g-mode') === 'translator';
       const lastChunk = (from.querySelectorAll('.g-chunk').length || 3) - 1;
       const outEnd = translator
