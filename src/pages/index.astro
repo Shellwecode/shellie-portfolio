@@ -1,6 +1,5 @@
 ---
 import { getCollection } from 'astro:content';
-import Arrow from '../components/Arrow.astro';
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import ArchiveRow from '../components/ArchiveRow.astro';
@@ -107,7 +106,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
               <span class="card-ov-title">{shortTitle(p.data.title)}</span>
               <span class="card-ov-sub">{p.data.tagline ?? p.data.summary}</span>
             </span>
-            <span class="card-go" aria-hidden="true"><Arrow dir="out" size={13} /></span>
+            <span class="card-go" aria-hidden="true">↗</span>
           </div>
         </a>
       ))}
