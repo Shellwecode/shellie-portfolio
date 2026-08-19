@@ -58,7 +58,8 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
 
   <div class="cp-song">
     <span class="cp-title">{title}</span>
-    <span class="cp-section" data-cp-section>{tracks.length} sections</span>
+    {/* the which-section line lived here until the margin rail took the
+        job (2026-08-19) — the pill keeps title + track only */}
     <div class="cp-track">
       {voice ? (
         <button type="button" class="cp-seg cp-seg--audio" data-cp-audiobar aria-label="Seek within the voice note">
@@ -302,15 +303,6 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .cp-section {
-    font-weight: 400;
-    font-size: var(--text-xs);
-    line-height: 15px;
-    color: var(--color-ink-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
   /* The hairline, made real: segments sized by section length, gaps as
      chapter marks, accent fill tracking the read. */
   .cp-track {
@@ -432,7 +424,6 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
     player.dataset.wired = '1';
 
     const segs = Array.from(player.querySelectorAll('[data-cp-seg]')) as HTMLElement[];
-    const sectionEl = player.querySelector('[data-cp-section]') as HTMLElement | null;
     const timeEl = player.querySelector('[data-cp-time]') as HTMLElement | null;
     const artBtn = player.querySelector('[data-cp-art]') as HTMLElement | null;
     const peek = player.querySelector('[data-cp-peek]') as HTMLElement | null;
@@ -477,12 +468,6 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
         const fill = seg.querySelector('.cp-seg-fill') as HTMLElement | null;
         if (fill) fill.style.width = i < current ? '100%' : i === current ? `${frac * 100}%` : '0%';
       });
-      if (sectionEl) {
-        sectionEl.textContent =
-          current >= 0
-            ? `${current + 1} · ${heads[current].textContent?.toLowerCase().trim()}`
-            : `${heads.length} sections`;
-      }
       if (timeEl && !voicePlaying) {
         const elapsed =
           current < 0
