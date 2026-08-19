@@ -6,17 +6,42 @@ import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
 import ChapterRail from '../../components/ChapterRail.astro';
 import gateLock from '../../assets/gate-lock.png';
+import { readFileSync } from 'node:fs';
+
+// The recording's true length, read at build from the m4a's mvhd atom
+// (timescale + duration) — so the pill's clock states it in the HTML
+// itself instead of waiting on a client metadata fetch.
+function voiceLength(publicPath: string): string | null {
+  try {
+    const buf = readFileSync(`public${publicPath}`);
+    const i = buf.indexOf('mvhd');
+    if (i < 0) return null;
+    const v1 = buf[i + 4] === 1;
+    const ts = buf.readUInt32BE(v1 ? i + 24 : i + 16);
+    const dur = v1 ? Number(buf.readBigUInt64BE(i + 28)) : buf.readUInt32BE(i + 20);
+    if (!ts || !dur) return null;
+    const s = Math.round(dur / ts);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  } catch {
+    return null;
+  }
+}
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
     .filter((p) => !p.data.draft && !p.data.external)
-    .sort((a, b) => b.data.year - a.data.year);
+    // the same order the work shelf deals its cards: hero first, then newest
+    .sort(
+      (a, b) =>
+        Number(b.data.hero ?? false) - Number(a.data.hero ?? false) || b.data.year - a.data.year
+    );
 
   return projects.map((project, i) => {
     const n = projects.length;
-    // the queue loops like a playlist, so every record has a prev and a next
-    const prev = n > 1 ? projects[(i + 1) % n] : null; // older, wrapping to newest
-    const next = n > 1 ? projects[(i - 1 + n) % n] : null; // newer, wrapping to oldest
+    // the queue loops like a playlist in SHELF order: next walks down the
+    // shelf (after feminist-scifi comes synthetic-tester), wrapping around
+    const prev = n > 1 ? projects[(i - 1 + n) % n] : null;
+    const next = n > 1 ? projects[(i + 1) % n] : null;
     return {
       params: { slug: project.id },
       props: {
@@ -55,7 +80,6 @@ const tracks = sections.map((h, i) => {
     label: fmt(seconds),
   };
 });
-const totalSeconds = tracks.reduce((a, t) => a + t.seconds, 0);
 
 // Album header copy — per the Paper frame "case study — detail (aug 4 edit)":
 // short title, discipline eyebrow, "@company, timeframe" meta.
@@ -217,8 +241,8 @@ if (password) {
       cover={project.data.cover}
       coverZoom={project.data.coverZoom}
       voice={project.data.voice}
+      voiceLabel={project.data.voice ? voiceLength(project.data.voice) : null}
       tracks={tracks}
-      totalLabel={fmt(totalSeconds)}
     />
   ) : tracks.length === 0 ? (
     <ReadingBar

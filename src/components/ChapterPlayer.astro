@@ -21,10 +21,10 @@ interface Props {
   cover?: ImageMetadata | null;
   coverZoom?: number;
   voice?: string | null;
+  voiceLabel?: string | null; // the recording's length, read at build
   tracks: Track[];
-  totalLabel: string;
 }
-const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
+const { title, cover, coverZoom, voice, voiceLabel, tracks } = Astro.props;
 ---
 
 <div
@@ -111,12 +111,12 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
   <span class="cp-time">
     {voice && (
       <span class="cp-time-mode" aria-hidden="true">
-        {/* which clock is this? book = reading progress, speaker = the recording */}
-        <svg class="cp-mode-book" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M6 2.3C5 1.5 3.5 1.2 1.6 1.5v8.1c1.9-.3 3.4 0 4.4.8 1-.8 2.5-1.1 4.4-.8V1.5C8.5 1.2 7 1.5 6 2.3Z" /><path d="M6 2.3v8.1" stroke-linecap="round" /></svg>
+        {/* this clock belongs to the recording — length at rest,
+            position / length while it plays */}
         <svg class="cp-mode-speaker" width="11" height="10" viewBox="0 0 13 11" fill="currentColor"><path d="M1 3.6h2.2L6.4 1v9L3.2 7.4H1z" /><path d="M8.4 3.2c1.5 1.2 1.5 3.4 0 4.6M10 1.6c2.6 2 2.6 5.8 0 7.8" stroke="currentColor" stroke-width="1.1" fill="none" stroke-linecap="round" /></svg>
       </span>
     )}
-    <span data-cp-time>0:00 / {totalLabel}</span>
+    <span data-cp-time>{voiceLabel}</span>
   </span>
 
   {/* the paper's tooth — same whisper grain as the landing pill */}
@@ -365,9 +365,6 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
     grid-area: 1 / 1;
     transition: opacity var(--motion-micro) ease;
   }
-  .cp-mode-speaker { opacity: 0; }
-  .chapter-player[data-voice-playing] .cp-mode-book { opacity: 0; }
-  .chapter-player[data-voice-playing] .cp-mode-speaker { opacity: 1; }
 
   .cp-grain {
     position: absolute;
@@ -436,8 +433,6 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       slug: string;
       seconds: number;
     }[];
-    const seconds = sections.map((s) => s.seconds || 60);
-    const total = seconds.reduce((a, b) => a + b, 0);
     const heads = sections
       .map((s) => document.getElementById(s.slug))
       .filter(Boolean) as HTMLElement[];
@@ -468,13 +463,8 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
         const fill = seg.querySelector('.cp-seg-fill') as HTMLElement | null;
         if (fill) fill.style.width = i < current ? '100%' : i === current ? `${frac * 100}%` : '0%';
       });
-      if (timeEl && !voicePlaying) {
-        const elapsed =
-          current < 0
-            ? 0
-            : seconds.slice(0, current).reduce((a, b) => a + b, 0) + frac * seconds[current];
-        timeEl.textContent = `${fmt(elapsed)} / ${fmt(total)}`;
-      }
+      // the clock is the recording's alone — reading progress lives in the
+      // segments (and the margin rail), never in the readout
     }
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -565,12 +555,17 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       document
         .querySelector('[data-voice-toggle]')
         ?.setAttribute('aria-pressed', String(playing));
-      if (!playing) update(); // hand the time readout back to reading progress
     };
     const ensureAudio = () => {
       if (audio || !voiceSrc) return audio;
       audio = new Audio(voiceSrc);
       audio.preload = 'metadata';
+      audio.addEventListener('loadedmetadata', () => {
+        // at rest the clock states the recording's length, nothing else
+        if (timeEl && !voicePlaying && Number.isFinite(audio!.duration)) {
+          timeEl.textContent = fmt(audio!.duration);
+        }
+      });
       audio.addEventListener('timeupdate', () => {
         if (!Number.isFinite(audio!.duration)) return;
         // the bar is the recording's — it holds its place through pauses
@@ -582,6 +577,7 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       audio.addEventListener('ended', () => {
         setVoiceState(false);
         if (audioFill) audioFill.style.width = '0%'; // rewind the bar for next time
+        if (timeEl) timeEl.textContent = fmt(audio!.duration); // the clock rests at the length again
       });
       audio.addEventListener('pause', () => setVoiceState(false));
       audio.addEventListener('play', () => setVoiceState(true));
@@ -592,6 +588,9 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       if (audio!.paused) audio!.play();
       else audio!.pause();
     };
+    // fetch the metadata up front (fast-start moov, a few KB) so the clock
+    // can state the recording's length before anyone presses play
+    if (voiceSrc) ensureAudio();
 
     // The transport: fifteen seconds either way, clamped to the recording's
     // ends. Skipping moves the needle without changing play/pause.
