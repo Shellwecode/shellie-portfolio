@@ -1,0 +1,132 @@
+---
+// The margin rail — reading nav direction A (Paper board "reading nav / A",
+// picked 2026-08-19). The tracklist's structure stays on the page while you
+// read: numbered section rows in the left margin, the current one in ink,
+// the rest faint. No accent, no clock, no chrome — the quietest furniture
+// that still answers "what is this made of, and where am I."
+// Lives only on wide viewports; the pill (audio or reading) is untouched.
+interface Track {
+  slug: string;
+  title: string;
+}
+interface Props {
+  tracks: Track[];
+}
+const { tracks } = Astro.props;
+---
+
+<nav class="chapter-rail" data-chapter-rail aria-label="Sections">
+  {tracks.map((t, i) => (
+    <a href={`#${t.slug}`} class="cr-row" data-cr-row data-slug={t.slug}>
+      <span class="cr-n">{i + 1}</span>
+      <span class="cr-title">{t.title}</span>
+    </a>
+  ))}
+</nav>
+
+<style>
+  .chapter-rail {
+    position: fixed;
+    top: 132px;
+    left: calc(50vw - var(--measure) / 2 - 224px);
+    width: 188px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 40;
+    /* asleep until the reading switch — and it wakes late, after the
+       article has risen, so the switch choreography keeps its order */
+    opacity: 0;
+    translate: 0 6px;
+    pointer-events: none;
+    transition: opacity var(--motion-content) ease, translate var(--motion-content) ease;
+  }
+  :global(html[data-reading]) .chapter-rail {
+    opacity: 1;
+    translate: 0 0;
+    pointer-events: auto;
+    transition-delay: 600ms;
+  }
+  .cr-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 4px 0;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .cr-n {
+    width: 12px;
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--color-ink-faint);
+  }
+  .cr-title {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--color-ink-faint);
+    transition: color var(--motion-micro) ease;
+  }
+  .cr-row:hover .cr-title { color: var(--color-ink); }
+  .cr-row[data-current] .cr-title {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+  /* the margin has to exist for the rail to live in it */
+  @media (max-width: 1240px) {
+    .chapter-rail { display: none; }
+  }
+</style>
+
+<script>
+  function wireChapterRail() {
+    const rail = document.querySelector('[data-chapter-rail]') as HTMLElement | null;
+    if (!rail || rail.dataset.wired) return;
+    rail.dataset.wired = '1';
+
+    const rows = Array.from(rail.querySelectorAll('[data-cr-row]')) as HTMLElement[];
+    const heads = rows
+      .map((r) => document.getElementById(r.dataset.slug ?? ''))
+      .filter(Boolean) as HTMLElement[];
+    if (!heads.length) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // same needle as the player: 35% down the viewport
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const marker = window.scrollY + window.innerHeight * 0.35;
+      let current = -1;
+      for (let i = 0; i < heads.length; i++) {
+        if (heads[i].getBoundingClientRect().top + window.scrollY <= marker) current = i;
+      }
+      rows.forEach((r, i) => r.toggleAttribute('data-current', i === current));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    update();
+
+    // same landing as the player's jump: heading to viewport center, floored
+    // so an early section can't scroll the reader back out of the article
+    rows.forEach((row, i) => {
+      row.addEventListener('click', (e) => {
+        e.preventDefault();
+        const el = heads[i];
+        const r = el.getBoundingClientRect();
+        const y = Math.max(
+          48,
+          r.top + window.scrollY - Math.max(0, (window.innerHeight - r.height) / 2)
+        );
+        const lenis = (window as any).lenis;
+        if (lenis && !reduced) lenis.scrollTo(y);
+        else window.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' });
+      });
+    });
+  }
+  wireChapterRail();
+  document.addEventListener('astro:page-load', wireChapterRail);
+</script>

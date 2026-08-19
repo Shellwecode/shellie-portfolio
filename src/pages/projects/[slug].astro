@@ -4,6 +4,7 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
+import ChapterRail from '../../components/ChapterRail.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -202,6 +203,8 @@ if (password) {
       </div>
     </div>
   )}
+
+  {tracks.length > 0 && <ChapterRail tracks={tracks} />}
 
   {tracks.length > 0 ? (
     <ChapterPlayer
