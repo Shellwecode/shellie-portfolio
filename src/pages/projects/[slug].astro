@@ -87,7 +87,7 @@ if (password) {
 >
   {/* The way back lives in the top bar now (header direction A) — the album
       shelf rises as one piece; its reading choreography owns the rest. */}
-  <header class="album-header enter" style="--enter-i: 0">
+  <header class:list={['album-header', 'enter', { 'no-pill': tracks.length > 0 && !project.data.voice }]} style="--enter-i: 0">
     <div class="album-cover" style={project.data.coverZoom ? `--cover-zoom: ${project.data.coverZoom}` : undefined}>
       {project.data.cover && (
         <Image
@@ -206,7 +206,10 @@ if (password) {
 
   {tracks.length > 0 && <ChapterRail tracks={tracks} />}
 
-  {tracks.length > 0 ? (
+  {/* The pill is transport furniture — without a recording the margin rail
+      carries the nav alone (her call, 2026-08-19: hide the pill for now on
+      case studies that haven't been recorded yet). */}
+  {tracks.length > 0 && project.data.voice ? (
     <ChapterPlayer
       title={project.data.title.split('—')[0].trim()}
       cover={project.data.cover}
@@ -215,7 +218,7 @@ if (password) {
       tracks={tracks}
       totalLabel={fmt(totalSeconds)}
     />
-  ) : (
+  ) : tracks.length === 0 ? (
     <ReadingBar
       title={project.data.title}
       prevHref={prev ? `/projects/${prev.id}` : null}
@@ -223,7 +226,7 @@ if (password) {
       nextHref={next ? `/projects/${next.id}` : null}
       nextLabel={next?.title}
     />
-  )}
+  ) : null}
 
 </Base>
 
@@ -287,6 +290,16 @@ if (password) {
       translate var(--sw-fly-dur, 380ms) cubic-bezier(0.55, 0, 0.25, 1),
       scale var(--sw-fly-dur, 380ms) cubic-bezier(0.55, 0, 0.25, 1),
       opacity 140ms ease var(--sw-fly-fade-delay, 210ms);
+  }
+  /* no pill, no seat to fly to — the cover takes a quiet bow in place */
+  :global(html[data-reading]) .no-pill .album-cover {
+    translate: 0 18px;
+    scale: 0.94;
+    opacity: 0;
+    transition:
+      translate 320ms cubic-bezier(0.55, 0, 0.25, 1),
+      scale 320ms cubic-bezier(0.55, 0, 0.25, 1),
+      opacity 200ms ease 60ms;
   }
   .album-copy {
     /* exit: the words return last, once their shelf is back */
