@@ -87,21 +87,21 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       reading pill. */}
   {voice && (
   <span class="cp-controls">
-    {/* the reference set: a near-full circle whose end carries a filled
-        arrowhead — left-turning to rewind, right-turning to skip — with
-        the 15 seated large in the middle */}
+    {/* Spotify's grammar: an open ring whose gap seats the number at the
+        lower corner, a stroked arrow riding the arc's end — left-turning
+        to rewind, right-turning to skip — drawn at the pill's hairline */}
     <button type="button" class="cp-btn" data-cp-skip="-15" data-peek="back 15s" aria-label="Back 15 seconds">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M3.32 10.7A5.4 5.4 0 1 0 6.6 2.78" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
-        <path d="M4.38 3.38 6.2 1.28 7 4.28Z" fill="currentColor" />
-        <text x="8" y="8.1" text-anchor="middle" dominant-baseline="central" font-size="6.4" font-weight="700" fill="currentColor">15</text>
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8.55 12.39A5.2 5.2 0 1 0 4.82 3.86" />
+        <path d="M3.68 2.26 3.28 5.7 6.6 4.7" />
+        <text x="4" y="15.3" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none">15</text>
       </svg>
     </button>
     <button type="button" class="cp-btn" data-cp-skip="15" data-peek="forward 15s" aria-label="Forward 15 seconds">
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M12.68 10.7A5.4 5.4 0 1 1 9.4 2.78" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
-        <path d="M11.62 3.38 9.8 1.28 9 4.28Z" fill="currentColor" />
-        <text x="8" y="8.1" text-anchor="middle" dominant-baseline="central" font-size="6.4" font-weight="700" fill="currentColor">15</text>
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M7.45 12.39A5.2 5.2 0 1 1 11.18 3.86" />
+        <path d="M12.32 2.26 12.72 5.7 9.4 4.7" />
+        <text x="12" y="15.3" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none">15</text>
       </svg>
     </button>
   </span>
@@ -518,15 +518,40 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
     // The peek: name whatever the cursor (or keyboard focus) is resting on —
     // a segment or a transport button — seated over its center, clamped
     // inside the pill.
+    // The gravity spring (and the duck) scale the whole pill, so screen-space
+    // rects and the peek's local translate disagree — and keep disagreeing
+    // while the spring moves. Place the peek every frame it's open: divide
+    // the instant's scale back out and clamp in the pill's own (unscaled)
+    // coordinates, re-reading the target so it rides the swell.
+    let peekTrack: (() => number) | null = null; // target screen-x, re-read per frame
+    let peekRaf = 0;
+    const placePeek = () => {
+      if (!peek || !peekTrack || !player.hasAttribute('data-peek-open')) {
+        peekRaf = 0;
+        return;
+      }
+      const pr = player.getBoundingClientRect();
+      const s = pr.width / player.offsetWidth || 1;
+      const half = peek.offsetWidth / 2;
+      const x = Math.min(
+        player.offsetWidth - half - 6,
+        Math.max(half + 6, (peekTrack() - pr.left) / s)
+      );
+      player.style.setProperty('--peek-x', `${x}px`);
+      peekRaf = requestAnimationFrame(placePeek);
+    };
+    const openPeek = (track: () => number) => {
+      peekTrack = track;
+      player.setAttribute('data-peek-open', '');
+      if (!peekRaf) peekRaf = requestAnimationFrame(placePeek);
+    };
     const showPeek = (text: string, anchor: HTMLElement) => {
       if (!peek || !text) return;
       peek.textContent = text;
-      const pr = player.getBoundingClientRect();
-      const ar = anchor.getBoundingClientRect();
-      const half = peek.offsetWidth / 2;
-      const x = Math.min(pr.width - half - 6, Math.max(half + 6, ar.left - pr.left + ar.width / 2));
-      player.style.setProperty('--peek-x', `${x}px`);
-      player.setAttribute('data-peek-open', '');
+      openPeek(() => {
+        const ar = anchor.getBoundingClientRect();
+        return ar.left + ar.width / 2;
+      });
     };
     const hidePeek = () => player.removeAttribute('data-peek-open');
     segs.forEach((seg) => {
@@ -638,11 +663,7 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
         if (scrubbing) seekTo(barFrac(e));
         if (!peek || !audio || !Number.isFinite(audio.duration)) return;
         peek.textContent = fmt(barFrac(e) * audio.duration);
-        const pr = player.getBoundingClientRect();
-        const half = peek.offsetWidth / 2;
-        const x = Math.min(pr.width - half - 6, Math.max(half + 6, e.clientX - pr.left));
-        player.style.setProperty('--peek-x', `${x}px`);
-        player.setAttribute('data-peek-open', '');
+        peekAt(e.clientX);
       });
       audioBar.addEventListener('pointerleave', hidePeek);
     }
