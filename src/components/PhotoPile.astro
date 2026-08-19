@@ -79,7 +79,7 @@ const placed = photos.map((p, i) => {
             data-full={p.full ?? undefined}
             data-video={p.video ?? undefined}
             data-caption={p.caption}
-            style={`left: ${p.left}%; top: ${p.top}%; --rot: ${p.rot.toFixed(1)}deg`}
+            style={`--pl: ${p.left}%; top: ${p.top}%; --rot: ${p.rot.toFixed(1)}deg`}
           >
             {/* eager — the pile is the page's moment; blank polaroids flashing in undercut it */}
             {p.img && (
@@ -124,6 +124,9 @@ const placed = photos.map((p, i) => {
   }
   .polaroid {
     position: absolute;
+    /* the seeded seat, clamped so no card's right edge leaves the table —
+       the scatter was tuned wide; narrow boards squeeze it back in */
+    left: min(var(--pl, 0%), calc(100% - 238px));
     width: 230px;
     padding: 8px 8px 6px;
     background: #fffdf9;
@@ -162,7 +165,7 @@ const placed = photos.map((p, i) => {
   }
   @media (max-width: 640px) {
     .pile { height: 300px; }
-    .polaroid { width: 150px; }
+    .polaroid { width: 150px; left: min(var(--pl, 0%), calc(100% - 158px)); }
     .polaroid :global(img),
     .polaroid video { height: 112px; }
   }
