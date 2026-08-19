@@ -211,8 +211,6 @@ if (password) {
       voice={project.data.voice}
       tracks={tracks}
       totalLabel={fmt(totalSeconds)}
-      nextHref={next ? `/projects/${next.id}` : null}
-      nextLabel={next ? next.title.split('—')[0].trim() : null}
     />
   ) : (
     <ReadingBar
