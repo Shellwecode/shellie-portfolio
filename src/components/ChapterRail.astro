@@ -27,12 +27,16 @@ const { tracks } = Astro.props;
 <style>
   .chapter-rail {
     position: fixed;
-    top: 132px;
+    /* first row's text shares the article's first line at the landing pose */
+    top: 137px;
     left: calc(50vw - var(--measure) / 2 - 224px);
     width: 188px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    /* breathing room in the hit area so the wake begins on approach,
+       before the cursor reaches the words */
+    padding: 8px 24px 8px 0;
     z-index: 40;
     /* asleep until the reading switch — and it wakes late, after the
        article has risen, so the switch choreography keeps its order */
@@ -55,24 +59,38 @@ const { tracks } = Astro.props;
     text-decoration: none;
     cursor: pointer;
   }
+  /* Two voices. At rest the rail is a whisper — everything drops to about
+     half presence except the current row, which stays legible ink so
+     "where am I" never needs a hover. Cursor over the rail lifts the whole
+     list a step for choosing. Ink color alone marks the current row: a
+     weight change would rewrap the two-line titles as sections pass. */
   .cr-n {
     width: 12px;
     flex-shrink: 0;
     font-family: var(--font-mono);
     font-size: 10.5px;
     color: var(--color-ink-faint);
+    opacity: 0.55;
+    transition: opacity var(--motion-content) ease;
   }
   .cr-title {
     font-size: 13px;
     line-height: 18px;
     color: var(--color-ink-faint);
-    transition: color var(--motion-micro) ease;
+    opacity: 0.55;
+    transition: color var(--motion-content) ease, opacity var(--motion-content) ease;
   }
+  .chapter-rail:hover .cr-n,
+  .chapter-rail:hover .cr-title {
+    opacity: 1;
+  }
+  .chapter-rail:hover .cr-title { color: var(--color-ink-muted); }
   .cr-row:hover .cr-title { color: var(--color-ink); }
+  .cr-row[data-current] .cr-n,
   .cr-row[data-current] .cr-title {
-    color: var(--color-ink);
-    font-weight: 600;
+    opacity: 1;
   }
+  .cr-row[data-current] .cr-title { color: var(--color-ink); }
   /* the margin has to exist for the rail to live in it */
   @media (max-width: 1240px) {
     .chapter-rail { display: none; }
