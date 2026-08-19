@@ -1,10 +1,13 @@
 ---
 // The chapter player — the landing's now-player pill, in reading mode. Same
 // anatomy and paper material (art · title · sub-line · hairline track ·
-// place-voice meta), with one difference: the hairline is a REAL segmented
-// progress bar — six segments sized by section length, filling as you read.
-// The track IS the nav: hovering a segment floats its title above the pill,
-// clicking jumps. No queue popup. Clicking the art returns to the cover.
+// place-voice meta), with one difference: the hairline is a REAL progress
+// bar. Without a recording it's segmented — sections sized by length,
+// filling as you read, hover names them, click jumps. With a recording the
+// segments give way to one continuous audio bar (the recording is a free
+// preview, not chapter-synced): it fills with playback, hover names the
+// timestamp, click seeks. Clicking the art plays/pauses (or returns to the
+// cover when there's no recording).
 import { Image } from 'astro:assets';
 
 interface Track {
@@ -26,7 +29,11 @@ interface Props {
 const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel } = Astro.props;
 ---
 
-<div class="chapter-player" data-chapter-player>
+<div
+  class="chapter-player"
+  data-chapter-player
+  data-cp-sections={JSON.stringify(tracks.map((t) => ({ slug: t.slug, seconds: t.seconds })))}
+>
   {cover && (
     <span class="cp-wash" aria-hidden="true">
       <Image src={cover} alt="" width={520} height={152} />
@@ -55,19 +62,25 @@ const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel 
     <span class="cp-title">{title}</span>
     <span class="cp-section" data-cp-section>{tracks.length} sections</span>
     <div class="cp-track">
-      {tracks.map((t) => (
-        <button
-          type="button"
-          class="cp-seg"
-          data-cp-seg
-          data-slug={t.slug}
-          data-seconds={t.seconds}
-          style={`flex-grow: ${t.seconds}`}
-          aria-label={`Jump to ${t.title}`}
-        >
+      {voice ? (
+        <button type="button" class="cp-seg cp-seg--audio" data-cp-audiobar aria-label="Seek within the voice note">
           <span class="cp-seg-fill"></span>
         </button>
-      ))}
+      ) : (
+        tracks.map((t) => (
+          <button
+            type="button"
+            class="cp-seg"
+            data-cp-seg
+            data-slug={t.slug}
+            data-seconds={t.seconds}
+            style={`flex-grow: ${t.seconds}`}
+            aria-label={`Jump to ${t.title}`}
+          >
+            <span class="cp-seg-fill"></span>
+          </button>
+        ))
+      )}
     </div>
   </div>
 
@@ -313,6 +326,9 @@ const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel 
     transition: height var(--motion-micro) ease;
   }
   .cp-track:hover .cp-seg { height: 4px; }
+  /* one continuous bar when a recording exists — no chapter marks */
+  .cp-seg--audio { flex: 1; }
+  .cp-seg--audio .cp-seg-fill { transition: width 260ms linear; /* rides ~4Hz timeupdates smoothly */ }
   .cp-seg-fill {
     display: block;
     width: 0%;
@@ -409,11 +425,19 @@ const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel 
     const timeEl = player.querySelector('[data-cp-time]') as HTMLElement | null;
     const artBtn = player.querySelector('[data-cp-art]') as HTMLElement | null;
     const peek = player.querySelector('[data-cp-peek]') as HTMLElement | null;
+    const audioBar = player.querySelector('[data-cp-audiobar]') as HTMLElement | null;
+    const audioFill = audioBar?.querySelector('.cp-seg-fill') as HTMLElement | null;
 
-    const seconds = segs.map((s) => Number(s.dataset.seconds ?? 60));
+    // Section geometry rides the player's own data — the segments carry it
+    // only in reading mode, and the audio bar has none.
+    const sections = JSON.parse(player.dataset.cpSections ?? '[]') as {
+      slug: string;
+      seconds: number;
+    }[];
+    const seconds = sections.map((s) => s.seconds || 60);
     const total = seconds.reduce((a, b) => a + b, 0);
-    const heads = segs
-      .map((s) => document.getElementById(s.dataset.slug ?? ''))
+    const heads = sections
+      .map((s) => document.getElementById(s.slug))
       .filter(Boolean) as HTMLElement[];
     if (!heads.length) return;
 
@@ -522,23 +546,61 @@ const { title, cover, coverZoom, voice, tracks, totalLabel, nextHref, nextLabel 
         ?.setAttribute('aria-pressed', String(playing));
       if (!playing) update(); // hand the time readout back to reading progress
     };
-    const toggleVoice = () => {
-      if (!voiceSrc) return;
-      if (!audio) {
-        audio = new Audio(voiceSrc);
-        audio.preload = 'metadata';
-        audio.addEventListener('timeupdate', () => {
-          if (timeEl && voicePlaying && Number.isFinite(audio!.duration)) {
-            timeEl.textContent = `${fmt(audio!.currentTime)} / ${fmt(audio!.duration)}`;
-          }
-        });
-        audio.addEventListener('ended', () => setVoiceState(false));
-        audio.addEventListener('pause', () => setVoiceState(false));
-        audio.addEventListener('play', () => setVoiceState(true));
-      }
-      if (audio.paused) audio.play();
-      else audio.pause();
+    const ensureAudio = () => {
+      if (audio || !voiceSrc) return audio;
+      audio = new Audio(voiceSrc);
+      audio.preload = 'metadata';
+      audio.addEventListener('timeupdate', () => {
+        if (!Number.isFinite(audio!.duration)) return;
+        // the bar is the recording's — it holds its place through pauses
+        if (audioFill) audioFill.style.width = `${(audio!.currentTime / audio!.duration) * 100}%`;
+        if (timeEl && voicePlaying) {
+          timeEl.textContent = `${fmt(audio!.currentTime)} / ${fmt(audio!.duration)}`;
+        }
+      });
+      audio.addEventListener('ended', () => {
+        setVoiceState(false);
+        if (audioFill) audioFill.style.width = '0%'; // rewind the bar for next time
+      });
+      audio.addEventListener('pause', () => setVoiceState(false));
+      audio.addEventListener('play', () => setVoiceState(true));
+      return audio;
     };
+    const toggleVoice = () => {
+      if (!ensureAudio()) return;
+      if (audio!.paused) audio!.play();
+      else audio!.pause();
+    };
+
+    // The audio bar: click seeks (and starts, if at rest); hovering names
+    // the timestamp under the cursor the way segments name their sections.
+    if (audioBar && voiceSrc) {
+      const barFrac = (e: PointerEvent | MouseEvent) => {
+        const r = audioBar.getBoundingClientRect();
+        return Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      };
+      audioBar.addEventListener('click', (e) => {
+        const a = ensureAudio()!;
+        const f = barFrac(e);
+        const seek = () => {
+          a.currentTime = f * a.duration;
+        };
+        if (Number.isFinite(a.duration)) seek();
+        else a.addEventListener('loadedmetadata', seek, { once: true });
+        if (a.paused) a.play();
+      });
+      audioBar.addEventListener('pointerenter', () => ensureAudio()); // warm the metadata for the peek
+      audioBar.addEventListener('pointermove', (e) => {
+        if (!peek || !audio || !Number.isFinite(audio.duration)) return;
+        peek.textContent = fmt(barFrac(e) * audio.duration);
+        const pr = player.getBoundingClientRect();
+        const half = peek.offsetWidth / 2;
+        const x = Math.min(pr.width - half - 6, Math.max(half + 6, e.clientX - pr.left));
+        player.style.setProperty('--peek-x', `${x}px`);
+        player.setAttribute('data-peek-open', '');
+      });
+      audioBar.addEventListener('pointerleave', hidePeek);
+    }
     artBtn?.addEventListener('click', () => {
       if (voiceSrc) {
         toggleVoice();

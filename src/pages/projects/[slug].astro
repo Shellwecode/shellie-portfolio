@@ -113,10 +113,20 @@ if (password) {
         </a>
         {project.data.voice && (
           <button type="button" class="album-listen" data-voice-toggle aria-pressed="false">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
-              <path d="M1.5 0.8 9 5 1.5 9.2Z" />
-            </svg>
-            <span>listen</span>
+            {/* the button always names the action a press will take:
+                listen at rest, pause while her voice is running */}
+            <span class="al-glyphs" aria-hidden="true">
+              <svg class="al-play" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                <path d="M1.5 0.8 9 5 1.5 9.2Z" />
+              </svg>
+              <svg class="al-pause" width="10" height="10" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M2.5 1.5h2.4v9H2.5zM7.1 1.5h2.4v9H7.1z" />
+              </svg>
+            </span>
+            <span class="al-words">
+              <span class="al-word-listen">listen</span>
+              <span class="al-word-pause">pause</span>
+            </span>
           </button>
         )}
       </div>
@@ -361,7 +371,25 @@ if (password) {
     cursor: pointer;
     transition: color var(--motion-micro) ease, border-color var(--motion-micro) ease;
   }
-  .album-listen svg { flex-shrink: 0; translate: 1px 0; /* optical center for the triangle */ }
+  /* both glyphs and both words stay mounted, cross-faded — the button
+     always offers the action a press will take (listen ⇄ pause) */
+  .al-glyphs { display: grid; place-items: center; flex-shrink: 0; }
+  .al-glyphs svg {
+    grid-area: 1 / 1;
+    transition: opacity var(--motion-micro) ease, scale var(--motion-micro) ease;
+  }
+  .al-play { translate: 1px 0; /* optical center for the triangle */ }
+  .al-pause { opacity: 0; scale: 0.25; }
+  .album-listen[aria-pressed='true'] .al-play { opacity: 0; scale: 0.25; }
+  .album-listen[aria-pressed='true'] .al-pause { opacity: 1; scale: 1; }
+  .al-words { display: grid; text-align: left; }
+  .al-words span {
+    grid-area: 1 / 1;
+    transition: opacity var(--motion-micro) ease;
+  }
+  .al-word-pause { opacity: 0; }
+  .album-listen[aria-pressed='true'] .al-word-listen { opacity: 0; }
+  .album-listen[aria-pressed='true'] .al-word-pause { opacity: 1; }
   .album-listen:hover,
   .album-listen[aria-pressed='true'] {
     color: var(--color-accent);
