@@ -5,6 +5,7 @@ import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
 import ChapterRail from '../../components/ChapterRail.astro';
+import gateLock from '../../assets/gate-lock.png';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -182,6 +183,8 @@ if (password) {
       data-gate-hash={gateHash}
     >
       <div class="cs-gate-card">
+        {/* her hand-drawn padlock keeps the door */}
+        <Image class="cs-gate-lock" src={gateLock} alt="" width={112} height={112} aria-hidden="true" />
         <h2 class="cs-gate-title">{shortTitle}</h2>
         <p class="cs-gate-note">This project is password protected. Ask me for the word.</p>
         <form class="cs-gate-form" data-gate-form novalidate>
@@ -627,6 +630,12 @@ if (password) {
     background: var(--color-bg);
     box-shadow: var(--shadow-card-hover);
     text-align: center;
+  }
+  .cs-gate-lock {
+    width: 56px;
+    height: 56px;
+    align-self: center;
+    margin-bottom: 0.25rem;
   }
   .cs-gate-title {
     font-size: var(--text-xl);
