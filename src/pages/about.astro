@@ -55,7 +55,6 @@ const contacts = [
 ---
 
 <Base
-  title="About — Shellie Hu"
   description="Product designer in Boston. Currently designing Five9's Voice AI Agents."
 >
   {/* no single cap — text blocks keep the reading measure, the pile
@@ -329,44 +328,8 @@ const contacts = [
 </style>
 
 <script>
-  // The landing's rise, replayed here on every arrival. The global entrance
-  // (html[data-entrance]) fires once per session and never on soft navs, so
-  // this page's .enter stagger would otherwise only show when /about is the
-  // session's first page. Same keyframe recipe, read from the --ent-* vars.
-  function riseAbout() {
-    const els = document.querySelectorAll<HTMLElement>('.about-page .enter');
-    if (!els.length) return; // some other page — nothing to do
-    if (document.documentElement.hasAttribute('data-entrance')) return; // CSS entrance already has it
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const style = getComputedStyle(document.documentElement);
-    const num = (name: string, fallback: number) => {
-      const v = parseFloat(style.getPropertyValue(name));
-      return Number.isFinite(v) ? v : fallback;
-    };
-    const dur = num('--ent-ms', 950);
-    const stagger = num('--ent-stagger', 120);
-    const rise = style.getPropertyValue('--ent-rise').trim() || '16px';
-    const blur = style.getPropertyValue('--ent-blur').trim() || '8px';
-    els.forEach((el) => {
-      const i = parseFloat(el.style.getPropertyValue('--enter-i')) || 0;
-      if (reduced) {
-        el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 120, easing: 'ease-out', fill: 'backwards' });
-        return;
-      }
-      el.animate(
-        [
-          { opacity: 0, filter: `blur(${blur})`, translate: `0 ${rise}` },
-          { opacity: 1, filter: 'blur(0px)', translate: '0 0' },
-        ],
-        {
-          duration: dur,
-          delay: i * stagger,
-          easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-          fill: 'backwards', // holds opacity 0 through the stagger delay
-        }
-      );
-    });
-  }
+  import { riseEnter } from '../scripts/enter-rise';
+  const riseAbout = () => riseEnter('.about-page .enter');
   riseAbout();
   document.addEventListener('astro:page-load', riseAbout);
 </script>

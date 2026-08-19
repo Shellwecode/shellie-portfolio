@@ -275,26 +275,39 @@ html[data-entrance] .enter {
   animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   animation-delay: calc(var(--enter-i, 0) * var(--ent-stagger));
 }
-/* Floating instruments arrive last, after the page is set */
+/* Floating instruments arrive last, after the page is set.
+   Fill is backwards, not both: a forwards fill would keep translate/opacity
+   animation-held for the whole [data-entrance] page, and a held property
+   can't transition — the pill's duck/wake would snap instead of glide. */
 html[data-entrance] .dock {
-  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
   animation-delay: calc(11 * var(--ent-stagger));
 }
-html[data-entrance] .np-pill,
 html[data-entrance] .chapter-player {
-  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  animation: rise var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
   animation-delay: calc(12 * var(--ent-stagger));
+}
+/* The pill centers itself with translate -50% — the shared rise keyframe
+   would zero that out mid-flight, so it rises through its own. */
+html[data-entrance] .np-pill {
+  animation: rise-pill var(--ent-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
+  animation-delay: calc(12 * var(--ent-stagger));
+}
+@keyframes rise-pill {
+  from { opacity: 0; filter: blur(var(--ent-blur)); translate: -50% var(--ent-rise); }
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-entrance] .enter,
   html[data-entrance] .np-pill,
   html[data-entrance] .chapter-player,
   html[data-entrance] .dock {
-    animation: rise 120ms ease-out both;
+    animation: rise 120ms ease-out backwards;
     animation-delay: 0ms;
-    translate: 0 0;
     filter: none; /* crossfade only */
   }
+  html[data-entrance] .enter,
+  html[data-entrance] .chapter-player,
+  html[data-entrance] .dock { translate: 0 0; }
   @keyframes rise {
     from { opacity: 0; }
     to { opacity: 1; }

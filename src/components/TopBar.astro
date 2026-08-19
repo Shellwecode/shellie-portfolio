@@ -62,6 +62,14 @@ const pathname = Astro.url.pathname;
 const isActive = (href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
 const menuItems = items.filter((i) => i.href !== '/');
+
+// Reading pages (header direction A): the menu words step aside and the
+// way back rides beside her mark. Only nested routes wear a crumb.
+const crumb = pathname.startsWith('/projects/')
+  ? { href: '/projects', label: 'work' }
+  : pathname.startsWith('/writing/')
+    ? { href: '/writing', label: 'writing' }
+    : null;
 ---
 
 <div class="topbar">
@@ -73,6 +81,14 @@ const menuItems = items.filter((i) => i.href !== '/');
       <svg class="gn-face gn-side" viewBox={glyphs.faceSide.vb} set:html={glyphs.faceSide.svg} />
     </span>
   </a>
+  {crumb && (
+    <a href={crumb.href} class="gn-crumb">
+      <svg class="gn-crumb-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.5 6H1.5" /><path d="M5.5 2 1.5 6l4 4" />
+      </svg>
+      <span>{crumb.label}</span>
+    </a>
+  )}
   <div class="topbar-spacer"></div>
   <nav class="topbar-mobile-nav">
     <a href="/">home</a>
@@ -219,27 +235,67 @@ const menuItems = items.filter((i) => i.href !== '/');
     inset: -11px -6px;
   }
   .topbar-link:hover { color: var(--color-accent); }
-  /* "now" + the theme toggle ride the top bar on every primary-menu page.
-     Reading pages keep the top clean — the toggle leaves with "now" (alone
-     in the corner it reads stranded) and reseats in the crumb row. The girl
-     and her menu stay but recede into the paper, like the dock used to. */
-  :global(html[data-quiet-dock]) .topbar-link[data-np-open],
-  :global(html[data-quiet-dock]) .topbar :global(.theme-toggle) { display: none; }
-  :global(html[data-quiet-dock]) .gn-mark,
+  /* ── the reading crumb (header direction A, picked 2026-08-19) ──
+     On nested pages the way back rides beside her mark, dressed like the
+     old crumb row's pill: quiet at rest, surfacing under the cursor. */
+  .gn-crumb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    margin-left: -6px; /* optical: tuck toward her mark, pill overhangs on hover */
+    border-radius: 999px;
+    font-size: 0.875rem;
+    color: var(--color-ink-muted);
+    text-decoration: none;
+    transition:
+      color var(--motion-micro) ease,
+      background-color var(--motion-fade) ease,
+      opacity 200ms ease,
+      translate 240ms ease;
+  }
+  .gn-crumb:hover {
+    color: var(--color-accent);
+    background: color-mix(in oklab, var(--color-rule) 55%, transparent);
+  }
+  .gn-crumb-arrow { flex-shrink: 0; transition: translate var(--motion-micro) ease; }
+  .gn-crumb:hover .gn-crumb-arrow { translate: -2px 0; }
+  /* ~40px hit area without visual weight */
+  .gn-crumb::after {
+    content: '';
+    position: absolute;
+    inset: -6px 0;
+  }
+  /* once reading starts on voice projects, the player's ⏮ owns "back" */
+  :global(html[data-reading][data-crumb-voice]) .gn-crumb {
+    opacity: 0;
+    translate: -6px 0;
+    pointer-events: none;
+  }
+
+  /* Reading pages, direction A: "now" leaves; the toggle KEEPS its corner
+     seat; her mark stays full ink with the crumb beside her; the menu words
+     step aside entirely — and whisper back whenever the bar is hovered or
+     focused (the flourish: reach for where nav always lives, it appears). */
+  :global(html[data-quiet-dock]) .topbar-link[data-np-open] { display: none; }
   :global(html[data-quiet-dock]) .gn-menu {
-    opacity: 0.35;
+    opacity: 0;
+    pointer-events: none;
     transition: opacity var(--motion-content) ease 400ms;
   }
-  :global(html[data-quiet-dock]) .gn-mark:hover,
-  :global(html[data-quiet-dock]) .gn-menu:hover,
-  :global(html[data-quiet-dock]) .gn-menu:focus-within {
+  :global(html[data-quiet-dock]) .topbar:hover .gn-menu,
+  :global(html[data-quiet-dock]) .topbar:focus-within .gn-menu {
     opacity: 1;
+    pointer-events: auto;
     transition-delay: 0ms;
   }
 
   .topbar-mobile-nav { display: none; }
   @media (max-width: 768px) {
     .gn-mark,
+    .gn-crumb,
     .gn-menu { display: none; } /* phase 1: text links carry mobile */
     .topbar-mobile-nav {
       display: flex;

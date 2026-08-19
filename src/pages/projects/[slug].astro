@@ -4,7 +4,6 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
-import CrumbRow from '../../components/CrumbRow.astro';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects'))
@@ -79,15 +78,15 @@ if (password) {
 ---
 
 <Base
-  title={`${project.data.title} — Shellie Hu`}
   description={project.data.summary}
   deck="none"
   fog={true}
   quietDock={true}
+  crumbVoice={!!project.data.voice}
 >
-  <CrumbRow href="/projects" label="work" hasVoice={!!project.data.voice} />
-
-  <header class="album-header">
+  {/* The way back lives in the top bar now (header direction A) — the album
+      shelf rises as one piece; its reading choreography owns the rest. */}
+  <header class="album-header enter" style="--enter-i: 0">
     <div class="album-cover" style={project.data.coverZoom ? `--cover-zoom: ${project.data.coverZoom}` : undefined}>
       {project.data.cover && (
         <Image

@@ -7,20 +7,28 @@ import Base from '../layouts/Base.astro';
 ---
 
 <Base
-  title="Doodles — Shellie Hu"
   description="Small drawings. A way to slow down."
 >
-  <div class="mb-12 space-y-4 text-[var(--text-lg)] leading-relaxed" style="max-width: var(--measure);">
-    <h1 class="text-xl font-medium">Doodles</h1>
-    <p class="text-[var(--color-ink-muted)]">
-      Small drawings, mostly from my notebooks. More on <a
-        href="https://www.instagram.com/shellwedraw/">Instagram</a
-      >.
-    </p>
-  </div>
+  <div class="doodles-page">
+    <div class="mb-12 space-y-4 text-[var(--text-lg)] leading-relaxed enter" style="max-width: var(--measure); --enter-i: 0">
+      <h1 class="text-xl font-medium">Doodles</h1>
+      <p class="text-[var(--color-ink-muted)]">
+        Small drawings, mostly from my notebooks. More on <a
+          href="https://www.instagram.com/shellwedraw/">Instagram</a
+        >.
+      </p>
+    </div>
 
-  <p class="coming-soon">coming soon — I'm still scanning the notebooks.</p>
+    <p class="coming-soon enter" style="--enter-i: 1">coming soon — I'm still scanning the notebooks.</p>
+  </div>
 </Base>
+
+<script>
+  import { riseEnter } from '../scripts/enter-rise';
+  const riseDoodles = () => riseEnter('.doodles-page .enter');
+  riseDoodles();
+  document.addEventListener('astro:page-load', riseDoodles);
+</script>
 
 <style>
   /* the work shelf's empty-note voice — a whisper, not an apology */

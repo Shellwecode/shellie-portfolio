@@ -71,18 +71,22 @@ const items = [
 const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).length;
 ---
 
+{/* deck none: browsing the shelf is the whole job here — the now pill
+    would pull attention from the covers. */}
 <Base
-  title="Work — Shellie Hu"
   description="Case studies and vibe-coded projects by Shellie Hu."
+  deck="none"
 >
-  <div class="page-head">
+  {/* Head + chips ride the shared entrance; the grid keeps its own
+      center-out WAAPI reveal (adding .enter there would double-animate). */}
+  <div class="page-head enter" style="--enter-i: 0">
     <h1 class="page-title">Work</h1>
     <p class="page-sub">
       I design voice AI at work, thinking tools and fun research on my own time.
     </p>
   </div>
 
-  <div class="filter-row" role="group" aria-label="Filter work">
+  <div class="filter-row enter" style="--enter-i: 1" role="group" aria-label="Filter work">
     <button type="button" class="fchip" data-cat="all" aria-pressed="true">
       <span>all</span><span class="fcount">{items.length}</span>
     </button>

@@ -19,9 +19,9 @@ const OPENING_VARIANT: 'galaxy' | 'ink' | 'fill' | 'none' = 'fill';
 const allProjects = (await getCollection('projects')).filter((p) => !p.data.draft);
 const heroProject = allProjects.find((p) => p.data.hero) ?? allProjects[0] ?? null;
 // Second and third cards are hand-picked so new entries don't reshuffle the
-// locked bento: the tester pairs with the agent builder, the early MIT project balances
-// the two 2026 ones.
-const secondProject = allProjects.find((p) => p.id === 'synthetic-tester') ?? null;
+// locked bento: the sci-fi research brings the self-directed side, the early MIT
+// project balances the two 2026 ones.
+const secondProject = allProjects.find((p) => p.id === 'feminist-scifi') ?? null;
 const thirdProject = allProjects.find((p) => p.id === 'saving-face') ?? null;
 // The bento's three: the agent builder anchors, the other two stack right.
 const featured = [heroProject, secondProject, thirdProject].filter(
@@ -42,7 +42,6 @@ const projectHref = (p: (typeof allProjects)[number]) =>
 ---
 
 <Base
-  title="Shellie Hu — Product Designer"
   description="Product designer in Boston working on AI agent experiences. Designing Five9 Voice AI Agents."
   opening={OPENING_VARIANT !== 'none'}
 >

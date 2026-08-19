@@ -9,9 +9,9 @@ import { ClientRouter } from 'astro:transitions';
 interface Props {
   title?: string;
   description?: string;
-  /** 'pill' (default) floats the whisper pill (it ducks when idle) — every
-      primary-menu page carries it, matching the top bar's "now". 'none' for
-      reading pages, which keep the top clean and dock their own instrument. */
+  /** 'pill' (default) floats the whisper pill (it ducks when idle), matching
+      the top bar's "now". 'none' for reading pages (they dock their own
+      instrument) and the work shelf (browsing covers owns the stage). */
   deck?: 'pill' | 'none';
   /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages.
       'thin' starts at the reading-mode strength (case studies get there via
@@ -19,6 +19,9 @@ interface Props {
   fog?: boolean | 'thin';
   /** Reading pages: the dock recedes when not hovered/focused. */
   quietDock?: boolean;
+  /** Voice case studies: once reading, the player's ⏮ owns "back" — the
+      top bar's crumb bows out (html[data-reading] + this flag). */
+  crumbVoice?: boolean;
   /** Landing only: the galaxy opening plays first and owns the entrance trigger. */
   opening?: boolean;
 }
@@ -29,6 +32,7 @@ const {
   deck = 'pill',
   fog = false,
   quietDock = false,
+  crumbVoice = false,
   opening = false,
 } = Astro.props;
 
@@ -36,7 +40,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-quiet-dock={quietDock || undefined} data-opening={opening || undefined}>
+<html lang="en" data-quiet-dock={quietDock || undefined} data-crumb-voice={crumbVoice || undefined} data-opening={opening || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

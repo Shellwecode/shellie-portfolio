@@ -9,31 +9,43 @@ const posts = (await getCollection('writing'))
 ---
 
 <Base
-  title="Writing — Shellie Hu"
   description="Notes on design, people, and the threads between."
 >
-  <div class="page-head">
-    <h1 class="page-title">Writing</h1>
-    <p class="page-sub">
-      I write to slow down, think more deeply and creatively, and articulate
-      what might otherwise go unspoken.
-    </p>
-  </div>
-  <div style="max-width: var(--measure);">
-    {
-      posts.map((post) => (
-        <ArchiveRow
-          kind={post.data.kind ?? 'writing'}
-          title={post.data.title}
-          href={post.data.external ?? `/writing/${post.id}`}
-          date={post.data.dateLabel ?? post.data.date}
-          external={Boolean(post.data.external)}
-          quiet
-        />
-      ))
-    }
+  {/* Entrance parity with the landing: head first, rows follow one by one
+      (late rows share a seat so a long archive never waits seconds). */}
+  <div class="writing-page">
+    <div class="page-head enter" style="--enter-i: 0">
+      <h1 class="page-title">Writing</h1>
+      <p class="page-sub">
+        I write to slow down, think more deeply and creatively, and articulate
+        what might otherwise go unspoken.
+      </p>
+    </div>
+    <div style="max-width: var(--measure);">
+      {
+        posts.map((post, i) => (
+          <div class="enter" style={`--enter-i: ${Math.min(1 + i, 7)}`}>
+            <ArchiveRow
+              kind={post.data.kind ?? 'writing'}
+              title={post.data.title}
+              href={post.data.external ?? `/writing/${post.id}`}
+              date={post.data.dateLabel ?? post.data.date}
+              external={Boolean(post.data.external)}
+              quiet
+            />
+          </div>
+        ))
+      }
+    </div>
   </div>
 </Base>
+
+<script>
+  import { riseEnter } from '../../scripts/enter-rise';
+  const riseWriting = () => riseEnter('.writing-page .enter');
+  riseWriting();
+  document.addEventListener('astro:page-load', riseWriting);
+</script>
 
 <style>
   /* same head voice as the work page */

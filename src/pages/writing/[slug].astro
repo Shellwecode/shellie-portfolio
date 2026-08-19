@@ -1,7 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import CrumbRow from '../../components/CrumbRow.astro';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('writing'))
@@ -39,15 +38,13 @@ const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min
 ---
 
 <Base
-  title={`${post.data.title} — Shellie Hu`}
   description={post.data.summary}
   deck="none"
   fog="thin"
   quietDock={true}
 >
-  <CrumbRow href="/writing" label="writing" measure="var(--pr-measure, 648px)" />
-
-  <header class="entry-header">
+  {/* The way back lives in the top bar now (header direction A). */}
+  <header class="entry-header enter" style="--enter-i: 0">
     <span class="entry-eyebrow">{eyebrow}</span>
     <h1 class="entry-title">{post.data.title}</h1>
     {
@@ -58,7 +55,7 @@ const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min
     <span class="entry-meta">{metaLine}</span>
   </header>
 
-  <article class="prose prose--album">
+  <article class="prose prose--album enter" style="--enter-i: 2">
     <Content />
 
     <footer class="mt-10 pt-8 border-t border-[var(--color-rule)] flex items-baseline justify-between gap-4">
