@@ -182,9 +182,8 @@ if (password) {
       data-gate-hash={gateHash}
     >
       <div class="cs-gate-card">
-        <span class="cs-gate-eyebrow">{eyebrow}</span>
         <h2 class="cs-gate-title">{shortTitle}</h2>
-        <p class="cs-gate-note">this one's under wraps — ask me for the word</p>
+        <p class="cs-gate-note">This project is password protected. Ask me for the word.</p>
         <form class="cs-gate-form" data-gate-form novalidate>
           <input
             class="cs-gate-input"
@@ -629,21 +628,14 @@ if (password) {
     box-shadow: var(--shadow-card-hover);
     text-align: center;
   }
-  .cs-gate-eyebrow {
-    font-weight: 300;
-    font-size: var(--text-xs);
-    letter-spacing: 0.02em;
-    color: var(--color-ink-muted);
-  }
   .cs-gate-title {
     font-size: var(--text-xl);
     font-weight: 600;
     letter-spacing: -0.01em;
   }
   .cs-gate-note {
-    font-family: var(--font-serif);
-    font-style: italic;
     font-size: var(--text-sm);
+    line-height: 1.55;
     color: var(--color-ink-muted);
   }
   :global(html.gated) { overflow: hidden; } /* the veiled page doesn't scroll */
