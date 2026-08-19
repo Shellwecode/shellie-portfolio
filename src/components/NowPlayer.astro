@@ -699,7 +699,20 @@ import now from '../data/now.json';
   ------------------------------------------------------------------------- */
   @media (max-width: 768px) {
     .np-pill { height: 72px; gap: 12px; padding: 10px 16px 10px 10px; border-radius: 22px; }
-    .np-art-sm { width: 52px; height: 52px; border-radius: 12px; }
+    /* phones: the menu dock owns the stage by default — the pill appears
+       only when the dock's now-seat summons it, seated right of the dock's
+       folded round handle (html[data-mpill], set by MobileDock) */
+    :global(html:not([data-mpill='now'])) .np-pill { display: none; }
+    :global(html[data-mpill='now']) .np-pill {
+      left: auto;
+      right: 16px;
+      translate: 0 0;
+      width: calc(100vw - 100px);
+      height: 58px;
+      padding: 8px 14px 8px 8px;
+    }
+    :global(html[data-mpill='now'][data-np='open']) .np-pill { translate: 0 0; }
+    .np-art-sm { width: 42px; height: 42px; border-radius: 11px; }
     .np-pill-place { display: none; }
     .np-sheet { height: calc(100dvh - 40px); }
     .np-cols { flex-direction: column; gap: 40px; padding: 56px 24px 40px; }

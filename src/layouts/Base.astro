@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import TopBar from '../components/TopBar.astro';
 import NowPlayer from '../components/NowPlayer.astro';
+import MobileDock from '../components/MobileDock.astro';
 import { ClientRouter } from 'astro:transitions';
 // SideNav (the droplet dock) is parked — the girl + worn word nav carries
 // wayfinding now. import SideNav from '../components/SideNav.astro';
@@ -45,6 +46,8 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* the same face for phones — iOS ignores SVG favicons */}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
 
     <title>{title}</title>
@@ -114,6 +117,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {/* <SideNav /> — parked for the girl + worn word nav; the dock returns by
         uncommenting this and its import. */}
     {deck === 'pill' && <NowPlayer />}
+    {/* phones trade the now pill for the menu dock; the dock's last seat
+        switches back to the player (html[data-mpill]) */}
+    {deck === 'pill' && <MobileDock />}
 
     <script>
       // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.
