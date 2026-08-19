@@ -6,12 +6,13 @@ import ArchiveRow from '../components/ArchiveRow.astro';
 import HeroGreeting from '../components/HeroGreeting.astro';
 import Opening from '../components/Opening.astro';
 import OpeningInk from '../components/OpeningInk.astro';
+import OpeningFill from '../components/OpeningFill.astro';
 
 // Front-door variant: 'galaxy' (stippled SVG morph), 'ink' (generative
-// gold-ink print / falling comet, Opening B), or 'none' (no opening).
-// Parked 2026-08-04 — all variants saved and working; comet earmarked as a
-// possible dark-theme opening. Flip this one word to bring one back.
-const OPENING_VARIANT: 'galaxy' | 'ink' | 'none' = 'none';
+// gold-ink print / falling comet, Opening B), 'fill' (idea 4 — the girl
+// as loading bar, color pours in as texture), or 'none' (no opening).
+// Galaxy/ink parked 2026-08-04; fill is the active exploration (2026-08-18).
+const OPENING_VARIANT: 'galaxy' | 'ink' | 'fill' | 'none' = 'fill';
 
 // Home: greeting + intro (the greeting owns the name; the intro never repeats it),
 // selected work with the current project as the emphasis card, recent writing rows.
@@ -48,6 +49,7 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   {/* Front door — blooms in, then hands off to the entrance rise. */}
   {OPENING_VARIANT === 'galaxy' && <Opening />}
   {OPENING_VARIANT === 'ink' && <OpeningInk />}
+  {OPENING_VARIANT === 'fill' && <OpeningFill />}
 
   {/* Hero — greeting + intro. No illustration, no hairline, per the Landing frame. */}
   <section class="hero">
