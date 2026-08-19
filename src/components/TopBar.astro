@@ -65,9 +65,12 @@ const menuItems = items.filter((i) => i.href !== '/');
 
 // Reading pages (header direction A): the menu words step aside and the
 // way back rides beside her mark. Only nested routes wear a crumb.
-const crumb = pathname.startsWith('/projects/')
+// Built pages carry a trailing slash ('/projects/') that dev doesn't,
+// so strip it first — else the index pages match their own prefix.
+const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+const crumb = path.startsWith('/projects/')
   ? { href: '/projects', label: 'work' }
-  : pathname.startsWith('/writing/')
+  : path.startsWith('/writing/')
     ? { href: '/writing', label: 'writing' }
     : null;
 ---
