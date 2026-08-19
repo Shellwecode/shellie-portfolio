@@ -6,6 +6,7 @@ import ReadingBar from '../../components/ReadingBar.astro';
 import ChapterPlayer from '../../components/ChapterPlayer.astro';
 import ChapterRail from '../../components/ChapterRail.astro';
 import gateLock from '../../assets/gate-lock.png';
+import Arrow from '../../components/Arrow.astro';
 import { readFileSync } from 'node:fs';
 
 // The recording's true length, read at build from the m4a's mvhd atom
@@ -184,11 +185,11 @@ if (password) {
     <Content />
     <footer class="mt-10 pt-8 border-t border-[var(--color-rule)] flex items-baseline justify-between gap-4">
       <a href="/projects" class="text-sm no-underline hover:text-[var(--color-accent)]">
-        ← back to work
+        <Arrow dir="left" /> back to work
       </a>
       {next && (
         <a href={`/projects/${next.id}`} class="text-sm no-underline text-right hover:text-[var(--color-accent)]">
-          up next · {next.title.split('—')[0].trim().toLowerCase()} →
+          up next · {next.title.split('—')[0].trim().toLowerCase()} <Arrow dir="right" />
         </a>
       )}
     </footer>
@@ -225,7 +226,7 @@ if (password) {
           </button>
         </form>
         <p class="cs-gate-error" data-gate-error hidden>not quite — try again</p>
-        <a class="cs-gate-back" href="/projects">← back to work</a>
+        <a class="cs-gate-back" href="/projects"><Arrow dir="left" size={11} /> back to work</a>
       </div>
     </div>
   )}

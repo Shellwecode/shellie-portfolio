@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import Arrow from '../../components/Arrow.astro';
 import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 
@@ -138,7 +139,7 @@ const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).lengt
             <span class="card-ov-title">{item.title}</span>
             <span class="card-ov-sub">{item.sub}</span>
           </span>
-          {item.href && <span class="card-go" aria-hidden="true">↗</span>}
+          {item.href && <span class="card-go" aria-hidden="true"><Arrow dir="out" size={13} /></span>}
         </div>
       </El>
       );

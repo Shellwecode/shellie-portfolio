@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import Arrow from '../../components/Arrow.astro';
 
 export async function getStaticPaths() {
   const posts = (await getCollection('writing'))
@@ -10,7 +11,7 @@ export async function getStaticPaths() {
   // like the case-study playlist, the queue wraps — every piece has a next
   return posts.map((post, i) => {
     const n = posts.length;
-    const next = n > 1 ? posts[(i - 1 + n) % n] : null; // newer, wrapping to oldest
+    const next = n > 1 ? posts[(i + 1) % n] : null; // down the index, wrapping to newest
     return {
       params: { slug: post.id },
       props: { post, next: next ? { id: next.id, title: next.data.title } : null },
@@ -63,14 +64,14 @@ const metaLine = `${post.data.dateLabel ?? formattedDate} · ~${readMinutes} min
         href="/writing"
         class="text-sm no-underline hover:text-[var(--color-accent)]"
       >
-        ← all writing
+        <Arrow dir="left" /> all writing
       </a>
       {next && (
         <a
           href={`/writing/${next.id}`}
           class="text-sm no-underline text-right hover:text-[var(--color-accent)]"
         >
-          Next: {next.title}
+          Next: {next.title} <Arrow dir="right" />
         </a>
       )}
     </footer>

@@ -1,4 +1,5 @@
 ---
+import Arrow from './Arrow.astro';
 /* The mini reader — a modal that renders a cited file in place, so the
    reader never leaves the essay. Opened by a FileChip wired to this id.
    The file's rendered markdown comes in through the slot. */
@@ -20,7 +21,7 @@ const { id, name, lines, href } = Astro.props;
       <span class="fr-name">{name}</span>
       <span class="fr-lines">{lines} lines</span>
     </span>
-    <a class="fr-github" href={href} target="_blank" rel="noopener">view on GitHub ↗</a>
+    <a class="fr-github" href={href} target="_blank" rel="noopener">view on GitHub <Arrow dir="out" size={11} /></a>
     <button type="button" class="fr-close" data-file-reader-close aria-label="Close">
       <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true">
         <path d="M2 2l8 8M10 2l-8 8" />

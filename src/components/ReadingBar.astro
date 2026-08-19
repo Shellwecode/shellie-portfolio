@@ -9,6 +9,7 @@ interface Props {
   nextLabel?: string | null;
 }
 const { title, prevHref, prevLabel, nextHref, nextLabel } = Astro.props;
+import Arrow from './Arrow.astro';
 ---
 
 <div class="reading-bar" data-reading-bar>
@@ -18,14 +19,14 @@ const { title, prevHref, prevLabel, nextHref, nextLabel } = Astro.props;
     <span class="bar-needle" data-reading-needle></span>
   </div>
   {prevHref ? (
-    <a href={prevHref} class="bar-nav" title={prevLabel ?? undefined}>← prev</a>
+    <a href={prevHref} class="bar-nav" title={prevLabel ?? undefined}><Arrow dir="left" size={11} /> prev</a>
   ) : (
-    <span class="bar-nav bar-nav-disabled">← prev</span>
+    <span class="bar-nav bar-nav-disabled"><Arrow dir="left" size={11} /> prev</span>
   )}
   {nextHref ? (
-    <a href={nextHref} class="bar-nav bar-nav-next" title={nextLabel ?? undefined}>next →</a>
+    <a href={nextHref} class="bar-nav bar-nav-next" title={nextLabel ?? undefined}>next <Arrow dir="right" size={11} /></a>
   ) : (
-    <span class="bar-nav bar-nav-disabled">next →</span>
+    <span class="bar-nav bar-nav-disabled">next <Arrow dir="right" size={11} /></span>
   )}
 </div>
 

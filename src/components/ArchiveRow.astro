@@ -1,4 +1,5 @@
 ---
+import Arrow from './Arrow.astro';
 // A single row in the archive list. Used for work, writing, doodles —
 // anything with a date and a title.
 interface Props {
@@ -29,7 +30,7 @@ const displayDate =
     class="title"
     {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
   >
-    {title}{external && <span class="text-[var(--color-ink-faint)]">&nbsp;↗</span>}
+    {title}{external && <span class="text-[var(--color-ink-faint)]">&nbsp;<Arrow dir="out" size={11} /></span>}
   </a>
   <span class="date">{displayDate}</span>
 </div>

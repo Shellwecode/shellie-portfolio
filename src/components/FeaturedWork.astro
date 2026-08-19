@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+import Arrow from './Arrow.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -40,7 +41,7 @@ const { projects } = Astro.props;
                 <div class="featured-meta">
                   <h3 class="featured-title">
                     {p.data.title}
-                    {isExternal && <span class="featured-ext" aria-hidden="true"> ↗</span>}
+                    {isExternal && <span class="featured-ext" aria-hidden="true"> <Arrow dir="out" size={12} /></span>}
                   </h3>
                   <p class="featured-summary">{p.data.summary}</p>
                   <p class="featured-byline">
