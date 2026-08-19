@@ -8,6 +8,13 @@
 // any of this. Mode rides html[data-mpill] + sessionStorage.
 import now from '../data/now.json';
 
+interface Props {
+  /** whether this page mounts the now player — without it the switch seat
+      would open onto an empty stage, so it stays home */
+  hasNow?: boolean;
+}
+const { hasNow = false } = Astro.props;
+
 const items = [
   { href: '/', label: 'home' },
   { href: '/about', label: 'about' },
@@ -51,10 +58,14 @@ const isActive = (href: string) =>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={glyphs[item.label]} />
       </a>
     ))}
-    <span class="mdock-sep" aria-hidden="true"></span>
-    <button type="button" class="mdock-nowseat" data-mpill-now aria-label="Now playing">
-      <span class="mdock-art" style={`background-image: url(${now.listening.cover})`} aria-hidden="true"></span>
-    </button>
+    {hasNow && (
+      <span class="mdock-sep" aria-hidden="true"></span>
+    )}
+    {hasNow && (
+      <button type="button" class="mdock-nowseat" data-mpill-now aria-label="Now playing">
+        <span class="mdock-art" style={`background-image: url(${now.listening.cover})`} aria-hidden="true"></span>
+      </button>
+    )}
   </div>
 </nav>
 

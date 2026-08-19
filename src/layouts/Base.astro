@@ -25,6 +25,9 @@ interface Props {
   crumbVoice?: boolean;
   /** Landing only: the galaxy opening plays first and owns the entrance trigger. */
   opening?: boolean;
+  /** Phones: the floating menu dock. On everywhere the nav should follow;
+      reading pages turn it off — the chapter pill owns their bottom edge. */
+  dock?: boolean;
 }
 
 const {
@@ -35,6 +38,7 @@ const {
   quietDock = false,
   crumbVoice = false,
   opening = false,
+  dock = true,
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -117,9 +121,10 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {/* <SideNav /> — parked for the girl + worn word nav; the dock returns by
         uncommenting this and its import. */}
     {deck === 'pill' && <NowPlayer />}
-    {/* phones trade the now pill for the menu dock; the dock's last seat
-        switches back to the player (html[data-mpill]) */}
-    {deck === 'pill' && <MobileDock />}
+    {/* phones trade the now pill for the menu dock; where the now player
+        lives, the dock's last seat switches over to it (html[data-mpill]).
+        Reading pages opt out — the chapter pill owns their bottom edge. */}
+    {dock && <MobileDock hasNow={deck === 'pill'} />}
 
     <script>
       // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.

@@ -93,13 +93,8 @@ const crumb = path.startsWith('/projects/')
     </a>
   )}
   <div class="topbar-spacer"></div>
-  <nav class="topbar-mobile-nav">
-    <a href="/">home</a>
-    <a href="/about">about</a>
-    <a href="/projects">work</a>
-    <a href="/writing">writing</a>
-    <a href="/doodles">doodles</a>
-  </nav>
+  {/* mobile nav words retired 2026-08-19 — the floating dock carries the
+      menu on phones; up here her mark and the crumb keep the top bar */}
   <nav class="gn-menu" aria-label="Site navigation">
     {menuItems.map((item) => (
       <a href={item.href} class:list={['gn-item', { active: isActive(item.href) }]}>
@@ -295,19 +290,10 @@ const crumb = path.startsWith('/projects/')
     transition-delay: 0ms;
   }
 
-  .topbar-mobile-nav { display: none; }
   @media (max-width: 768px) {
-    .gn-mark,
-    .gn-crumb,
-    .gn-menu { display: none; } /* phase 1: text links carry mobile */
-    .topbar-mobile-nav {
-      display: flex;
-      gap: 0.875rem;
-      font-size: 0.875rem;
-    }
-    .topbar-mobile-nav a {
-      color: var(--color-ink-muted);
-      text-decoration: none;
-    }
+    /* phase 2: the dock carries mobile nav — up here the menu words leave,
+       her mark and the crumb stay (identity + the way back) */
+    .gn-menu,
+    .topbar-link { display: none; } /* "now" lives in the dock's last seat */
   }
 </style>
