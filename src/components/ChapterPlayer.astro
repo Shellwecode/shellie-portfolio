@@ -87,18 +87,21 @@ const { title, cover, coverZoom, voice, tracks, totalLabel } = Astro.props;
       reading pill. */}
   {voice && (
   <span class="cp-controls">
+    {/* the reference set: a near-full circle whose end carries a filled
+        arrowhead — left-turning to rewind, right-turning to skip — with
+        the 15 seated large in the middle */}
     <button type="button" class="cp-btn" data-cp-skip="-15" data-peek="back 15s" aria-label="Back 15 seconds">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M8 2.5A5.5 5.5 0 1 0 13.5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-        <path d="M8.4 0.5 5.6 2.5l2.8 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
-        <text x="8" y="10.4" text-anchor="middle" font-size="6.2" font-weight="600" fill="currentColor">15</text>
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M3.32 10.7A5.4 5.4 0 1 0 6.6 2.78" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
+        <path d="M4.38 3.38 6.2 1.28 7 4.28Z" fill="currentColor" />
+        <text x="8" y="8.1" text-anchor="middle" dominant-baseline="central" font-size="7" font-weight="700" fill="currentColor">15</text>
       </svg>
     </button>
     <button type="button" class="cp-btn" data-cp-skip="15" data-peek="forward 15s" aria-label="Forward 15 seconds">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M8 2.5A5.5 5.5 0 1 1 2.5 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-        <path d="M7.6 0.5 10.4 2.5l-2.8 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
-        <text x="8" y="10.4" text-anchor="middle" font-size="6.2" font-weight="600" fill="currentColor">15</text>
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M12.68 10.7A5.4 5.4 0 1 1 9.4 2.78" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
+        <path d="M11.62 3.38 9.8 1.28 9 4.28Z" fill="currentColor" />
+        <text x="8" y="8.1" text-anchor="middle" dominant-baseline="central" font-size="7" font-weight="700" fill="currentColor">15</text>
       </svg>
     </button>
   </span>
