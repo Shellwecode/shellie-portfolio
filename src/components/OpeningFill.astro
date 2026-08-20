@@ -7,19 +7,23 @@
    itself in the corner. When she's full the boil settles into flat ink,
    gold sparks flick off her, and the landing rises.
 
-   PRODUCTION BAKE (2026-08-18): the DialKit rig is retired — the tuned
-   timeline lives in this file's script as real Motion animations, and
-   the feel dials are baked into the CSS custom-property fallbacks
-   below. The full authoring rig (OpeningFillDirector.tsx) lives in git
-   history before this commit if the door ever needs re-tuning.
+   PRODUCTION BAKE (2026-08-18; pour re-baked 2026-08-19): the DialKit
+   rig is retired — the tuned timeline lives in this file's script as
+   real Motion animations, and the feel dials are baked into the CSS
+   custom-property fallbacks below. The pour's authoring rig
+   (OpeningFillDirector.tsx — glug dials + a scrubbable timeline) lives
+   in git history one commit before this bake if the door ever needs
+   re-tuning.
 
    Storyboard (seconds):
      0.00  the gray girl drops in from above (y −19, opacity .12→1)
            on an overshoot ease — a little landing
-     0.43  the pour — fill level springs 0→1 in 1.02s (bounce .2, the
-           waterline laps back); shoreline + counter + log ride it
-     1.58  the settle — the boil drains out of the ink (0.45s)
-     1.96  sparks — six gold ticks flick outward and fade
+     0.43  the pour — the level climbs 0→1 in 1.02s through a seeded
+           GLUG CURVE: three uneven surges, each cresting with a small
+           lap-back, hesitating before the next — the way liquid
+           actually pours; shoreline + counter + log ride it
+     1.60  the settle — the boil drains out of the ink (0.45s)
+     1.93  sparks — six gold ticks flick outward and fade
      2.58  release — the veil fades (0.56s), data-entrance fires, the
            landing performs its rise (the landing's own greeting is
            the hello — the door doesn't repeat it). Click/key/wheel
@@ -57,11 +61,6 @@ const maskSvg =
   SHADES.map((d) => `<path d="${d}"/>`).join('') +
   `</svg>`;
 const maskUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(maskSvg)}")`;
-
-/* Dev-only: the DialKit rig (re-raised 2026-08-19 to retune the pour).
-   When it mounts it drives the door instead of the baked script below;
-   prod never ships it. */
-import OpeningFillDirector from './OpeningFillDirector';
 ---
 
 <div id="fg-opening" aria-hidden="true" style={`--fg-mask: ${maskUri}`}>
@@ -91,8 +90,6 @@ import OpeningFillDirector from './OpeningFillDirector';
   <pre class="fg-log"></pre>
 </div>
 
-{import.meta.env.DEV && <OpeningFillDirector client:only="react" />}
-
 {/* Pre-paint guard — same contract as the other openings: repeat visitors
     and reduced-motion skip the door entirely; dev always plays. */}
 <script is:inline data-astro-rerun define:vars={{ dev: import.meta.env.DEV }}>
@@ -117,18 +114,71 @@ import OpeningFillDirector from './OpeningFillDirector';
 <script>
   import { animate } from 'motion';
 
-  /* The tuned timeline, baked (her DialKit session, 2026-08-18). Times in
-     seconds; TEX_O is the boil strength the settle drains from. */
+  /* The tuned timeline, baked (her DialKit sessions, 2026-08-18 + the pour
+     re-tune 2026-08-19). Times in seconds; TEX_O is the boil strength the
+     settle drains from. */
   const T = {
     girlMs: 0.54,
     pourAt: 0.43,
     pourS: 1.02,
-    settleAt: 1.58,
-    sparksAt: 1.96,
+    settleAt: 1.6,
+    sparksAt: 1.93,
     releaseAt: 2.58,
     veilS: 0.56,
   };
   const TEX_O = 0.45;
+
+  /* The pour arrives in GLUGS (her rig session, 2026-08-19): surges of
+     uneven size, each cresting with a small lap-back, hesitating before
+     the next — the way liquid actually pours. Seeded, so every visit
+     pours the same pour. */
+  const POUR = { glugs: 3, uneven: 0.35, hesitate: 0.21, lap: 0.27, seed: 11 };
+
+  /* tiny seeded rng — one seed is one pour */
+  const mulberry32 = (seed: number) => {
+    let a = seed | 0;
+    return () => {
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  /* pour progress (0..1) → fill level (0..1) through the glugs; the
+     lap-back is a back-ease, not a bounce, so the surface never dips
+     below what's already risen */
+  const glugCurve = (() => {
+    const rand = mulberry32(POUR.seed * 1013 + 7);
+    const heights: number[] = [];
+    const widths: number[] = [];
+    for (let i = 0; i < POUR.glugs; i++) {
+      heights.push(1 + POUR.uneven * (rand() * 2 - 1) * 0.9);
+      widths.push(1 + POUR.uneven * (rand() * 2 - 1) * 0.9);
+    }
+    const hSum = heights.reduce((a, b) => a + b, 0);
+    const wSum = widths.reduce((a, b) => a + b, 0);
+    const glugs: { t0: number; t1: number; l0: number; l1: number }[] = [];
+    let l = 0;
+    let t = 0;
+    for (let i = 0; i < POUR.glugs; i++) {
+      glugs.push({ t0: t, t1: t + widths[i] / wSum, l0: l, l1: l + heights[i] / hSum });
+      l += heights[i] / hSum;
+      t += widths[i] / wSum;
+    }
+    const c1 = 1.70158 * POUR.lap * 2.2;
+    const c3 = c1 + 1;
+    return (p: number) => {
+      if (p <= 0) return 0;
+      if (p >= 1) return 1;
+      const g = glugs.find((s) => p < s.t1) ?? glugs[glugs.length - 1];
+      const q = (p - g.t0) / (g.t1 - g.t0);
+      const rise = Math.max(0.15, 1 - POUR.hesitate); // the rest of the glug is the wait
+      if (q >= rise) return g.l1;
+      const k = q / rise - 1;
+      return g.l0 + (g.l1 - g.l0) * (1 + c3 * k * k * k + c1 * k * k);
+    };
+  })();
 
   /* The honest part of the theater — these are real files this page loads. */
   const LOG_LINES = [
@@ -183,15 +233,15 @@ import OpeningFillDirector from './OpeningFillDirector';
       ),
     );
 
-    /* the pour — a springing waterline, everything else rides its level */
+    /* the pour — a gluggy waterline (linear clock; the curve carries all
+       the shape), everything else rides its level */
     anims.push(
       animate(0, 1, {
         delay: T.pourAt,
-        type: 'spring',
         duration: T.pourS,
-        bounce: 0.2,
+        ease: 'linear',
         onUpdate: (v) => {
-          level = v;
+          level = glugCurve(v);
           paint();
         },
       }),
@@ -279,12 +329,8 @@ import OpeningFillDirector from './OpeningFillDirector';
     timers.push(setTimeout(release, T.releaseAt * 1000));
   }
 
-  // Dev hands the door to the DialKit rig (OpeningFillDirector); this baked
-  // driver is what ships.
-  if (!import.meta.env.DEV) {
-    openFillDoor();
-    document.addEventListener('astro:after-swap', openFillDoor);
-  }
+  openFillDoor();
+  document.addEventListener('astro:after-swap', openFillDoor);
 </script>
 
 <style>
