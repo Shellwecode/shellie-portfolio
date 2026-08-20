@@ -169,6 +169,16 @@ const contacts = [
         </a>
       ))}
     </p>
+
+    {/* on narrow screens the hero has no yard, so the doodles sat out the
+        whole page — one comes back at the end to see the reader out.
+        Static: down here it's a sign-off, not a toy. */}
+    <figure class="foot-doodle foot-doodle--light enter" style="--enter-i: 6">
+      <Image src={doodleWalking} alt="A drawing of me mid-stride, luggage in tow" widths={[320]} sizes="140px" draggable={false} />
+    </figure>
+    <figure class="foot-doodle foot-doodle--dark enter" style="--enter-i: 6">
+      <Image src={doodleReading} alt="A drawing of me reading under a lamp at night" widths={[440]} sizes="220px" draggable={false} />
+    </figure>
   </div>
 </Base>
 
@@ -217,9 +227,6 @@ const contacts = [
     height: auto;
     pointer-events: none;
   }
-  @media (max-width: 1023px) {
-    .hero-doodle { display: none; } /* no yard to wander on narrow screens */
-  }
   /* each theme keeps one company: the travelers by day, the reading lamp
      by night (its glow is the one warm thing on the dark page) */
   .hero-doodle--dark { display: none; }
@@ -228,6 +235,12 @@ const contacts = [
     display: block;
     width: 260px; /* a seated scene, not a cutout stride — it earns more room */
     filter: none; /* no paper-light shadow in the dark */
+  }
+  @media (max-width: 1023px) {
+    /* no yard to wander on narrow screens — last word, so the dark theme's
+       display: block above can't reseat its doodle here */
+    .hero-doodle,
+    :global(:root[data-theme='dark']) .hero-doodle--dark { display: none; }
   }
   .about-page > :not(.pile-stage, .about-hero) {
     max-width: var(--measure);
@@ -325,6 +338,26 @@ const contacts = [
   }
   .contact-link:hover {
     color: var(--color-accent);
+  }
+
+  /* the see-you-out doodle — only where the hero yard is gone */
+  .foot-doodle {
+    display: none;
+    width: 140px;
+    margin: 3.5rem 0 0 auto; /* drifts toward the right edge, mid-departure */
+    rotate: -3deg;
+  }
+  .foot-doodle :global(img) {
+    width: 100%;
+    height: auto;
+  }
+  @media (max-width: 1023px) {
+    .foot-doodle--light { display: block; }
+    :global(:root[data-theme='dark']) .foot-doodle--light { display: none; }
+    :global(:root[data-theme='dark']) .foot-doodle--dark {
+      display: block;
+      width: 220px; /* the seated scene, as in the desktop hero */
+    }
   }
 </style>
 

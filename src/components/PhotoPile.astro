@@ -70,7 +70,10 @@ const placed = photos.map((p, i) => {
 {
   placed.length > 0 && (
     <section class="pile-wrap" aria-label="Photos">
-      <p class="pile-whisper">drag to see corners of my life</p>
+      <p class="pile-whisper">
+        <span class="whisper-wide">drag to see corners of my life</span>
+        <span class="whisper-narrow">swipe through corners of my life</span>
+      </p>
       <div class="pile" data-drag-zone>
         {placed.map((p) => (
           <figure
@@ -114,6 +117,7 @@ const placed = photos.map((p, i) => {
     color: var(--color-ink-faint);
     margin-bottom: 0.5rem;
   }
+  .whisper-narrow { display: none; }
   .pile {
     position: relative;
     height: 480px; /* the wider stage earns a taller table */
@@ -163,11 +167,41 @@ const placed = photos.map((p, i) => {
     padding-top: 5px;
     line-height: 1.3;
   }
-  @media (max-width: 640px) {
-    .pile { height: 300px; }
-    .polaroid { width: 150px; left: min(var(--pl, 0%), calc(100% - 158px)); }
+  /* Narrow screens: the pile becomes a strip — dragging fought the page's
+     scroll under a thumb, and a 300px board left no room to wander anyway.
+     A swipe is the gesture the thumb already knows; native scroll brings
+     the momentum for free. Full-bleed, so the photos run past the page
+     edge and say so. */
+  @media (max-width: 768px) {
+    .whisper-wide { display: none; }
+    .whisper-narrow { display: inline; }
+    .pile {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      height: auto;
+      margin-inline: -1.5rem; /* the shell's mobile pad — the band runs edge to edge */
+      padding: 20px 1.5rem 24px;
+      border-radius: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 1.5rem;
+      scrollbar-width: none;
+    }
+    .pile::-webkit-scrollbar { display: none; }
+    .polaroid {
+      position: static;
+      flex: 0 0 auto;
+      width: 190px;
+      rotate: calc(var(--rot, 0deg) * 0.6); /* looser than level, calmer than the pile */
+      cursor: default;
+      touch-action: auto; /* the thumb scrolls the strip; cards stay seated */
+      scroll-snap-align: center;
+    }
+    .polaroid:nth-child(even) { margin-top: 18px; } /* a strewn line, not a ruled one */
     .polaroid :global(img),
-    .polaroid video { height: 112px; }
+    .polaroid video { height: 142px; }
   }
 
   /* the expanded view — paper veil, the photo held up to the light */
@@ -218,6 +252,17 @@ const placed = photos.map((p, i) => {
   // friction, and the zone's bounds catch the slide with a soft bounce.
   // Generic: any [data-drag-zone] container with [data-draggable] children
   // (the pile here, the hero doodles on the about page).
+  // Below the strip breakpoint the cards don't drag at all — the strip
+  // scrolls natively and a tap expands.
+  const strip = window.matchMedia('(max-width: 768px)');
+  strip.addEventListener('change', () => {
+    if (!strip.matches) return;
+    // offsets dragged on the wide board are stale seats in the strip
+    document.querySelectorAll<HTMLElement>('[data-draggable]').forEach((c) => {
+      c.style.translate = '';
+      c.style.zIndex = '';
+    });
+  });
   function wireDragZones() {
     document.querySelectorAll<HTMLElement>('[data-drag-zone]').forEach(wireZone);
   }
@@ -271,7 +316,14 @@ const placed = photos.map((p, i) => {
       };
 
       let travelled = 0; // a "drag" that never travels is a click → expand
+      card.addEventListener('click', () => {
+        // strip mode's expand — a scroll-flick suppresses the click, so
+        // only a true tap lands here
+        if (!strip.matches) return;
+        if (card.dataset.full || card.dataset.video) openLightbox(card);
+      });
       card.addEventListener('pointerdown', (e) => {
+        if (strip.matches) return;
         dragging = true;
         travelled = 0;
         cancelAnimationFrame(raf);
@@ -341,6 +393,12 @@ const placed = photos.map((p, i) => {
     const box = document.querySelector<HTMLElement>('[data-pile-lightbox]');
     if (!box || box.dataset.wired) return;
     box.dataset.wired = '1';
+    // out from under the pile stage — its entrance animation holds a
+    // translate/filter (fill: both), which quietly becomes the containing
+    // block for fixed descendants: the veil centers on the pile, not the
+    // screen, and ducks under the dock. At body level, fixed means the
+    // viewport again and z-index 200 outranks the dock's 50.
+    document.body.appendChild(box);
     const vid = box.querySelector('video')!;
     const close = () => {
       box.hidden = true;
