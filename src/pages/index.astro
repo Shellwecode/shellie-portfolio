@@ -187,12 +187,13 @@ const projectHref = (p: (typeof allProjects)[number]) =>
   .section-link:hover .section-link-arrow { translate: var(--arrow-nudge, 3px) 0; }
 
   .work { margin-bottom: 2.625rem; } /* 14 section pad + 28 main gap, per frame */
-  /* Bento — Shellie's dial-tuned composition, locked 2026-08-02:
-     64% agent-builder anchor, twin 282px cells stacked right */
+  /* Bento — Shellie's dial-tuned composition (locked 2026-08-02, anchor
+     widened 2026-08-20): 70% agent-builder anchor, twin 282px cells
+     stacked right */
   .cards {
     display: grid;
     gap: var(--card-gap);
-    grid-template-columns: calc(64% - var(--card-gap) / 2) 1fr;
+    grid-template-columns: calc(70% - var(--card-gap) / 2) 1fr;
     grid-template-areas: 'a b' 'a c';
   }
   .card[data-i='0'] { grid-area: a; }
