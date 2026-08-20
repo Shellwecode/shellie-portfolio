@@ -24,6 +24,10 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     customLogger: logger,
+    // Pre-bundle the animation deps at boot — discovering them mid-session
+    // (the door's `motion`, a director's `dialkit`) re-runs the optimizer
+    // and the dev server 503s those modules until the next restart.
+    optimizeDeps: { include: ['motion', 'dialkit', 'react', 'react-dom'] },
   },
   markdown: {
     shikiConfig: {

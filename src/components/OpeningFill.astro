@@ -57,6 +57,11 @@ const maskSvg =
   SHADES.map((d) => `<path d="${d}"/>`).join('') +
   `</svg>`;
 const maskUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(maskSvg)}")`;
+
+/* Dev-only: the DialKit rig (re-raised 2026-08-19 to retune the pour).
+   When it mounts it drives the door instead of the baked script below;
+   prod never ships it. */
+import OpeningFillDirector from './OpeningFillDirector';
 ---
 
 <div id="fg-opening" aria-hidden="true" style={`--fg-mask: ${maskUri}`}>
@@ -85,6 +90,8 @@ const maskUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(maskSvg)}")`;
   </div>
   <pre class="fg-log"></pre>
 </div>
+
+{import.meta.env.DEV && <OpeningFillDirector client:only="react" />}
 
 {/* Pre-paint guard — same contract as the other openings: repeat visitors
     and reduced-motion skip the door entirely; dev always plays. */}
@@ -272,8 +279,12 @@ const maskUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(maskSvg)}")`;
     timers.push(setTimeout(release, T.releaseAt * 1000));
   }
 
-  openFillDoor();
-  document.addEventListener('astro:after-swap', openFillDoor);
+  // Dev hands the door to the DialKit rig (OpeningFillDirector); this baked
+  // driver is what ships.
+  if (!import.meta.env.DEV) {
+    openFillDoor();
+    document.addEventListener('astro:after-swap', openFillDoor);
+  }
 </script>
 
 <style>
@@ -404,6 +415,22 @@ const maskUri = `url("data:image/svg+xml;utf8,${encodeURIComponent(maskSvg)}")`;
     color: var(--color-ink-faint);
     white-space: pre;
   }
+  /* Phones: the girl was filling two-thirds of the screen — she's a mark,
+     not a poster. Smaller scene, counter tucked closer so it can't run off
+     the right edge, log eases toward the corner. */
+  @media (max-width: 768px) {
+    #fg-opening {
+      --fg-size: 176px;
+      --fg-cnt-x: 24px;
+      --fg-cnt-size: 13px;
+    }
+    .fg-log {
+      left: 20px;
+      bottom: 18px;
+      font-size: 9.5px;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     #fg-opening {
       display: none;
