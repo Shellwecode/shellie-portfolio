@@ -12,8 +12,11 @@ interface Props {
   description?: string;
   /** 'pill' (default) floats the whisper pill (it ducks when idle), matching
       the top bar's "now". 'none' for reading pages (they dock their own
-      instrument) and the work shelf (browsing covers owns the stage). */
-  deck?: 'pill' | 'none';
+      instrument). 'mobile' for the work shelf: desktop keeps the stage clear
+      for the covers, but phones keep the dock's now-seat — without it the
+      five icons stretch to fill the pill and the dock reads differently
+      page to page. */
+  deck?: 'pill' | 'mobile' | 'none';
   /** Edge fog (ol.studio treatment) — reserved for long-scrolling reading pages.
       'thin' starts at the reading-mode strength (case studies get there via
       html[data-reading]; writing pages are born reading). */
@@ -45,7 +48,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="en" data-quiet-dock={quietDock || undefined} data-crumb-voice={crumbVoice || undefined} data-opening={opening || undefined}>
+<html lang="en" data-quiet-dock={quietDock || undefined} data-crumb-voice={crumbVoice || undefined} data-opening={opening || undefined} data-deck-mobile={deck === 'mobile' || undefined}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -126,11 +129,14 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     {fog && <div class:list={['edge-fog', 'edge-fog--bottom', { 'edge-fog--thin': fog === 'thin' }]} aria-hidden="true"></div>}
     {/* <SideNav /> — parked for the girl + worn word nav; the dock returns by
         uncommenting this and its import. */}
-    {deck === 'pill' && <NowPlayer />}
+    {/* deck 'mobile' mounts the player too — html[data-deck-mobile] hides it
+        on desktop (an html attribute, not a prop on the persisted element,
+        so soft navs re-decide it per page). */}
+    {deck !== 'none' && <NowPlayer />}
     {/* phones trade the now pill for the menu dock; where the now player
         lives, the dock's last seat switches over to it (html[data-mpill]).
         Reading pages opt out — the chapter pill owns their bottom edge. */}
-    {dock && <MobileDock hasNow={deck === 'pill'} />}
+    {dock && <MobileDock hasNow={deck !== 'none'} />}
 
     <script>
       // Lenis smooth scroll — the ol.studio glide. Skipped for reduced motion.

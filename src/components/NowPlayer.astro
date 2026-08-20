@@ -172,6 +172,12 @@ import now from '../data/now.json';
     --np-lb-scale: 0.91;
   }
 
+  /* deck 'mobile' (the work shelf): the player rides along only for the
+     phone dock's now-seat — desktop keeps the stage clear for the covers */
+  @media (min-width: 769px) {
+    :global(html[data-deck-mobile]) .now-player { display: none; }
+  }
+
   /* -------------------------------------------------------------------------
      The pill at rest
   ------------------------------------------------------------------------- */
@@ -739,8 +745,16 @@ import now from '../data/now.json';
   // so a mid-flight reversal just retargets (make-interfaces-feel-better).
   let lastTrigger: HTMLElement | null = null;
 
+  // Mounted AND displayed — deck 'mobile' hides the whole instrument on
+  // desktop, where 'n' should stay silent (an invisible open sheet would
+  // still inert the page).
+  const playerAvailable = () => {
+    const np = document.querySelector('.now-player');
+    return !!np && getComputedStyle(np).display !== 'none';
+  };
+
   function setPlayer(open: boolean) {
-    if (open && !document.querySelector('.np-sheet')) return; // page without the player
+    if (open && !playerAvailable()) return; // page without the player
     const html = document.documentElement;
     if (open) html.setAttribute('data-np', 'open');
     else {

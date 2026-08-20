@@ -71,11 +71,13 @@ const items = [
 const countOf = (key: string) => items.filter((i) => i.tags.includes(key)).length;
 ---
 
-{/* deck none: browsing the shelf is the whole job here — the now pill
-    would pull attention from the covers. */}
+{/* deck mobile: on desktop, browsing the shelf is the whole job — the now
+    pill would pull attention from the covers. Phones keep the player so the
+    dock's now-seat stays put — without it the icons stretch to fill the
+    pill and the dock reads differently here than everywhere else. */}
 <Base
   description="Case studies and vibe-coded projects by Shellie Hu."
-  deck="none"
+  deck="mobile"
 >
   {/* Head + chips ride the shared entrance; the grid keeps its own
       center-out WAAPI reveal (adding .enter there would double-animate). */}
