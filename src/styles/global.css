@@ -169,6 +169,21 @@ html {
   html { zoom: 0.9; }
 }
 
+/* Phones read one notch smaller (her call, 2026-08-19): desktop is judged
+   through the 0.9 zoom above, so natural-scale phones were reading every
+   size ~11% up from the designed feel. Stepping the root brings all
+   rem-based type AND rem spacing down together; the prose's px sizes
+   take the same step by hand. */
+@media (max-width: 768px) {
+  html { font-size: 15px; }
+  :root {
+    --pr-body-size: 16.5px;
+    --pr-body-lh: 30px;
+    --pr-h2-size: 20.5px;
+    --pr-h2-lh: 33px;
+  }
+}
+
 body {
   min-height: 100dvh;
   display: flex;

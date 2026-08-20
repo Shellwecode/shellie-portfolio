@@ -707,12 +707,16 @@ import now from '../data/now.json';
       left: auto;
       right: 16px;
       translate: 0 0;
-      width: calc(100vw - 100px);
-      height: 58px;
+      width: calc(100vw - 94px); /* 16 + the 52px handle + 10 breath + 16 */
+      height: 52px; /* matches the dock handle it sits beside */
       padding: 8px 14px 8px 8px;
     }
     :global(html[data-mpill='now'][data-np='open']) .np-pill { translate: 0 0; }
-    .np-art-sm { width: 42px; height: 42px; border-radius: 11px; }
+    /* the summoned pill never ducks on phones — there's no hover to recall
+       it from the sliver, and the dock handle is the explicit dismiss.
+       (:not(:hover) only outguns the duck rule's specificity, 0,4,1 > 0,4,0) */
+    :global(html[data-mpill='now']) .np-pill[data-ducked]:not(:hover) { translate: 0 0; }
+    .np-art-sm { width: 36px; height: 36px; border-radius: 10px; }
     .np-pill-place { display: none; }
     .np-sheet { height: calc(100dvh - 40px); }
     .np-cols { flex-direction: column; gap: 40px; padding: 56px 24px 40px; }
